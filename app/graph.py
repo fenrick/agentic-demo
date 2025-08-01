@@ -66,8 +66,6 @@ def build_graph(
         available.
     """
 
-    # TODO: allow callers to override agent functions via ``primary``
-
     async def plan_node(state: GraphState) -> GraphState:
         if primary:
             text = primary.plan(cast(str, state["text"]), loop=state["loops"])

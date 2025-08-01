@@ -1,4 +1,4 @@
-"""Higher level document workflow utilities."""
+"""High level document DAG utilities."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from .primary_agent import PrimaryAgent
 
 
 @dataclass
-class DocumentWorkflow:
+class DocumentDAG:
     """Orchestrate per-heading flows and return the final document."""
 
     overlay: OverlayAgent | None = None
