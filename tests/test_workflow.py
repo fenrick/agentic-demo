@@ -9,6 +9,12 @@ def test_parse_outline_basic():
     assert wf.parse_outline(outline) == ["Intro", "Body", "Conclusion"]
 
 
+def test_parse_outline_numbers_and_markdown():
+    wf = DocumentWorkflow()
+    outline = "1. Intro\n1.1 Details\n## Conclusion"
+    assert wf.parse_outline(outline) == ["Intro", "Details", "Conclusion"]
+
+
 def test_generate_document_runs_graph_per_heading():
     wf = DocumentWorkflow()
     with (
