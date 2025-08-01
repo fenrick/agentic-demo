@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import os
 from typing import Optional
 
 from app.graph import build_graph
@@ -57,6 +58,8 @@ async def run_demo(topic: str, mode: str) -> dict[str, str]:
 async def main(argv: Optional[list[str]] = None) -> None:
     """Entry point for the demo script."""
     args = parse_args(argv)
+    if not os.environ.get("OPENAI_API_KEY"):
+        print("OPENAI_API_KEY not set - using placeholder responses.")
     result = await run_demo(args.topic, args.mode)
     print(result["output"])
 

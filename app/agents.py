@@ -5,16 +5,40 @@ from __future__ import annotations
 import openai
 from typing import Dict, Any
 
+FALLBACK_MESSAGE = "OpenAI API unavailable"
+
 
 class ChatAgent:
-    """Simple wrapper around the OpenAI chat completion API."""
+    """Simple wrapper around the OpenAI chat completion API.
 
-    def __init__(self, model: str = "gpt-3.5-turbo") -> None:
+    Parameters
+    ----------
+    model:
+        Name of the chat model to invoke.
+    fallback:
+        Message returned when the OpenAI client is unavailable or errors occur.
+    """
+
+    def __init__(self, model: str = "gpt-3.5-turbo", *, fallback: str | None = None) -> None:
         self.model = model
+        self.fallback = fallback or FALLBACK_MESSAGE
 
     def __call__(self, messages: list[Dict[str, str]]) -> str:
-        """Call the chat completion API with the provided messages."""
-        response = openai.ChatCompletion.create(model=self.model, messages=messages)
+        """Call the chat completion API with the provided messages.
+
+        If the OpenAI dependency is missing or raises an error, ``fallback`` is
+        returned instead.
+        """
+        try:
+            create = openai.ChatCompletion.create
+        except AttributeError:
+            return self.fallback
+
+        try:
+            response = create(model=self.model, messages=messages)
+        except Exception:
+            return self.fallback
+
         return response["choices"][0]["message"]["content"].strip()
 
 

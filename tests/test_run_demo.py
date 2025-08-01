@@ -34,3 +34,12 @@ def test_main_prints_result(capsys):
         asyncio.run(rd.main(["--topic", "abc"]))
     captured = capsys.readouterr()
     assert "printed" in captured.out
+
+
+def test_main_warns_when_missing_api_key(monkeypatch, capsys):
+    fake_graph = SimpleNamespace(run=lambda topic: {"output": "any"})
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    with patch("scripts.run_demo.build_graph", return_value=fake_graph):
+        asyncio.run(rd.main(["--topic", "abc"]))
+    captured = capsys.readouterr()
+    assert "OPENAI_API_KEY not set" in captured.out

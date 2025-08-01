@@ -20,6 +20,10 @@ This project is released under the [Unlicense](LICENSE).
    ```bash
    python -m agentic_demo.cli
    ```
+4. **Try the demo script**:
+   ```bash
+   python scripts/run_demo.py --topic "Quantum" 
+   ```
 
 ## Configuration
 
@@ -30,8 +34,8 @@ provided example file and editing it with your credentials:
 cp .env.example .env
 ```
 
-The `OPENAI_API_KEY` variable is required to interact with OpenAI services.
-If you have a Tavily account, you can also set `TAVILY_API_KEY` to enable
+The `OPENAI_API_KEY` variable enables real responses from OpenAI services. If it
+is unset the demo prints placeholder text. If you have a Tavily account, you can also set `TAVILY_API_KEY` to enable
 search features.
 
 ## Running Tests
