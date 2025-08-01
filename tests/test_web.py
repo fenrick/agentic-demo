@@ -82,3 +82,26 @@ def test_to_docx_bytes_generates_zip():
         pytest.skip("python-docx not installed")
     data = _to_docx_bytes("hi")
     assert data.startswith(b"PK")
+
+
+def test_websocket_streaming_overlay_mixed_types():
+    """OverlayAgent results of varying types should be sent correctly."""
+    # TODO: ensure overlay outputs send raw strings and JSON for dicts
+    client = TestClient(app)
+    outputs = ["image", {"slides": [1]}]
+    with (
+        patch("web.router.plan", return_value="p"),
+        patch("web.router.research", return_value="r"),
+        patch("web.router.draft", return_value="d"),
+        patch("web.router.review", return_value="done"),
+        patch.object(web_router.OverlayAgent, "__call__", side_effect=outputs),
+    ):
+        for expected in [outputs[0], json.dumps(outputs[1])]:
+            with client.websocket_connect("/stream?input=x&mode=overlay") as ws:
+                assert ws.receive_text() == "p"
+                assert ws.receive_text() == "r"
+                assert ws.receive_text() == "d"
+                assert ws.receive_text() == "done"
+                assert ws.receive_text() == expected
+                with pytest.raises(WebSocketDisconnect):
+                    ws.receive_text()
