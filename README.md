@@ -97,3 +97,8 @@ combined. Each section runs through a graph built with ``skip_plan=True`` so the
 outline step isn't repeated. Once the sections are joined, a final review agent
 polishes the document before returning it.
 
+## Coding requirements
+
+For detailed coding standards and quality checks see
+[`docs/CODING_REQUIREMENTS.md`](docs/CODING_REQUIREMENTS.md).
+
