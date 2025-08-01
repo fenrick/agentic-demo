@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from typing import Dict, List, Optional, TypedDict
+from typing import Dict, List, Optional, TypedDict, cast
 
 from langgraph.graph import StateGraph, END, START
 from typing import Any
@@ -16,7 +16,7 @@ from .overlay_agent import OverlayAgent
 class GraphState(TypedDict):
     """State shared across graph nodes."""
 
-    text: str
+    text: str | dict[str, object]
     draft: str
     approved: bool
     history: List[str]
@@ -60,7 +60,7 @@ def build_graph(
     """
 
     async def plan_node(state: GraphState) -> GraphState:
-        text = plan(state["text"])
+        text = plan(cast(str, state["text"]))
         return {
             "text": text,
             "draft": state["draft"],
@@ -69,7 +69,7 @@ def build_graph(
         }
 
     async def research_node(state: GraphState) -> GraphState:
-        text = research(state["text"])
+        text = research(cast(str, state["text"]))
         return {
             "text": text,
             "draft": state["draft"],
@@ -78,7 +78,7 @@ def build_graph(
         }
 
     async def draft_node(state: GraphState) -> GraphState:
-        text = draft(state["text"])
+        text = draft(cast(str, state["text"]))
         return {
             "text": text,
             "draft": text,
@@ -87,7 +87,7 @@ def build_graph(
         }
 
     async def review_node(state: GraphState) -> GraphState:
-        result = review(state["text"])
+        result = review(cast(str, state["text"]))
         approved = "retry" not in result
         return {
             "text": result,
@@ -98,12 +98,12 @@ def build_graph(
 
     async def overlay_node(state: GraphState) -> GraphState:
         assert overlay is not None
-        result = overlay(state["draft"], state["text"])
+        result = overlay(state["draft"], cast(str, state["text"]))
         return {
             "text": result,
             "draft": state["draft"],
             "approved": True,
-            "history": state["history"] + [result],
+            "history": state["history"] + [cast(str, result)],
         }
 
     builder: StateGraph = StateGraph(GraphState)

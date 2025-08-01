@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from io import BytesIO
-from typing import AsyncIterator
+from typing import AsyncIterator, cast
 import pathlib
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Response
@@ -42,7 +42,7 @@ def _run_stream(text: str, mode: str) -> AsyncIterator[str]:
             yield result
             if "retry" not in result:
                 if overlay:
-                    text = overlay(draft_text, result)
+                    text = cast(str, overlay(draft_text, result))
                     yield text
                 else:
                     text = result
