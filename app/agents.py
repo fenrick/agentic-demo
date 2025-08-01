@@ -138,8 +138,10 @@ def research(
     """
 
     search_results = perplexity.search(outline)
-    prompt = utils.load_prompt("research").format(outline=outline)
-    prompt = f"{prompt}\n\nSearch results:\n{search_results}"
+    prompt = utils.load_prompt("research").format(
+        outline=outline,
+        search_results=search_results,
+    )
     text = _call_agent(prompt, agent)
     _log_metrics(text, loop)
     return text

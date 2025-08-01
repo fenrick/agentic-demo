@@ -35,7 +35,7 @@ def test_agent_functions_use_yaml_templates():
         calls.append(name)
         return {
             "plan": "p {topic}",
-            "research": "r {outline}",
+            "research": "r {outline}\nSearch results:\n{search_results}",
             "draft": "d {notes}",
             "review": "v {text}",
             "system": "sys",
@@ -57,7 +57,7 @@ def test_agent_functions_use_yaml_templates():
         assert msgs[0]["role"] == "system" and msgs[0]["content"] == "sys"
         assert msgs[1]["content"] == "p topic"
         research_call = mock.call_args_list[1][0][0]
-        assert "Search results:" in research_call[1]["content"]
+        assert research_call[1]["content"] == "r topic\nSearch results:\nr"
         for name in ["plan", "research", "draft", "review"]:
             assert name in calls
 
