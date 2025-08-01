@@ -53,3 +53,18 @@ def _safe_load(text: str) -> dict:
 
         value = dedent("\n".join(lines[1:])).lstrip()
     return {key.strip(): value}
+
+
+def load_tools() -> dict[str, dict[str, object]]:
+    """Return tool metadata loaded from ``tools.yaml``.
+
+    Returns
+    -------
+    dict[str, dict[str, object]]
+        Mapping of tool name to its definition.
+    """
+    path = PROMPTS_PATH / "tools.yaml"
+    if not path.exists():
+        return {}
+    data = _safe_load(path.read_text())
+    return data.get("tools", data)

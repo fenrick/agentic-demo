@@ -4,6 +4,7 @@ import asyncio
 import pytest
 
 from app.agents import ChatAgent
+from app.primary_agent import PrimaryAgent
 
 from app import graph
 from app.graph import build_graph
@@ -96,3 +97,21 @@ def test_overlay_history_serialized_when_dict():
         flow = build_graph(overlay)
         result = flow.run("topic")
         assert result["messages"][-1] == json.dumps({"slides": []})
+
+
+def test_graph_with_primary_agent():
+    """build_graph should delegate steps to a PrimaryAgent when provided."""
+    primary = PrimaryAgent()
+    with (
+        patch.object(primary, "plan", return_value="plan") as plan_mock,
+        patch.object(primary, "research", return_value="research") as research_mock,
+        patch.object(primary, "draft", return_value="draft") as draft_mock,
+        patch.object(primary, "review", return_value="final") as review_mock,
+    ):
+        flow = build_graph(primary=primary)
+        result = flow.run("topic")
+        assert result["output"] == "final"
+    plan_mock.assert_called_once_with("topic", loop=0)
+    research_mock.assert_called_once_with("plan", loop=0)
+    draft_mock.assert_called_once_with("research", loop=0)
+    review_mock.assert_called_once_with("draft", loop=0)

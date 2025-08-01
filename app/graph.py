@@ -12,6 +12,7 @@ from typing import Any
 
 from .agents import plan, research, draft, review
 from .overlay_agent import OverlayAgent
+from .primary_agent import PrimaryAgent
 
 
 class GraphState(TypedDict):
@@ -48,7 +49,10 @@ class ConversationGraph:
 
 
 def build_graph(
-    overlay: Optional[OverlayAgent] = None, *, skip_plan: bool = False
+    overlay: Optional[OverlayAgent] = None,
+    *,
+    primary: "PrimaryAgent | None" = None,
+    skip_plan: bool = False,
 ) -> ConversationGraph:
     """Create the conversation graph using langgraph.
 
@@ -63,7 +67,10 @@ def build_graph(
     """
 
     async def plan_node(state: GraphState) -> GraphState:
-        text = plan(cast(str, state["text"]), loop=state["loops"])
+        if primary:
+            text = primary.plan(cast(str, state["text"]), loop=state["loops"])
+        else:
+            text = plan(cast(str, state["text"]), loop=state["loops"])
         return {
             "text": text,
             "draft": state["draft"],
@@ -73,7 +80,10 @@ def build_graph(
         }
 
     async def research_node(state: GraphState) -> GraphState:
-        text = research(cast(str, state["text"]), loop=state["loops"])
+        if primary:
+            text = primary.research(cast(str, state["text"]), loop=state["loops"])
+        else:
+            text = research(cast(str, state["text"]), loop=state["loops"])
         return {
             "text": text,
             "draft": state["draft"],
@@ -83,7 +93,10 @@ def build_graph(
         }
 
     async def draft_node(state: GraphState) -> GraphState:
-        text = draft(cast(str, state["text"]), loop=state["loops"])
+        if primary:
+            text = primary.draft(cast(str, state["text"]), loop=state["loops"])
+        else:
+            text = draft(cast(str, state["text"]), loop=state["loops"])
         return {
             "text": text,
             "draft": text,
@@ -93,7 +106,10 @@ def build_graph(
         }
 
     async def review_node(state: GraphState) -> GraphState:
-        result = review(cast(str, state["text"]), loop=state["loops"])
+        if primary:
+            result = primary.review(cast(str, state["text"]), loop=state["loops"])
+        else:
+            result = review(cast(str, state["text"]), loop=state["loops"])
         approved = "retry" not in result
         return {
             "text": result,

@@ -1,6 +1,4 @@
 prompt: |
-  Integrate the addition below into the existing text.
-  Existing:
-  {original}
-  Addition:
-  {addition}
+  Seamlessly integrate the addition into the existing text.
+  Existing: {original}
+  Addition: {addition}

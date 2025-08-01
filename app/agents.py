@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Dict
 import logging
+
+from . import utils
 from datetime import datetime, timezone
 
 from langsmith import run_helpers
@@ -21,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class ChatAgent:
-    """Simple wrapper around the OpenAI chat completion API.
+    """Simple wrapper around the ``openai.Responses`` API.
 
     Parameters
     ----------
@@ -32,19 +34,21 @@ class ChatAgent:
     """
 
     def __init__(
-        self, model: str = "gpt-3.5-turbo", *, fallback: str | None = None
+        self,
+        model: str = "o4-mini",
+        *,
+        fallback: str | None = None,
     ) -> None:
         self.model = model
         self.fallback = fallback or FALLBACK_MESSAGE
 
     def __call__(self, messages: list[Dict[str, str]]) -> str:
-        """Call the chat completion API with the provided messages.
+        """Call the chosen OpenAI API with the provided messages.
 
-        If the OpenAI dependency is missing or raises an error, ``fallback`` is
-        returned instead.
+        Falls back to ``fallback`` if the client or endpoint is unavailable.
         """
         try:
-            create = openai.ChatCompletion.create
+            create = openai.Responses.create
         except AttributeError:
             return self.fallback
 
@@ -75,7 +79,12 @@ def _call_agent(prompt: str, agent: ChatAgent | None) -> str:
     """
 
     use_agent = agent or ChatAgent()
-    messages = [{"role": "user", "content": prompt}]
+    system_prompt = utils.load_prompt("system")
+    user_template = utils.load_prompt("user")
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_template.format(input=prompt)},
+    ]
     return use_agent(messages)
 
 
@@ -109,7 +118,8 @@ def _log_metrics(text: str, loop: int) -> None:
 @run_helpers.traceable
 def plan(topic: str, *, agent: ChatAgent | None = None, loop: int = 0) -> str:
     """Generate a short plan for the given topic."""
-    text = _call_agent(f"Create an outline for {topic}.", agent)
+    prompt = utils.load_prompt("plan").format(topic=topic)
+    text = _call_agent(prompt, agent)
     _log_metrics(text, loop)
     return text
 
@@ -122,7 +132,8 @@ def research(
     loop: int = 0,
 ) -> str:
     """Return research notes for the outline."""
-    text = _call_agent(f"Provide background facts about: {outline}", agent)
+    prompt = utils.load_prompt("research").format(outline=outline)
+    text = _call_agent(prompt, agent)
     _log_metrics(text, loop)
     return text
 
@@ -135,7 +146,8 @@ def draft(
     loop: int = 0,
 ) -> str:
     """Draft content from notes."""
-    text = _call_agent(f"Write a short passage using: {notes}", agent)
+    prompt = utils.load_prompt("draft").format(notes=notes)
+    text = _call_agent(prompt, agent)
     _log_metrics(text, loop)
     return text
 
@@ -148,6 +160,7 @@ def review(
     loop: int = 0,
 ) -> str:
     """Review and polish the text."""
-    result = _call_agent(f"Improve the following text for clarity:\n{text}", agent)
+    prompt = utils.load_prompt("review").format(text=text)
+    result = _call_agent(prompt, agent)
     _log_metrics(result, loop)
     return result
