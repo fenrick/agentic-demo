@@ -18,3 +18,10 @@ test = [
     "pytest-cov>=4.1",
     "pytest-asyncio>=0.23",
 ]
+
+[tool.setuptools]
+packages = [
+    "app",
+    "openai_stub",
+    "scripts",
+]
