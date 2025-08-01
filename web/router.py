@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from io import BytesIO
 from typing import AsyncIterator, cast
+import json
 import pathlib
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Response
@@ -42,7 +43,12 @@ def _run_stream(text: str, mode: str) -> AsyncIterator[str]:
             yield result
             if "retry" not in result:
                 if overlay:
-                    text = cast(str, overlay(draft_text, result))
+                    # TODO: when overlay returns a dict, convert to JSON before yielding
+                    overlay_result = overlay(draft_text, result)
+                    if isinstance(overlay_result, dict):
+                        text = json.dumps(overlay_result)
+                    else:
+                        text = cast(str, overlay_result)
                     yield text
                 else:
                     text = result
