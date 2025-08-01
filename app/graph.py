@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 from typing import Dict, List, Optional, TypedDict, cast
+import json
 
 from langgraph.graph import StateGraph, END, START
 from typing import Any
@@ -97,13 +98,18 @@ def build_graph(
         }
 
     async def overlay_node(state: GraphState) -> GraphState:
+        """Merge the draft with review notes and log the action."""
+        # TODO: append JSON string when overlay output is a dictionary
         assert overlay is not None
         result = overlay(state["draft"], cast(str, state["text"]))
+        history_entry = (
+            json.dumps(result) if isinstance(result, dict) else cast(str, result)
+        )
         return {
             "text": result,
             "draft": state["draft"],
             "approved": True,
-            "history": state["history"] + [cast(str, result)],
+            "history": state["history"] + [history_entry],
         }
 
     builder: StateGraph = StateGraph(GraphState)

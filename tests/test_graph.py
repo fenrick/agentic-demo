@@ -78,3 +78,21 @@ def test_build_graph_skip_plan():
         research_mock.assert_called_once()
         draft_mock.assert_called_once()
         review_mock.assert_called_once()
+
+
+def test_overlay_history_serialized_when_dict():
+    """Overlay node should append JSON when result is a dict."""
+    from app.overlay_agent import OverlayAgent
+    import json
+
+    overlay = OverlayAgent(ChatAgent())
+    with (
+        patch.object(OverlayAgent, "__call__", return_value={"slides": []}),
+        patch.object(graph, "plan", return_value="plan"),
+        patch.object(graph, "research", return_value="research"),
+        patch.object(graph, "draft", return_value="draft"),
+        patch.object(graph, "review", return_value="review"),
+    ):
+        flow = build_graph(overlay)
+        result = flow.run("topic")
+        assert result["messages"][-1] == json.dumps({"slides": []})
