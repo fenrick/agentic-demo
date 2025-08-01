@@ -10,7 +10,8 @@ import json
 from langgraph.graph import StateGraph, END, START
 from typing import Any
 
-from .agents import plan, research, draft, review
+from langsmith import run_helpers
+from .agents import plan, research, draft, review, _log_metrics
 from .overlay_agent import OverlayAgent
 from .primary_agent import PrimaryAgent
 
@@ -51,6 +52,7 @@ class ConversationGraph:
 def build_graph(
     overlay: Optional[OverlayAgent] = None,
     *,
+    mode: str = "basic",
     primary: "PrimaryAgent | None" = None,
     skip_plan: bool = False,
 ) -> ConversationGraph:
@@ -60,12 +62,20 @@ def build_graph(
     ----------
     overlay:
         Optional :class:`OverlayAgent` for the final merge step.
+    mode:
+        Conversation variant. When set to ``"overlay"`` a new
+        :class:`OverlayAgent` should be created if ``overlay`` is not
+        provided.
     skip_plan:
         When ``True`` the returned graph starts at the research step instead of
         generating a plan first. This is useful when an outline is already
         available.
     """
 
+    if overlay is None and mode == "overlay":
+        overlay = OverlayAgent()
+
+    @run_helpers.traceable
     async def plan_node(state: GraphState) -> GraphState:
         if primary:
             text = primary.plan(cast(str, state["text"]), loop=state["loops"])
@@ -79,6 +89,7 @@ def build_graph(
             "loops": state["loops"],
         }
 
+    @run_helpers.traceable
     async def research_node(state: GraphState) -> GraphState:
         if primary:
             text = primary.research(cast(str, state["text"]), loop=state["loops"])
@@ -92,6 +103,7 @@ def build_graph(
             "loops": state["loops"],
         }
 
+    @run_helpers.traceable
     async def draft_node(state: GraphState) -> GraphState:
         if primary:
             text = primary.draft(cast(str, state["text"]), loop=state["loops"])
@@ -105,6 +117,7 @@ def build_graph(
             "loops": state["loops"],
         }
 
+    @run_helpers.traceable
     async def review_node(state: GraphState) -> GraphState:
         if primary:
             result = primary.review(cast(str, state["text"]), loop=state["loops"])
@@ -119,11 +132,15 @@ def build_graph(
             "loops": state["loops"] if approved else state["loops"] + 1,
         }
 
+    @run_helpers.traceable
     async def overlay_node(state: GraphState) -> GraphState:
         """Merge the draft with review notes and log the action."""
-        # TODO: append JSON string when overlay output is a dictionary
         assert overlay is not None
         result = overlay(state["draft"], cast(str, state["text"]))
+        if isinstance(result, str):
+            _log_metrics(result, state["loops"])
+        else:
+            _log_metrics(json.dumps(result), state["loops"])
         history_entry = (
             json.dumps(result) if isinstance(result, dict) else cast(str, result)
         )

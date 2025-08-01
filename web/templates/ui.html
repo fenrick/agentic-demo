@@ -20,6 +20,7 @@ textarea { width: 100%; box-sizing: border-box; resize: none; }
 <button id="run">Run</button>
 <button id="cancel">Cancel</button>
 <div id="output"></div>
+<div id="stats"></div>
 <button id="save-md">Download Markdown</button>
 <button id="save-docx">Download DOCX</button>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" integrity="sha384-eDzOAsrZsXwOrN8v7DqM8o30ezwTG5Ae8tm0wYuo+8KBw9yLYkhIbZP+pt2K1SVP" crossorigin="anonymous"></script>
@@ -45,8 +46,16 @@ textarea { width: 100%; box-sizing: border-box; resize: none; }
     const mode = document.getElementById('mode').value;
     ws = new WebSocket(`ws://${location.host}/stream?input=${encodeURIComponent(text)}&mode=${mode}`);
     ws.onmessage = ev => {
-      finalText += ev.data + "\n";
-      out.innerHTML = marked.parse(finalText);
+      let data;
+      try { data = JSON.parse(ev.data); } catch { data = null; }
+      if (data && data.stats) {
+        const s = data.stats;
+        document.getElementById('stats').textContent =
+          `Tokens: ${s.tokens} Cost: $${s.cost.toFixed(4)} Latency: ${s.latency.toFixed(2)}s`;
+      } else {
+        finalText += ev.data + "\n";
+        out.innerHTML = marked.parse(finalText);
+      }
     };
     ws.onerror = () => { out.textContent = 'WebSocket error'; };
     ws.onclose = ev => {

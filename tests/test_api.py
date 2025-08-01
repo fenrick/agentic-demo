@@ -7,7 +7,10 @@ from app.agents import ChatAgent
 
 def test_chat_endpoint():
     client = TestClient(app)
-    with patch.object(ChatAgent, "__call__", return_value="ok"):
+    with (
+        patch.object(ChatAgent, "__call__", return_value="ok"),
+        patch("app.agents.perplexity.search", return_value="r"),
+    ):
         response = client.post("/chat", params={"input": "topic"})
     assert response.status_code == 200
     data = response.json()
