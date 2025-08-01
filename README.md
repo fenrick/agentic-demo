@@ -11,7 +11,7 @@ This project is released under the [Unlicense](LICENSE).
 
 ## Setup
 
-1. **Python**: Use Python 3.11 or newer.
+1. **Python**: Use the latest Python 3 release.
 2. **Install dependencies**:
    ```bash
    pip install -r requirements.txt
