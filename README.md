@@ -18,19 +18,30 @@ This project is released under the [Unlicense](LICENSE).
    ```
    The optional `openai` dependency enables real API calls. Without it,
    the bundled `openai_stub` module provides placeholder responses.
+   To hack on the code locally, install in editable mode:
+   ```bash
+   pip install -e .
+   ```
 3. **Start the API server**:
    ```bash
    uvicorn app.api:app --reload
    ```
 4. **Run the demo script**:
    ```bash
-   python scripts/run_demo.py --topic "Quantum" 
+   python scripts/run_demo.py --topic "Quantum"
    ```
+
+## `openai_stub`
+
+The minimal `openai_stub` package lets the demo run without the real
+OpenAI client. It returns a placeholder response whenever the `openai`
+library is missing. Install the official `openai` package and set an
+`OPENAI_API_KEY` in your environment to receive genuine completions.
 
 ## Configuration
 
-This project uses environment variables for API keys. Start by copying the
-provided example file and editing it with your credentials:
+This project uses environment variables for API keys. The included
+`.env.example` file provides a convenient starting point:
 
 ```bash
 cp .env.example .env
