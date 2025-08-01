@@ -14,13 +14,17 @@ def test_chat_agent_calls_responses_api():
 
 
 def test_plan_research_draft_review_calls_agent():
-    with patch.object(ChatAgent, "__call__", return_value="x") as mock:
+    with (
+        patch.object(ChatAgent, "__call__", return_value="x") as mock,
+        patch("app.agents.perplexity.search", return_value="r") as search,
+    ):
         agent = ChatAgent()
         assert plan("topic", agent=agent) == "x"
         assert research("plan", agent=agent) == "x"
         assert draft("research", agent=agent) == "x"
         assert review("draft", agent=agent) == "x"
         assert mock.call_count == 4
+        search.assert_called_once_with("plan")
 
 
 def test_agent_functions_use_yaml_templates():
@@ -41,6 +45,7 @@ def test_agent_functions_use_yaml_templates():
     with (
         patch("app.utils.load_prompt", side_effect=fake_load),
         patch.object(ChatAgent, "__call__", return_value="x") as mock,
+        patch("app.agents.perplexity.search", return_value="r"),
     ):
         plan("topic")
         research("topic")
@@ -51,6 +56,8 @@ def test_agent_functions_use_yaml_templates():
         msgs = mock.call_args_list[0][0][0]
         assert msgs[0]["role"] == "system" and msgs[0]["content"] == "sys"
         assert msgs[1]["content"] == "p topic"
+        research_call = mock.call_args_list[1][0][0]
+        assert "Search results:" in research_call[1]["content"]
         for name in ["plan", "research", "draft", "review"]:
             assert name in calls
 
@@ -83,6 +90,7 @@ def test_metrics_logged_during_calls():
         patch("app.agents._call_agent", return_value="x [1]"),
         patch("app.agents.run_helpers.get_current_run_tree", return_value=fake_run),
         patch("app.agents.logger") as log,
+        patch("app.agents.perplexity.search", return_value="s"),
     ):
         assert plan("topic", loop=1) == "x [1]"
         fake_run.add_event.assert_called_once()

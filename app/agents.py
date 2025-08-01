@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, Dict
 import logging
 
-from . import utils
+from . import utils, perplexity
 from datetime import datetime, timezone
 
 from langsmith import run_helpers
@@ -131,8 +131,15 @@ def research(
     agent: ChatAgent | None = None,
     loop: int = 0,
 ) -> str:
-    """Return research notes for the outline."""
+    """Return research notes for the outline.
+
+    The function enriches the prompt with search results from Perplexity to
+    provide the chat agent with up-to-date facts.
+    """
+
+    search_results = perplexity.search(outline)
     prompt = utils.load_prompt("research").format(outline=outline)
+    prompt = f"{prompt}\n\nSearch results:\n{search_results}"
     text = _call_agent(prompt, agent)
     _log_metrics(text, loop)
     return text
