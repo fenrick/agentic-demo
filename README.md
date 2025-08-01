@@ -57,6 +57,11 @@ is unset the demo prints placeholder text. If you have a Tavily account, you can
 search features. Uvicorn can load this file automatically with `--env-file .env`,
 and the demo script supports `python -m dotenv run -- python scripts/run_demo.py ...`.
 
+## Docker Usage
+
+A Dockerfile is included for local development and deployment. See
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for build and run instructions.
+
 ## API
 
 The FastAPI app exposes several endpoints:
