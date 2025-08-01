@@ -5,6 +5,10 @@ This repository demonstrates two main workflows for generating course content us
 * **Lecture Builder** – assembles lecture notes from topic prompts and reference material.
 * **AI-Curriculum Overlay** – applies generative methods to enrich or modify an existing curriculum.
 
+## License
+
+This project is released under the [Unlicense](LICENSE).
+
 ## Setup
 
 1. **Python**: Use Python 3.10 or newer.
