@@ -13,5 +13,5 @@ flow = build_graph()
 @app.post("/chat")
 async def chat(input: str) -> dict:
     """Handle chat requests returning the final response."""
-    result = flow.run(input)
+    result = await flow.arun(input)
     return {"response": result["output"]}
