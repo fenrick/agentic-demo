@@ -12,3 +12,12 @@ def test_chat_endpoint():
     assert response.status_code == 200
     data = response.json()
     assert data == {"response": "ok"}
+
+
+def test_mcp_endpoint():
+    client = TestClient(app)
+    with patch("app.api.mcp.edit", return_value="doc") as edit:
+        resp = client.post("/mcp", json={"addition": "add"})
+    assert resp.status_code == 200
+    assert resp.json() == {"text": "doc"}
+    edit.assert_called_once_with("add")

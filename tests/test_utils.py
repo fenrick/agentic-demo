@@ -37,3 +37,21 @@ def test_repository_prompts_load(monkeypatch):
     assert utils.load_prompt("draft").startswith("Compose a brief")
     assert utils.load_prompt("review").startswith("Review the text below")
     assert utils.load_prompt("overlay").startswith("Seamlessly integrate")
+
+
+def test_load_tools(tmp_path, monkeypatch):
+    prom_dir = tmp_path / "prompts"
+    prom_dir.mkdir()
+    tools_yaml = prom_dir / "tools.yaml"
+    tools_yaml.write_text(
+        """
+tools:
+  search:
+    description: search tool
+    agents: [research]
+"""
+    )
+    monkeypatch.setattr(utils, "PROMPTS_PATH", prom_dir)
+    data = utils.load_tools()
+    assert data["search"]["description"] == "search tool"
+    assert "research" in data["search"]["agents"]
