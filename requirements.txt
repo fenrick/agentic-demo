@@ -7,3 +7,4 @@ httpx
 langsmith
 fastapi
 uvicorn[standard]
+python-docx

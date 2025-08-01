@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Agentic Demo</title>
+<style>
+body { font-family: sans-serif; margin: 2em; }
+textarea { width: 100%; box-sizing: border-box; }
+#output { border: 1px solid #ccc; padding: 0.5em; white-space: pre-wrap; min-height: 6em; margin-top: 1em; }
+</style>
+</head>
+<body>
+<h1>Agentic Demo</h1>
+<textarea id="text" rows="4" placeholder="Enter topic"></textarea>
+<select id="mode">
+  <option value="basic">basic</option>
+  <option value="overlay">overlay</option>
+</select>
+<button id="run">Run</button>
+<div id="output"></div>
+<button id="save-md">Download Markdown</button>
+<button id="save-docx">Download DOCX</button>
+<script>
+(function() {
+  let finalText = "";
+  const out = document.getElementById('output');
+  document.getElementById('run').onclick = function() {
+    out.textContent = "";
+    finalText = "";
+    const text = document.getElementById('text').value;
+    const mode = document.getElementById('mode').value;
+    const ws = new WebSocket(`ws://${location.host}/stream?input=${encodeURIComponent(text)}&mode=${mode}`);
+    ws.onmessage = ev => { finalText += ev.data + "\n"; out.textContent = finalText; };
+    ws.onclose = () => { window.demoOutput = finalText; };
+  };
+  document.getElementById('save-md').onclick = function() {
+    const blob = new Blob([window.demoOutput || ""], {type: 'text/markdown'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'output.md'; a.click();
+  };
+  document.getElementById('save-docx').onclick = function() {
+    fetch('/export/docx', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text: window.demoOutput || ''})})
+      .then(r => r.blob())
+      .then(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'output.docx'; a.click(); });
+  };
+})();
+</script>
+</body>
+</html>
