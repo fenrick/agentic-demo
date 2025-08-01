@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+from typing import Any, Dict
+
 try:  # attempt to use the real client if available
-    import openai  # type: ignore
+    import openai as _openai
 except ModuleNotFoundError:  # pragma: no cover - fallback for testing
-    import openai_stub as openai  # type: ignore
-from typing import Dict
+    import openai_stub as _openai  # type: ignore
+
+openai: Any = _openai
 
 FALLBACK_MESSAGE = "OpenAI API unavailable"
 

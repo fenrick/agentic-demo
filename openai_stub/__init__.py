@@ -1,3 +1,6 @@
+from typing import Any, Dict
+
+
 class ChatCompletion:
     """Simplistic stub for openai.ChatCompletion.
 
@@ -6,5 +9,5 @@ class ChatCompletion:
     """
 
     @staticmethod
-    def create(*args, **kwargs):
+    def create(*args: Any, **kwargs: Any) -> Dict[str, Any]:
         return {"choices": [{"message": {"content": "stub response"}}]}

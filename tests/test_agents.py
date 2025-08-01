@@ -6,9 +6,7 @@ def test_chat_agent_calls_openai():
     agent = ChatAgent()
     messages = [{"role": "user", "content": "hi"}]
     with patch("app.agents.openai.ChatCompletion.create") as mock_create:
-        mock_create.return_value = {
-            "choices": [{"message": {"content": "hello"}}]
-        }
+        mock_create.return_value = {"choices": [{"message": {"content": "hello"}}]}
         assert agent(messages) == "hello"
         mock_create.assert_called_once_with(model=agent.model, messages=messages)
 
@@ -26,11 +24,15 @@ def test_plan_research_draft_review_calls_agent():
 def test_chat_agent_falls_back_when_openai_unavailable():
     agent = ChatAgent()
     messages = [{"role": "user", "content": "hi"}]
-    with patch("app.agents.openai.ChatCompletion.create", side_effect=NotImplementedError):
+    with patch(
+        "app.agents.openai.ChatCompletion.create", side_effect=NotImplementedError
+    ):
         assert agent(messages) == "OpenAI API unavailable"
 
 
 def test_chat_agent_custom_fallback_message():
     agent = ChatAgent(fallback="oops")
-    with patch("app.agents.openai.ChatCompletion.create", side_effect=NotImplementedError):
+    with patch(
+        "app.agents.openai.ChatCompletion.create", side_effect=NotImplementedError
+    ):
         assert agent([{"role": "user", "content": "ignored"}]) == "oops"

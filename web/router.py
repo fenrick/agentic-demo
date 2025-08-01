@@ -24,9 +24,11 @@ router = APIRouter()
 # helpers
 # ---------------------------------------------------------------------------
 
+
 def _run_stream(text: str, mode: str) -> AsyncIterator[str]:
     """Run the conversation flow yielding intermediate results."""
     overlay = OverlayAgent() if mode == "overlay" else None
+
     async def _inner() -> AsyncIterator[str]:
         nonlocal text
         while True:
@@ -46,6 +48,7 @@ def _run_stream(text: str, mode: str) -> AsyncIterator[str]:
                     text = result
                 break
             text = result
+
     return _inner()
 
 
@@ -65,6 +68,7 @@ def _to_docx_bytes(text: str) -> bytes:
 # routes
 # ---------------------------------------------------------------------------
 
+
 @router.get("/ui")
 async def ui() -> HTMLResponse:
     """Serve the demo HTML page."""
@@ -81,6 +85,8 @@ async def stream(websocket: WebSocket, input: str, mode: str = "basic") -> None:
             await websocket.send_text(msg)
     except WebSocketDisconnect:  # pragma: no cover - client closed early
         pass
+    finally:
+        await websocket.close()
 
 
 @router.post("/export/docx")
@@ -89,4 +95,8 @@ async def export_docx(payload: dict) -> Response:
     text = payload.get("text", "")
     data = _to_docx_bytes(text)
     headers = {"Content-Disposition": "attachment; filename=output.docx"}
-    return Response(content=data, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document", headers=headers)
+    return Response(
+        content=data,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers=headers,
+    )

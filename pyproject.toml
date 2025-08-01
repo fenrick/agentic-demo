@@ -10,7 +10,7 @@ dependencies = [
     "openai>=1.25.0",
     "tavily-python>=0.7.10",
     "python-dotenv>=1.1.1",
-    "langgraph>=0.9.0",
+    "langgraph>=0.6.2",
     "python-docx",
 ]
 
@@ -43,3 +43,4 @@ line-length = 88
 [tool.mypy]
 ignore_missing_imports = true
 disallow_untyped_defs = true
+exclude = ["tests/"]

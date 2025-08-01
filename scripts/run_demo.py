@@ -15,6 +15,7 @@ from app.overlay_agent import OverlayAgent
 # argument parsing
 # ---------------------------------------------------------------------------
 
+
 def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     """Parse command line arguments.
 
@@ -47,6 +48,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
 # ---------------------------------------------------------------------------
 # core execution helpers
 # ---------------------------------------------------------------------------
+
 
 async def run_demo(topic: str, mode: str) -> dict[str, str]:
     """Run the conversation flow asynchronously and return the result."""
