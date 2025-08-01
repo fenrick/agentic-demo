@@ -61,3 +61,20 @@ async def test_graph_async_overlay_dict():
         assert isinstance(result["output"], dict)
         assert "slides" in result["output"] or "ai_overlay" in result["output"]
         ov_mock.assert_called_once_with("draft", "review")
+
+
+def test_build_graph_skip_plan():
+    """skip_plan should omit plan node and start at research."""
+    with (
+        patch.object(graph, "plan", return_value="plan") as plan_mock,
+        patch.object(graph, "research", return_value="research") as research_mock,
+        patch.object(graph, "draft", return_value="draft") as draft_mock,
+        patch.object(graph, "review", return_value="final") as review_mock,
+    ):
+        flow = build_graph(skip_plan=True)
+        result = flow.run("topic")
+        assert result["output"] == "final"
+        plan_mock.assert_not_called()
+        research_mock.assert_called_once()
+        draft_mock.assert_called_once()
+        review_mock.assert_called_once()

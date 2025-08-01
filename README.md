@@ -77,3 +77,23 @@ Install the development dependencies and run the test suite using `pytest`:
 pip install -r requirements-dev.txt
 pytest
 ```
+
+## Agentic Workflow
+
+The application orchestrates content creation through a sequence of prompts and agents. Each topic is processed section by section, allowing refinements at every stage.
+
+1. **Research** – gather background notes for each subheading.
+2. **Draft** – generate initial text from the notes.
+3. **Edit** – review and adjust the draft for clarity and coherence.
+4. **Rewrite** – produce an improved revision using feedback from the edit step.
+5. **Final edit and polish** – complete a last pass to ensure consistent style and structure across all sections.
+
+The conversation graph in ``app.graph`` repeats steps 2–4 until the review approves the content. Once all subsections are finalized, the final edit produces the polished document.
+
+The :class:`~app.workflow.DocumentWorkflow` helper wraps this graph. It starts
+by planning an outline, then iterates over each heading so that every section
+flows through the Research → Draft → Edit → Rewrite cycle before the parts are
+combined. Each section runs through a graph built with ``skip_plan=True`` so the
+outline step isn't repeated. Once the sections are joined, a final review agent
+polishes the document before returning it.
+

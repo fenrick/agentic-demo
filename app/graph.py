@@ -44,8 +44,20 @@ class ConversationGraph:
         return asyncio.run(self.arun(input))
 
 
-def build_graph(overlay: Optional[OverlayAgent] = None) -> ConversationGraph:
-    """Create the conversation graph using langgraph."""
+def build_graph(
+    overlay: Optional[OverlayAgent] = None, *, skip_plan: bool = False
+) -> ConversationGraph:
+    """Create the conversation graph using langgraph.
+
+    Parameters
+    ----------
+    overlay:
+        Optional :class:`OverlayAgent` for the final merge step.
+    skip_plan:
+        When ``True`` the returned graph starts at the research step instead of
+        generating a plan first. This is useful when an outline is already
+        available.
+    """
 
     async def plan_node(state: GraphState) -> GraphState:
         text = plan(state["text"])
@@ -95,15 +107,19 @@ def build_graph(overlay: Optional[OverlayAgent] = None) -> ConversationGraph:
         }
 
     builder: StateGraph = StateGraph(GraphState)
-    builder.add_node("plan", plan_node)
+    if not skip_plan:
+        builder.add_node("plan", plan_node)
     builder.add_node("research", research_node)
     builder.add_node("draft", draft_node)
     builder.add_node("review", review_node)
     if overlay:
         builder.add_node("overlay", overlay_node)
 
-    builder.add_edge(START, "plan")
-    builder.add_edge("plan", "research")
+    if skip_plan:
+        builder.add_edge(START, "research")
+    else:
+        builder.add_edge(START, "plan")
+        builder.add_edge("plan", "research")
     builder.add_edge("research", "draft")
     builder.add_edge("draft", "review")
 
