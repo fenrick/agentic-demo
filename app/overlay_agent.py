@@ -23,7 +23,6 @@ class OverlayAgent:
 
     def __call__(self, original: str, addition: str) -> str | dict[str, object]:
         """Merge new material with existing text. JSON responses are parsed to a dictionary."""
-        # TODO: use YAML template for overlay prompt
         template = utils.load_prompt("overlay")
         prompt = template.format(original=original, addition=addition)
         system = utils.load_prompt("system")

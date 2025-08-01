@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class ChatAgent:
-    """Simple wrapper around OpenAI chat and response APIs.
+    """Simple wrapper around the ``openai.Responses`` API.
 
     Parameters
     ----------
@@ -37,11 +37,9 @@ class ChatAgent:
         self,
         model: str = "o4-mini",
         *,
-        use_search: bool = False,
         fallback: str | None = None,
     ) -> None:
         self.model = model
-        self.use_search = use_search
         self.fallback = fallback or FALLBACK_MESSAGE
 
     def __call__(self, messages: list[Dict[str, str]]) -> str:
@@ -50,11 +48,7 @@ class ChatAgent:
         Falls back to ``fallback`` if the client or endpoint is unavailable.
         """
         try:
-            create = (
-                openai.Responses.create
-                if self.use_search
-                else openai.ChatCompletion.create
-            )
+            create = openai.Responses.create
         except AttributeError:
             return self.fallback
 
@@ -84,7 +78,6 @@ def _call_agent(prompt: str, agent: ChatAgent | None) -> str:
         error, its fallback message is returned.
     """
 
-    # TODO: load system and user messages from YAML templates
     use_agent = agent or ChatAgent()
     system_prompt = utils.load_prompt("system")
     user_template = utils.load_prompt("user")
@@ -125,7 +118,6 @@ def _log_metrics(text: str, loop: int) -> None:
 @run_helpers.traceable
 def plan(topic: str, *, agent: ChatAgent | None = None, loop: int = 0) -> str:
     """Generate a short plan for the given topic."""
-    # TODO: use YAML template for plan prompt
     prompt = utils.load_prompt("plan").format(topic=topic)
     text = _call_agent(prompt, agent)
     _log_metrics(text, loop)
@@ -140,7 +132,6 @@ def research(
     loop: int = 0,
 ) -> str:
     """Return research notes for the outline."""
-    # TODO: use YAML template for research prompt
     prompt = utils.load_prompt("research").format(outline=outline)
     text = _call_agent(prompt, agent)
     _log_metrics(text, loop)
@@ -155,7 +146,6 @@ def draft(
     loop: int = 0,
 ) -> str:
     """Draft content from notes."""
-    # TODO: use YAML template for draft prompt
     prompt = utils.load_prompt("draft").format(notes=notes)
     text = _call_agent(prompt, agent)
     _log_metrics(text, loop)
@@ -170,7 +160,6 @@ def review(
     loop: int = 0,
 ) -> str:
     """Review and polish the text."""
-    # TODO: use YAML template for review prompt
     prompt = utils.load_prompt("review").format(text=text)
     result = _call_agent(prompt, agent)
     _log_metrics(result, loop)
