@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <title>Agentic Demo</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.min.css" integrity="sha512-9NqN6o/GjK4YHLGMeqK5dCV5mNMofuFDgkxku7+qw1KoH2vvAo7+C+NLp0oH8sb6KkFvQ/0D5EWliiW0wCTI9g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <style>
-body { font-family: sans-serif; margin: 2em; }
-textarea { width: 100%; box-sizing: border-box; }
-#output { border: 1px solid #ccc; padding: 0.5em; white-space: pre-wrap; min-height: 6em; margin-top: 1em; }
+body { margin: 2em; }
+textarea { width: 100%; box-sizing: border-box; resize: none; }
+#output { border: 1px solid #ccc; padding: 0.5em; min-height: 6em; margin-top: 1em; overflow-wrap: anywhere; }
 </style>
 </head>
 <body>
@@ -20,17 +21,31 @@ textarea { width: 100%; box-sizing: border-box; }
 <div id="output"></div>
 <button id="save-md">Download Markdown</button>
 <button id="save-docx">Download DOCX</button>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" integrity="sha384-eDzOAsrZsXwOrN8v7DqM8o30ezwTG5Ae8tm0wYuo+8KBw9yLYkhIbZP+pt2K1SVP" crossorigin="anonymous"></script>
 <script>
 (function() {
   let finalText = "";
   const out = document.getElementById('output');
+
+  function resize(e) {
+    const el = e.target;
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  }
+  const textEl = document.getElementById('text');
+  textEl.addEventListener('input', resize);
+  window.addEventListener('load', () => resize({target: textEl}));
+
   document.getElementById('run').onclick = function() {
-    out.textContent = "";
+    out.innerHTML = "";
     finalText = "";
-    const text = document.getElementById('text').value;
+    const text = textEl.value;
     const mode = document.getElementById('mode').value;
     const ws = new WebSocket(`ws://${location.host}/stream?input=${encodeURIComponent(text)}&mode=${mode}`);
-    ws.onmessage = ev => { finalText += ev.data + "\n"; out.textContent = finalText; };
+    ws.onmessage = ev => {
+      finalText += ev.data + "\n";
+      out.innerHTML = marked.parse(finalText);
+    };
     ws.onclose = () => { window.demoOutput = finalText; };
   };
   document.getElementById('save-md').onclick = function() {
