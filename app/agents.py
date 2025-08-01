@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 from typing import Any, Dict
+import logging
+from datetime import datetime, timezone
+
+from langsmith import run_helpers
 
 try:  # attempt to use the real client if available
     import openai as _openai
@@ -12,6 +16,8 @@ except ModuleNotFoundError:  # pragma: no cover - fallback for testing
 openai: Any = _openai
 
 FALLBACK_MESSAGE = "OpenAI API unavailable"
+
+logger = logging.getLogger(__name__)
 
 
 class ChatAgent:
@@ -73,21 +79,75 @@ def _call_agent(prompt: str, agent: ChatAgent | None) -> str:
     return use_agent(messages)
 
 
-def plan(topic: str, *, agent: ChatAgent | None = None) -> str:
+def _log_metrics(text: str, loop: int) -> None:
+    """Record token, loop and citation statistics with LangSmith."""
+    # TODO: replace naive token counting with tiktoken when available
+    token_count = len(text.split())
+    citation_tokens = text.count("[")
+    coverage = citation_tokens / token_count if token_count else 0
+    run = run_helpers.get_current_run_tree()
+    if run:
+        run.add_event(
+            {
+                "name": "metrics",
+                "time": datetime.now(timezone.utc).isoformat(),
+                "kwargs": {
+                    "token_count": token_count,
+                    "loop_count": loop,
+                    "citation_coverage": coverage,
+                },
+            }
+        )
+    logger.info(
+        "tokens=%s loop=%s citation=%.2f",
+        token_count,
+        loop,
+        coverage,
+    )
+
+
+@run_helpers.traceable
+def plan(topic: str, *, agent: ChatAgent | None = None, loop: int = 0) -> str:
     """Generate a short plan for the given topic."""
-    return _call_agent(f"Create an outline for {topic}.", agent)
+    text = _call_agent(f"Create an outline for {topic}.", agent)
+    _log_metrics(text, loop)
+    return text
 
 
-def research(outline: str, *, agent: ChatAgent | None = None) -> str:
+@run_helpers.traceable
+def research(
+    outline: str,
+    *,
+    agent: ChatAgent | None = None,
+    loop: int = 0,
+) -> str:
     """Return research notes for the outline."""
-    return _call_agent(f"Provide background facts about: {outline}", agent)
+    text = _call_agent(f"Provide background facts about: {outline}", agent)
+    _log_metrics(text, loop)
+    return text
 
 
-def draft(notes: str, *, agent: ChatAgent | None = None) -> str:
+@run_helpers.traceable
+def draft(
+    notes: str,
+    *,
+    agent: ChatAgent | None = None,
+    loop: int = 0,
+) -> str:
     """Draft content from notes."""
-    return _call_agent(f"Write a short passage using: {notes}", agent)
+    text = _call_agent(f"Write a short passage using: {notes}", agent)
+    _log_metrics(text, loop)
+    return text
 
 
-def review(text: str, *, agent: ChatAgent | None = None) -> str:
+@run_helpers.traceable
+def review(
+    text: str,
+    *,
+    agent: ChatAgent | None = None,
+    loop: int = 0,
+) -> str:
     """Review and polish the text."""
-    return _call_agent(f"Improve the following text for clarity:\n{text}", agent)
+    result = _call_agent(f"Improve the following text for clarity:\n{text}", agent)
+    _log_metrics(result, loop)
+    return result
