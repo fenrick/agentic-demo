@@ -31,3 +31,14 @@ def test_export_docx():
     mock_fn.assert_called_once_with("hi")
     assert resp.headers["Content-Disposition"].startswith("attachment")
     assert resp.content == b"doc"
+
+
+def test_ui_includes_cancel_and_error_handlers():
+    """UI should contain cancel button and websocket error handling."""
+    client = TestClient(app)
+    resp = client.get("/ui")
+    assert resp.status_code == 200
+    html = resp.text
+    assert 'id="cancel"' in html  # cancel button
+    assert ".onerror" in html  # websocket error handler
+    assert "catch" in html  # fetch error handling
