@@ -54,10 +54,11 @@ and the demo script supports `python -m dotenv run -- python scripts/run_demo.py
 
 ## API
 
-The FastAPI app exposes a single endpoint:
+The FastAPI app exposes several endpoints:
 
 - `POST /chat?input=TEXT` – runs the conversation flow and returns
   `{"response": "..."}`.
+- `GET /ui` – serves a simple browser UI for interactive use.
 
 Start the server using the command shown in the setup section and send requests
 to `http://localhost:8000/chat`.
