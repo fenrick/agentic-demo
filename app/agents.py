@@ -22,7 +22,9 @@ class ChatAgent:
         Message returned when the OpenAI client is unavailable or errors occur.
     """
 
-    def __init__(self, model: str = "gpt-3.5-turbo", *, fallback: str | None = None) -> None:
+    def __init__(
+        self, model: str = "gpt-3.5-turbo", *, fallback: str | None = None
+    ) -> None:
         self.model = model
         self.fallback = fallback or FALLBACK_MESSAGE
 
@@ -46,6 +48,23 @@ class ChatAgent:
 
 
 def _call_agent(prompt: str, agent: ChatAgent | None) -> str:
+    """Send ``prompt`` to ``agent`` and return the response text.
+
+    Parameters
+    ----------
+    prompt:
+        Text to be passed to the chat model.
+    agent:
+        Instance of :class:`ChatAgent` to use. If ``None`` a default
+        ``ChatAgent`` is created.
+
+    Returns
+    -------
+    str
+        Response from the chat agent. If the underlying agent encounters an
+        error, its fallback message is returned.
+    """
+
     use_agent = agent or ChatAgent()
     messages = [{"role": "user", "content": prompt}]
     return use_agent(messages)
