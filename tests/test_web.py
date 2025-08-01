@@ -1,27 +1,42 @@
 from fastapi.testclient import TestClient
 from fastapi.websockets import WebSocketDisconnect
+from typing import AsyncIterator
 from unittest.mock import patch
 import json
 import pytest
-import web.router as web_router
 from web.router import _to_docx_bytes, Document
 
 from app.api import app
 
 
+def _fake_graph(events: list[tuple[str, str | dict]]) -> object:
+    """Return an object mimicking a compiled graph for testing."""
+
+    class DummyGraph:
+        async def astream(self, _state: dict) -> AsyncIterator[dict]:
+            for name, text in events:
+                yield {name: {"text": text}}
+
+    class Wrapper:
+        def __init__(self) -> None:
+            self.graph = DummyGraph()
+
+    return Wrapper()
+
+
 def test_websocket_streaming_basic():
+    """stream endpoint should yield graph outputs sequentially."""
     client = TestClient(app)
-    with (
-        patch("web.router.plan", return_value="p"),
-        patch("web.router.research", return_value="r"),
-        patch("web.router.draft", return_value="d"),
-        patch("web.router.review", return_value="done"),
-    ):
+    events = [
+        ("plan", "p"),
+        ("research", "r"),
+        ("draft", "d"),
+        ("review", "done"),
+    ]
+    with patch("web.router.build_graph", return_value=_fake_graph(events)):
         with client.websocket_connect("/stream?input=x&mode=basic") as ws:
-            assert ws.receive_text() == "p"
-            assert ws.receive_text() == "r"
-            assert ws.receive_text() == "d"
-            assert ws.receive_text() == "done"
+            for expected in ["p", "r", "d", "done"]:
+                assert ws.receive_text() == expected
             with pytest.raises(WebSocketDisconnect):
                 ws.receive_text()
 
@@ -59,13 +74,14 @@ def test_websocket_streaming_overlay_dict():
     """Overlay mode should stringify dict results for websocket transmission."""
     client = TestClient(app)
     overlay_output = {"slides": []}
-    with (
-        patch("web.router.plan", return_value="p"),
-        patch("web.router.research", return_value="r"),
-        patch("web.router.draft", return_value="d"),
-        patch("web.router.review", return_value="done"),
-        patch.object(web_router.OverlayAgent, "__call__", return_value=overlay_output),
-    ):
+    events = [
+        ("plan", "p"),
+        ("research", "r"),
+        ("draft", "d"),
+        ("review", "done"),
+        ("overlay", overlay_output),
+    ]
+    with patch("web.router.build_graph", return_value=_fake_graph(events)):
         with client.websocket_connect("/stream?input=x&mode=overlay") as ws:
             assert ws.receive_text() == "p"
             assert ws.receive_text() == "r"
@@ -89,19 +105,23 @@ def test_websocket_streaming_overlay_mixed_types():
     # TODO: ensure overlay outputs send raw strings and JSON for dicts
     client = TestClient(app)
     outputs = ["image", {"slides": [1]}]
-    with (
-        patch("web.router.plan", return_value="p"),
-        patch("web.router.research", return_value="r"),
-        patch("web.router.draft", return_value="d"),
-        patch("web.router.review", return_value="done"),
-        patch.object(web_router.OverlayAgent, "__call__", side_effect=outputs),
-    ):
-        for expected in [outputs[0], json.dumps(outputs[1])]:
+    base_events = [
+        ("plan", "p"),
+        ("research", "r"),
+        ("draft", "d"),
+        ("review", "done"),
+    ]
+    for output in outputs:
+        events = base_events + [("overlay", output)]
+        with patch("web.router.build_graph", return_value=_fake_graph(events)):
             with client.websocket_connect("/stream?input=x&mode=overlay") as ws:
-                assert ws.receive_text() == "p"
-                assert ws.receive_text() == "r"
-                assert ws.receive_text() == "d"
-                assert ws.receive_text() == "done"
-                assert ws.receive_text() == expected
+                for expected in [
+                    "p",
+                    "r",
+                    "d",
+                    "done",
+                    json.dumps(output) if isinstance(output, dict) else output,
+                ]:
+                    assert ws.receive_text() == expected
                 with pytest.raises(WebSocketDisconnect):
                     ws.receive_text()
