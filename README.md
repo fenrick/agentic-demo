@@ -51,8 +51,9 @@ to `http://localhost:8000/chat`.
 
 ## Running Tests
 
-Execute all tests with `pytest` from the repository root:
+Install the development dependencies and run the test suite using `pytest`:
 
 ```bash
+pip install -r requirements-dev.txt
 pytest
 ```
