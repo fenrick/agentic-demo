@@ -21,6 +21,7 @@ class GraphState(TypedDict):
     draft: str
     approved: bool
     history: List[str]
+    loops: int
 
 
 @dataclass
@@ -36,6 +37,7 @@ class ConversationGraph:
             "draft": "",
             "approved": False,
             "history": [],
+            "loops": 0,
         }
         result: GraphState = await self.graph.ainvoke(state)
         return {"messages": result["history"], "output": result["text"]}
@@ -61,40 +63,44 @@ def build_graph(
     """
 
     async def plan_node(state: GraphState) -> GraphState:
-        text = plan(cast(str, state["text"]))
+        text = plan(cast(str, state["text"]), loop=state["loops"])
         return {
             "text": text,
             "draft": state["draft"],
             "approved": False,
             "history": state["history"] + [text],
+            "loops": state["loops"],
         }
 
     async def research_node(state: GraphState) -> GraphState:
-        text = research(cast(str, state["text"]))
+        text = research(cast(str, state["text"]), loop=state["loops"])
         return {
             "text": text,
             "draft": state["draft"],
             "approved": False,
             "history": state["history"] + [text],
+            "loops": state["loops"],
         }
 
     async def draft_node(state: GraphState) -> GraphState:
-        text = draft(cast(str, state["text"]))
+        text = draft(cast(str, state["text"]), loop=state["loops"])
         return {
             "text": text,
             "draft": text,
             "approved": False,
             "history": state["history"] + [text],
+            "loops": state["loops"],
         }
 
     async def review_node(state: GraphState) -> GraphState:
-        result = review(cast(str, state["text"]))
+        result = review(cast(str, state["text"]), loop=state["loops"])
         approved = "retry" not in result
         return {
             "text": result,
             "draft": state["draft"],
             "approved": approved,
             "history": state["history"] + [result],
+            "loops": state["loops"] if approved else state["loops"] + 1,
         }
 
     async def overlay_node(state: GraphState) -> GraphState:
@@ -110,6 +116,7 @@ def build_graph(
             "draft": state["draft"],
             "approved": True,
             "history": state["history"] + [history_entry],
+            "loops": state["loops"],
         }
 
     builder: StateGraph = StateGraph(GraphState)

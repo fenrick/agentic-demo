@@ -1,5 +1,5 @@
 from app.agents import ChatAgent, plan, research, draft, review
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 
 def test_chat_agent_calls_openai():
@@ -36,3 +36,22 @@ def test_chat_agent_custom_fallback_message():
         "app.agents.openai.ChatCompletion.create", side_effect=NotImplementedError
     ):
         assert agent([{"role": "user", "content": "ignored"}]) == "oops"
+
+
+def test_agent_functions_are_traceable():
+    assert hasattr(plan, "__langsmith_traceable__")
+    assert hasattr(research, "__langsmith_traceable__")
+    assert hasattr(draft, "__langsmith_traceable__")
+    assert hasattr(review, "__langsmith_traceable__")
+
+
+def test_metrics_logged_during_calls():
+    fake_run = MagicMock()
+    with (
+        patch("app.agents._call_agent", return_value="x [1]"),
+        patch("app.agents.run_helpers.get_current_run_tree", return_value=fake_run),
+        patch("app.agents.logger") as log,
+    ):
+        assert plan("topic", loop=1) == "x [1]"
+        fake_run.add_event.assert_called_once()
+        log.info.assert_called_once()
