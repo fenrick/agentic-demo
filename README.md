@@ -7,7 +7,7 @@ This repository demonstrates two main workflows for generating course content us
 
 ## Setup
 
-1. **Python**: Use Python 3.10 or newer.
+1. **Python**: Use Python 3.13 or newer.
 2. **Install dependencies**:
    ```bash
    pip install -r requirements.txt
