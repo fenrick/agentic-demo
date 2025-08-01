@@ -3,7 +3,6 @@ from unittest.mock import patch
 import asyncio
 import pytest
 
-from app.agents import ChatAgent
 from app.primary_agent import PrimaryAgent
 
 from app import graph
@@ -28,40 +27,55 @@ def test_graph_cycles_until_review_passes():
 
 def test_graph_with_overlay():
     """Overlay node should merge draft with review output when provided."""
-    from app.overlay_agent import OverlayAgent
-
-    overlay = OverlayAgent(ChatAgent())
     with (
-        patch.object(OverlayAgent, "__call__", return_value="ov") as ov_mock,
+        patch("app.graph.OverlayAgent") as Agent,
         patch.object(graph, "plan", return_value="plan"),
         patch.object(graph, "research", return_value="research"),
         patch.object(graph, "draft", return_value="draft"),
         patch.object(graph, "review", return_value="review"),
     ):
-        flow = build_graph(overlay)
+        Agent.return_value.return_value = "ov"
+        flow = build_graph(mode="overlay")
         result = flow.run("topic")
         assert result["output"] == "ov"
-        ov_mock.assert_called_once_with("draft", "review")
+        Agent.assert_called_once()
+        Agent.return_value.assert_called_once_with("draft", "review")
+
+
+def test_build_graph_mode_overlay_creates_agent():
+    """mode="overlay" should instantiate OverlayAgent when not provided."""
+    with (
+        patch("app.graph.OverlayAgent") as Agent,
+        patch.object(graph, "plan", return_value="plan"),
+        patch.object(graph, "research", return_value="research"),
+        patch.object(graph, "draft", return_value="draft"),
+        patch.object(graph, "review", return_value="review"),
+    ):
+        Agent.return_value.return_value = "ov"
+        flow = build_graph(mode="overlay")
+        result = flow.run("topic")
+        assert result["output"] == "ov"
+        Agent.assert_called_once()
+        Agent.return_value.assert_called_once_with("draft", "review")
 
 
 @pytest.mark.asyncio
 async def test_graph_async_overlay_dict():
     """Graph run should return a dict with slides or ai_overlay when overlay outputs one."""
-    from app.overlay_agent import OverlayAgent
-
-    overlay = OverlayAgent(ChatAgent())
     with (
-        patch.object(OverlayAgent, "__call__", return_value={"slides": []}) as ov_mock,
+        patch("app.graph.OverlayAgent") as Agent,
         patch.object(graph, "plan", return_value="plan"),
         patch.object(graph, "research", return_value="research"),
         patch.object(graph, "draft", return_value="draft"),
         patch.object(graph, "review", return_value="review"),
     ):
-        flow = build_graph(overlay)
+        Agent.return_value.return_value = {"slides": []}
+        flow = build_graph(mode="overlay")
         result = await asyncio.to_thread(flow.run, "topic")
         assert isinstance(result["output"], dict)
         assert "slides" in result["output"] or "ai_overlay" in result["output"]
-        ov_mock.assert_called_once_with("draft", "review")
+        Agent.assert_called_once()
+        Agent.return_value.assert_called_once_with("draft", "review")
 
 
 def test_build_graph_skip_plan():
@@ -83,20 +97,21 @@ def test_build_graph_skip_plan():
 
 def test_overlay_history_serialized_when_dict():
     """Overlay node should append JSON when result is a dict."""
-    from app.overlay_agent import OverlayAgent
     import json
 
-    overlay = OverlayAgent(ChatAgent())
     with (
-        patch.object(OverlayAgent, "__call__", return_value={"slides": []}),
+        patch("app.graph.OverlayAgent") as Agent,
         patch.object(graph, "plan", return_value="plan"),
         patch.object(graph, "research", return_value="research"),
         patch.object(graph, "draft", return_value="draft"),
         patch.object(graph, "review", return_value="review"),
     ):
-        flow = build_graph(overlay)
+        Agent.return_value.return_value = {"slides": []}
+        flow = build_graph(mode="overlay")
         result = flow.run("topic")
         assert result["messages"][-1] == json.dumps({"slides": []})
+        Agent.assert_called_once()
+        Agent.return_value.assert_called_once_with("draft", "review")
 
 
 def test_graph_with_primary_agent():

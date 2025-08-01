@@ -51,20 +51,31 @@ class ConversationGraph:
 def build_graph(
     overlay: Optional[OverlayAgent] = None,
     *,
+    mode: str = "basic",
     primary: "PrimaryAgent | None" = None,
     skip_plan: bool = False,
 ) -> ConversationGraph:
     """Create the conversation graph using langgraph.
 
+    TODO: automatically create an :class:`OverlayAgent` when ``mode`` is set
+    to ``"overlay"`` and no overlay agent is supplied.
+
     Parameters
     ----------
     overlay:
         Optional :class:`OverlayAgent` for the final merge step.
+    mode:
+        Conversation variant. When set to ``"overlay"`` a new
+        :class:`OverlayAgent` should be created if ``overlay`` is not
+        provided.
     skip_plan:
         When ``True`` the returned graph starts at the research step instead of
         generating a plan first. This is useful when an outline is already
         available.
     """
+
+    if overlay is None and mode == "overlay":
+        overlay = OverlayAgent()
 
     async def plan_node(state: GraphState) -> GraphState:
         if primary:
