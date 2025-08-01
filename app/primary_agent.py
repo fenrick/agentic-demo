@@ -19,18 +19,18 @@ class PrimaryAgent:
 
     agent: ChatAgent = field(default_factory=lambda: ChatAgent(model="gpt-4.1"))
 
-    def plan(self, topic: str) -> str:
+    def plan(self, topic: str, *, loop: int = 0) -> str:
         """Generate an outline using the primary agent."""
-        return _plan(topic, agent=self.agent)
+        return _plan(topic, agent=self.agent, loop=loop)
 
-    def research(self, outline: str) -> str:
+    def research(self, outline: str, *, loop: int = 0) -> str:
         """Gather notes with search capability."""
-        return _research(outline, agent=self.agent)
+        return _research(outline, agent=self.agent, loop=loop)
 
-    def draft(self, notes: str) -> str:
+    def draft(self, notes: str, *, loop: int = 0) -> str:
         """Draft text from notes."""
-        return _draft(notes, agent=self.agent)
+        return _draft(notes, agent=self.agent, loop=loop)
 
-    def review(self, text: str) -> str:
+    def review(self, text: str, *, loop: int = 0) -> str:
         """Review and polish text."""
-        return _review(text, agent=self.agent)
+        return _review(text, agent=self.agent, loop=loop)

@@ -8,6 +8,7 @@ from typing import List
 from . import agents
 from .graph import build_graph
 from .overlay_agent import OverlayAgent
+from .primary_agent import PrimaryAgent
 
 
 @dataclass
@@ -15,6 +16,7 @@ class DocumentWorkflow:
     """Orchestrate per-heading flows and return the final document."""
 
     overlay: OverlayAgent | None = None
+    primary: PrimaryAgent | None = None
 
     def _clean_heading(self, line: str) -> str:
         """Remove bullet, numeric or Markdown heading prefixes from ``line``."""
@@ -35,11 +37,13 @@ class DocumentWorkflow:
 
     def generate(self, topic: str) -> str:
         """Generate a polished document for ``topic`` using the graph."""
-        outline = agents.plan(topic)
-        graph = build_graph(self.overlay, skip_plan=True)
+        plan_fn = self.primary.plan if self.primary else agents.plan
+        review_fn = self.primary.review if self.primary else agents.review
+        outline = plan_fn(topic)
+        graph = build_graph(self.overlay, primary=self.primary, skip_plan=True)
         sections = []
         for heading in self.parse_outline(outline):
             result = graph.run(heading)
             sections.append(result["output"])
         combined = "\n\n".join(sections)
-        return agents.review(combined)
+        return review_fn(combined)

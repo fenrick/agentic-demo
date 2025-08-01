@@ -16,11 +16,11 @@ def test_primary_agent_delegates_calls():
         patch("app.primary_agent._draft", return_value="d") as draft_mock,
         patch("app.primary_agent._review", return_value="v") as review_mock,
     ):
-        assert pa.plan("t") == "p"
-        assert pa.research("o") == "r"
-        assert pa.draft("n") == "d"
-        assert pa.review("x") == "v"
-    plan_mock.assert_called_once_with("t", agent=pa.agent)
-    research_mock.assert_called_once_with("o", agent=pa.agent)
-    draft_mock.assert_called_once_with("n", agent=pa.agent)
-    review_mock.assert_called_once_with("x", agent=pa.agent)
+        assert pa.plan("t", loop=1) == "p"
+        assert pa.research("o", loop=2) == "r"
+        assert pa.draft("n", loop=3) == "d"
+        assert pa.review("x", loop=4) == "v"
+    plan_mock.assert_called_once_with("t", agent=pa.agent, loop=1)
+    research_mock.assert_called_once_with("o", agent=pa.agent, loop=2)
+    draft_mock.assert_called_once_with("n", agent=pa.agent, loop=3)
+    review_mock.assert_called_once_with("x", agent=pa.agent, loop=4)
