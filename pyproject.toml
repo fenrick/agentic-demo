@@ -10,6 +10,7 @@ dependencies = [
     "openai>=1.25.0",
     "tavily-python>=0.7.10",
     "python-dotenv>=1.1.1",
+    "langgraph>=0.9.0",
 ]
 
 [project.optional-dependencies]
