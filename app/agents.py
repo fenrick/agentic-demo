@@ -6,7 +6,7 @@ try:  # attempt to use the real client if available
     import openai  # type: ignore
 except ModuleNotFoundError:  # pragma: no cover - fallback for testing
     import openai_stub as openai  # type: ignore
-from typing import Dict, Any
+from typing import Dict
 
 FALLBACK_MESSAGE = "OpenAI API unavailable"
 
