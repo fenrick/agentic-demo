@@ -10,21 +10,25 @@ from app.graph import build_graph
 
 
 
-def test_graph_flow():
+def test_graph_cycles_until_review_passes():
+    """Flow should repeat draft-review until review approves."""
     with (
         patch.object(graph, "plan", return_value="plan") as plan_mock,
         patch.object(graph, "research", return_value="research") as research_mock,
         patch.object(graph, "draft", return_value="draft") as draft_mock,
-        patch.object(graph, "review", return_value="review") as review_mock,
+        patch.object(graph, "review", side_effect=["retry", "final"]) as review_mock,
     ):
         flow = build_graph()
         result = flow.run("topic")
-        assert result["output"] == "review"
+        assert result["output"] == "final"
         assert plan_mock.called and research_mock.called
-        assert draft_mock.called and review_mock.called
+        assert draft_mock.call_count == 2
+        assert review_mock.call_count == 2
 
 def test_graph_with_overlay():
+    """Overlay node should merge draft with review output when provided."""
     from app.overlay_agent import OverlayAgent
+
     overlay = OverlayAgent(ChatAgent())
     with (
         patch.object(OverlayAgent, "__call__", return_value="ov") as ov_mock,
@@ -36,7 +40,7 @@ def test_graph_with_overlay():
         flow = build_graph(overlay)
         result = flow.run("topic")
         assert result["output"] == "ov"
-        ov_mock.assert_called_once()
+        ov_mock.assert_called_once_with("draft", "review")
 
 
 @pytest.mark.asyncio
@@ -56,4 +60,4 @@ async def test_graph_async_overlay_dict():
         result = await asyncio.to_thread(flow.run, "topic")
         assert isinstance(result["output"], dict)
         assert "slides" in result["output"] or "ai_overlay" in result["output"]
-        ov_mock.assert_called_once()
+        ov_mock.assert_called_once_with("draft", "review")
