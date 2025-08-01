@@ -26,7 +26,12 @@ This project is released under the [Unlicense](LICENSE).
    ```bash
    uvicorn app.api:app --reload
    ```
-4. **Run the demo script**:
+4. **Open the web interface**:
+   Navigate to `http://localhost:8000/ui` once the server is running.
+   The page streams intermediate results as they arrive and provides
+   **Download Markdown** and **Download DOCX** buttons for exporting
+   the final output.
+5. **Run the demo script**:
    ```bash
    python scripts/run_demo.py --topic "Quantum"
    ```
@@ -60,8 +65,9 @@ The FastAPI app exposes several endpoints:
   `{"response": "..."}`.
 - `GET /ui` – serves a simple browser UI for interactive use.
 
-Start the server using the command shown in the setup section and send requests
-to `http://localhost:8000/chat`.
+Start the server using the command shown in the setup section.
+Open `http://localhost:8000/ui` for the web interface or send requests to
+`http://localhost:8000/chat`.
 
 ## Running Tests
 
