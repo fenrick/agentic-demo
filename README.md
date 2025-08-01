@@ -16,11 +16,11 @@ This project is released under the [Unlicense](LICENSE).
    ```bash
    pip install -r requirements.txt
    ```
-3. **Run the CLI**:
+3. **Start the API server**:
    ```bash
-   python -m agentic_demo.cli
+   uvicorn app.api:app --reload
    ```
-4. **Try the demo script**:
+4. **Run the demo script**:
    ```bash
    python scripts/run_demo.py --topic "Quantum" 
    ```
@@ -36,7 +36,18 @@ cp .env.example .env
 
 The `OPENAI_API_KEY` variable enables real responses from OpenAI services. If it
 is unset the demo prints placeholder text. If you have a Tavily account, you can also set `TAVILY_API_KEY` to enable
-search features.
+search features. Uvicorn can load this file automatically with `--env-file .env`,
+and the demo script supports `python -m dotenv run -- python scripts/run_demo.py ...`.
+
+## API
+
+The FastAPI app exposes a single endpoint:
+
+- `POST /chat?input=TEXT` – runs the conversation flow and returns
+  `{"response": "..."}`.
+
+Start the server using the command shown in the setup section and send requests
+to `http://localhost:8000/chat`.
 
 ## Running Tests
 
