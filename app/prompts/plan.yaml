@@ -1,2 +1,2 @@
 prompt: |
-  Create an outline for {topic}.
+  You are an expert planner. Provide a concise bullet-point outline for {topic}.

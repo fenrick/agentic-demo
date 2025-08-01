@@ -21,6 +21,38 @@ def test_plan_research_draft_review_calls_agent():
         assert mock.call_count == 4
 
 
+def test_agent_functions_use_yaml_templates():
+    """Each agent function should render prompts from YAML files."""
+    calls = []
+
+    def fake_load(name):
+        calls.append(name)
+        return {
+            "plan": "p {topic}",
+            "research": "r {outline}",
+            "draft": "d {notes}",
+            "review": "v {text}",
+            "system": "sys",
+            "user": "{input}",
+        }[name]
+
+    with (
+        patch("app.utils.load_prompt", side_effect=fake_load),
+        patch.object(ChatAgent, "__call__", return_value="x") as mock,
+    ):
+        plan("topic")
+        research("topic")
+        draft("notes")
+        review("text")
+
+        assert mock.call_count == 4
+        msgs = mock.call_args_list[0][0][0]
+        assert msgs[0]["role"] == "system" and msgs[0]["content"] == "sys"
+        assert msgs[1]["content"] == "p topic"
+        for name in ["plan", "research", "draft", "review"]:
+            assert name in calls
+
+
 def test_chat_agent_falls_back_when_openai_unavailable():
     agent = ChatAgent()
     messages = [{"role": "user", "content": "hi"}]

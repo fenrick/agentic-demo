@@ -1,2 +1,2 @@
 prompt: |
-  Write a short passage using: {notes}
+  Compose a brief and coherent paragraph based on these notes: {notes}

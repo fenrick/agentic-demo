@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Dict
 import logging
+
+from . import utils
 from datetime import datetime, timezone
 
 from langsmith import run_helpers
@@ -74,8 +76,14 @@ def _call_agent(prompt: str, agent: ChatAgent | None) -> str:
         error, its fallback message is returned.
     """
 
+    # TODO: load system and user messages from YAML templates
     use_agent = agent or ChatAgent()
-    messages = [{"role": "user", "content": prompt}]
+    system_prompt = utils.load_prompt("system")
+    user_template = utils.load_prompt("user")
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_template.format(input=prompt)},
+    ]
     return use_agent(messages)
 
 
@@ -109,7 +117,9 @@ def _log_metrics(text: str, loop: int) -> None:
 @run_helpers.traceable
 def plan(topic: str, *, agent: ChatAgent | None = None, loop: int = 0) -> str:
     """Generate a short plan for the given topic."""
-    text = _call_agent(f"Create an outline for {topic}.", agent)
+    # TODO: use YAML template for plan prompt
+    prompt = utils.load_prompt("plan").format(topic=topic)
+    text = _call_agent(prompt, agent)
     _log_metrics(text, loop)
     return text
 
@@ -122,7 +132,9 @@ def research(
     loop: int = 0,
 ) -> str:
     """Return research notes for the outline."""
-    text = _call_agent(f"Provide background facts about: {outline}", agent)
+    # TODO: use YAML template for research prompt
+    prompt = utils.load_prompt("research").format(outline=outline)
+    text = _call_agent(prompt, agent)
     _log_metrics(text, loop)
     return text
 
@@ -135,7 +147,9 @@ def draft(
     loop: int = 0,
 ) -> str:
     """Draft content from notes."""
-    text = _call_agent(f"Write a short passage using: {notes}", agent)
+    # TODO: use YAML template for draft prompt
+    prompt = utils.load_prompt("draft").format(notes=notes)
+    text = _call_agent(prompt, agent)
     _log_metrics(text, loop)
     return text
 
@@ -148,6 +162,8 @@ def review(
     loop: int = 0,
 ) -> str:
     """Review and polish the text."""
-    result = _call_agent(f"Improve the following text for clarity:\n{text}", agent)
+    # TODO: use YAML template for review prompt
+    prompt = utils.load_prompt("review").format(text=text)
+    result = _call_agent(prompt, agent)
     _log_metrics(result, loop)
     return result

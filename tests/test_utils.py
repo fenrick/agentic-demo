@@ -32,8 +32,8 @@ def test_safe_load_without_yaml(monkeypatch):
 
 def test_repository_prompts_load(monkeypatch):
     monkeypatch.setattr(utils, "PROMPTS_PATH", pathlib.Path("app/prompts"))
-    assert utils.load_prompt("plan").startswith("Create an outline")
-    assert utils.load_prompt("research").startswith("Provide background")
-    assert utils.load_prompt("draft").startswith("Write a short passage")
-    assert utils.load_prompt("review").startswith("Improve the following")
-    assert utils.load_prompt("overlay").startswith("Integrate the addition")
+    assert utils.load_prompt("plan").startswith("You are an expert planner")
+    assert utils.load_prompt("research").startswith("Gather concise background")
+    assert utils.load_prompt("draft").startswith("Compose a brief")
+    assert utils.load_prompt("review").startswith("Review the text below")
+    assert utils.load_prompt("overlay").startswith("Seamlessly integrate")
