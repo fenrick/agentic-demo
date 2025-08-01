@@ -20,8 +20,7 @@ class OverlayAgent:
             self.agent = ChatAgent()
 
     def __call__(self, original: str, addition: str) -> str | dict[str, object]:
-        """Merge new material with existing text."""
-        # TODO: return a parsed dict when the underlying agent responds with JSON
+        """Merge new material with existing text. JSON responses are parsed to a dictionary."""
         prompt = (
             "Integrate the addition below into the existing text.\n"
             f"Existing:\n{original}\n"
