@@ -3,42 +3,34 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Callable, Dict, List, Optional
 
-from .agents import ChatAgent
-from .utils import load_prompt
+from .agents import plan, research, draft, review
+from .overlay_agent import OverlayAgent
 
 
 @dataclass
 class ConversationGraph:
-    """Simplistic sequential graph for conversation."""
+    """Simple sequential graph executing callables."""
 
-    agent: ChatAgent
+    nodes: List[Callable[[str], str]]
 
     def run(self, input: str) -> Dict[str, str]:
-        """Execute the conversation flow.
-
-        Parameters
-        ----------
-        input : str
-            User input.
-
-        Returns
-        -------
-        dict
-            State containing the assistant output and message history.
-        """
-        system = load_prompt("system")
-        user = load_prompt("user").format(input=input)
-        messages = [
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ]
-        reply = self.agent(messages)
-        messages.append({"role": "assistant", "content": reply})
-        return {"messages": messages, "output": reply}
+        """Run the graph on the given input."""
+        state = input
+        history: List[str] = []
+        for node in self.nodes:
+            state = node(state)
+            history.append(state)
+        return {"messages": history, "output": state}
 
 
-def build_graph() -> ConversationGraph:
-    """Factory for a :class:`ConversationGraph`."""
-    return ConversationGraph(agent=ChatAgent())
+def build_graph(overlay: Optional[OverlayAgent] = None) -> ConversationGraph:
+    """Create the default conversation graph."""
+
+    def review_node(text: str) -> str:
+        result = review(text)
+        return overlay(text, result) if overlay else result
+
+    nodes = [plan, research, draft, review_node]
+    return ConversationGraph(nodes=nodes)
