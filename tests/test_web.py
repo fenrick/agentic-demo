@@ -42,3 +42,12 @@ def test_ui_includes_cancel_and_error_handlers():
     assert 'id="cancel"' in html  # cancel button
     assert ".onerror" in html  # websocket error handler
     assert "catch" in html  # fetch error handling
+
+
+# TODO: ensure /export/docx falls back to plain text if Document is missing
+def test_export_docx_without_document(monkeypatch):
+    client = TestClient(app)
+    monkeypatch.setattr("web.router.Document", None)
+    resp = client.post("/export/docx", json={"text": "hi"})
+    assert resp.status_code == 200
+    assert resp.content == b"hi"
