@@ -44,7 +44,6 @@ def test_ui_includes_cancel_and_error_handlers():
     assert "catch" in html  # fetch error handling
 
 
-# TODO: ensure /export/docx falls back to plain text if Document is missing
 def test_export_docx_without_document(monkeypatch):
     client = TestClient(app)
     monkeypatch.setattr("web.router.Document", None)
