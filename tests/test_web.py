@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+from fastapi.websockets import WebSocketDisconnect
 from unittest.mock import patch
 import pytest
 
@@ -18,7 +19,7 @@ def test_websocket_streaming_basic():
             assert ws.receive_text() == "r"
             assert ws.receive_text() == "d"
             assert ws.receive_text() == "done"
-            with pytest.raises(RuntimeError):
+            with pytest.raises(WebSocketDisconnect):
                 ws.receive_text()
 
 

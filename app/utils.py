@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import pathlib
+
 try:
-    import yaml
+    import yaml  # type: ignore
 except ModuleNotFoundError:  # pragma: no cover - optional dependency
     yaml = None
 
@@ -49,5 +50,6 @@ def _safe_load(text: str) -> dict:
     value = rest.strip()
     if value == "|":
         from textwrap import dedent
+
         value = dedent("\n".join(lines[1:])).lstrip()
     return {key.strip(): value}
