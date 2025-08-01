@@ -1,3 +1,4 @@
+import app
 from app.agents import ChatAgent, plan, research, draft, review
 from unittest.mock import patch, MagicMock
 
@@ -6,6 +7,16 @@ def test_chat_agent_calls_openai():
     agent = ChatAgent()
     messages = [{"role": "user", "content": "hi"}]
     with patch("app.agents.openai.ChatCompletion.create") as mock_create:
+        mock_create.return_value = {"choices": [{"message": {"content": "hello"}}]}
+        assert agent(messages) == "hello"
+        mock_create.assert_called_once_with(model=agent.model, messages=messages)
+
+
+def test_chat_agent_calls_responses_api_when_search_enabled():
+    agent = ChatAgent(use_search=True)
+    messages = [{"role": "user", "content": "hi"}]
+    with patch.object(app.agents.openai, "Responses", create=True) as res:
+        mock_create = res.create
         mock_create.return_value = {"choices": [{"message": {"content": "hello"}}]}
         assert agent(messages) == "hello"
         mock_create.assert_called_once_with(model=agent.model, messages=messages)
@@ -60,6 +71,15 @@ def test_chat_agent_falls_back_when_openai_unavailable():
         "app.agents.openai.ChatCompletion.create", side_effect=NotImplementedError
     ):
         assert agent(messages) == "OpenAI API unavailable"
+
+
+def test_chat_agent_falls_back_when_responses_api_unavailable():
+    agent = ChatAgent(use_search=True)
+    with patch.object(app.agents.openai, "Responses", create=True) as res:
+        res.create.side_effect = NotImplementedError
+        assert (
+            agent([{"role": "user", "content": "ignored"}]) == "OpenAI API unavailable"
+        )
 
 
 def test_chat_agent_custom_fallback_message():

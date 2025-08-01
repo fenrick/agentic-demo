@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class ChatAgent:
-    """Simple wrapper around the OpenAI chat completion API.
+    """Simple wrapper around OpenAI chat and response APIs.
 
     Parameters
     ----------
@@ -34,19 +34,27 @@ class ChatAgent:
     """
 
     def __init__(
-        self, model: str = "gpt-3.5-turbo", *, fallback: str | None = None
+        self,
+        model: str = "o4-mini",
+        *,
+        use_search: bool = False,
+        fallback: str | None = None,
     ) -> None:
         self.model = model
+        self.use_search = use_search
         self.fallback = fallback or FALLBACK_MESSAGE
 
     def __call__(self, messages: list[Dict[str, str]]) -> str:
-        """Call the chat completion API with the provided messages.
+        """Call the chosen OpenAI API with the provided messages.
 
-        If the OpenAI dependency is missing or raises an error, ``fallback`` is
-        returned instead.
+        Falls back to ``fallback`` if the client or endpoint is unavailable.
         """
         try:
-            create = openai.ChatCompletion.create
+            create = (
+                openai.Responses.create
+                if self.use_search
+                else openai.ChatCompletion.create
+            )
         except AttributeError:
             return self.fallback
 

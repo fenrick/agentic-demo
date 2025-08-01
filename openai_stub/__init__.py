@@ -11,3 +11,12 @@ class ChatCompletion:
     @staticmethod
     def create(*args: Any, **kwargs: Any) -> Dict[str, Any]:
         return {"choices": [{"message": {"content": "stub response"}}]}
+
+
+class Responses:
+    """Placeholder for the ``openai.Responses`` API."""
+
+    @staticmethod
+    def create(*args: Any, **kwargs: Any) -> Dict[str, Any]:
+        """Return a generic response mimicking the real API."""
+        return {"choices": [{"message": {"content": "stub response"}}]}
