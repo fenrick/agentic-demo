@@ -16,6 +16,8 @@ This project is released under the [Unlicense](LICENSE).
    ```bash
    pip install -r requirements.txt
    ```
+   The optional `openai` dependency enables real API calls. Without it,
+   the bundled `openai_stub` module provides placeholder responses.
 3. **Start the API server**:
    ```bash
    uvicorn app.api:app --reload
