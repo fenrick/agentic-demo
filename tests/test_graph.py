@@ -114,6 +114,50 @@ def test_overlay_history_serialized_when_dict():
         Agent.return_value.assert_called_once_with("draft", "review")
 
 
+def test_graph_nodes_are_traceable(monkeypatch):
+    """All nodes should be decorated with LangSmith traceable."""
+    recorded: list[str] = []
+
+    def fake_traceable(fn):
+        recorded.append(fn.__name__)
+        return fn
+
+    monkeypatch.setattr(graph.run_helpers, "traceable", fake_traceable)
+    with (
+        patch("app.graph.OverlayAgent") as Agent,
+        patch.object(graph, "plan", return_value="plan"),
+        patch.object(graph, "research", return_value="research"),
+        patch.object(graph, "draft", return_value="draft"),
+        patch.object(graph, "review", return_value="review"),
+    ):
+        Agent.return_value.return_value = "ov"
+        build_graph(mode="overlay")
+    expected = {
+        "plan_node",
+        "research_node",
+        "draft_node",
+        "review_node",
+        "overlay_node",
+    }
+    assert expected.issubset(recorded)
+
+
+def test_overlay_node_logs_metrics():
+    """Overlay node should log token metrics via _log_metrics."""
+    with (
+        patch("app.graph.OverlayAgent") as Agent,
+        patch.object(graph, "plan", return_value="plan"),
+        patch.object(graph, "research", return_value="research"),
+        patch.object(graph, "draft", return_value="draft"),
+        patch.object(graph, "review", return_value="review"),
+        patch.object(graph, "_log_metrics") as log,
+    ):
+        Agent.return_value.return_value = "ov text"
+        flow = build_graph(mode="overlay")
+        flow.run("topic")
+        log.assert_any_call("ov text", 0)
+
+
 def test_graph_with_primary_agent():
     """build_graph should delegate steps to a PrimaryAgent when provided."""
     primary = PrimaryAgent()

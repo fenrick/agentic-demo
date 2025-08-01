@@ -10,7 +10,8 @@ import json
 from langgraph.graph import StateGraph, END, START
 from typing import Any
 
-from .agents import plan, research, draft, review
+from langsmith import run_helpers
+from .agents import plan, research, draft, review, _log_metrics
 from .overlay_agent import OverlayAgent
 from .primary_agent import PrimaryAgent
 
@@ -57,9 +58,6 @@ def build_graph(
 ) -> ConversationGraph:
     """Create the conversation graph using langgraph.
 
-    TODO: automatically create an :class:`OverlayAgent` when ``mode`` is set
-    to ``"overlay"`` and no overlay agent is supplied.
-
     Parameters
     ----------
     overlay:
@@ -77,6 +75,7 @@ def build_graph(
     if overlay is None and mode == "overlay":
         overlay = OverlayAgent()
 
+    @run_helpers.traceable
     async def plan_node(state: GraphState) -> GraphState:
         if primary:
             text = primary.plan(cast(str, state["text"]), loop=state["loops"])
@@ -90,6 +89,7 @@ def build_graph(
             "loops": state["loops"],
         }
 
+    @run_helpers.traceable
     async def research_node(state: GraphState) -> GraphState:
         if primary:
             text = primary.research(cast(str, state["text"]), loop=state["loops"])
@@ -103,6 +103,7 @@ def build_graph(
             "loops": state["loops"],
         }
 
+    @run_helpers.traceable
     async def draft_node(state: GraphState) -> GraphState:
         if primary:
             text = primary.draft(cast(str, state["text"]), loop=state["loops"])
@@ -116,6 +117,7 @@ def build_graph(
             "loops": state["loops"],
         }
 
+    @run_helpers.traceable
     async def review_node(state: GraphState) -> GraphState:
         if primary:
             result = primary.review(cast(str, state["text"]), loop=state["loops"])
@@ -130,11 +132,15 @@ def build_graph(
             "loops": state["loops"] if approved else state["loops"] + 1,
         }
 
+    @run_helpers.traceable
     async def overlay_node(state: GraphState) -> GraphState:
         """Merge the draft with review notes and log the action."""
-        # TODO: append JSON string when overlay output is a dictionary
         assert overlay is not None
         result = overlay(state["draft"], cast(str, state["text"]))
+        if isinstance(result, str):
+            _log_metrics(result, state["loops"])
+        else:
+            _log_metrics(json.dumps(result), state["loops"])
         history_entry = (
             json.dumps(result) if isinstance(result, dict) else cast(str, result)
         )

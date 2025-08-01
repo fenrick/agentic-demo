@@ -57,6 +57,13 @@ is unset the demo prints placeholder text. If you have a Tavily account, you can
 search features. Uvicorn can load this file automatically with `--env-file .env`,
 and the demo script supports `python -m dotenv run -- python scripts/run_demo.py ...`.
 
+### LangSmith tracing
+
+Set `LANGCHAIN_API_KEY` and `LANGCHAIN_PROJECT` to send traces to
+[LangSmith](https://smith.langchain.com). The application decorates agent
+functions and graph nodes with `@langsmith.traceable`, so events are captured
+automatically when these variables are configured.
+
 ## Docker Usage
 
 A Dockerfile is included for local development and deployment. See
