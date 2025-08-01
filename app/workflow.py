@@ -16,11 +16,21 @@ class DocumentWorkflow:
 
     overlay: OverlayAgent | None = None
 
-    # TODO: allow nested numbering or markdown parsing of outlines
+    def _clean_heading(self, line: str) -> str:
+        """Remove bullet, numeric or Markdown heading prefixes from ``line``."""
+        import re
+
+        line = line.strip()
+        pattern = r"^(?:[-*]|\d+(?:\.\d+)*[.)]?|#+)\s*(.*)"
+        match = re.match(pattern, line)
+        if match:
+            return match.group(1).strip()
+        return line
+
     def parse_outline(self, outline: str) -> List[str]:
-        """Extract individual headings from a plain-text outline."""
+        """Return a list of headings parsed from ``outline``."""
         return [
-            line.lstrip("- ").strip() for line in outline.splitlines() if line.strip()
+            self._clean_heading(line) for line in outline.splitlines() if line.strip()
         ]
 
     def generate(self, topic: str) -> str:
