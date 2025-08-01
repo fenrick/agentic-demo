@@ -4,7 +4,7 @@ from typing import AsyncIterator
 from unittest.mock import patch
 import json
 import pytest
-from web.router import _to_docx_bytes, Document
+from web.router import _to_docx_bytes, Document, TOKEN_PRICE
 
 from app.api import app
 
@@ -34,11 +34,16 @@ def test_websocket_streaming_basic():
         ("review", "done"),
     ]
     with patch("web.router.build_graph", return_value=_fake_graph(events)):
-        with client.websocket_connect("/stream?input=x&mode=basic") as ws:
-            for expected in ["p", "r", "d", "done"]:
-                assert ws.receive_text() == expected
-            with pytest.raises(WebSocketDisconnect):
-                ws.receive_text()
+        with patch("web.router.time.monotonic", side_effect=[0.0, 1.0]):
+            with client.websocket_connect("/stream?input=x&mode=basic") as ws:
+                for expected in ["p", "r", "d", "done"]:
+                    assert ws.receive_text() == expected
+                stats = json.loads(ws.receive_text())
+                assert stats["stats"]["tokens"] == 4
+                assert stats["stats"]["cost"] == 4 * TOKEN_PRICE
+                assert stats["stats"]["latency"] == 1.0
+                with pytest.raises(WebSocketDisconnect):
+                    ws.receive_text()
 
 
 def test_export_docx():
@@ -58,6 +63,7 @@ def test_ui_includes_cancel_and_error_handlers():
     assert resp.status_code == 200
     html = resp.text
     assert 'id="cancel"' in html  # cancel button
+    assert 'id="stats"' in html  # stats container
     assert ".onerror" in html  # websocket error handler
     assert "catch" in html  # fetch error handling
 
@@ -82,14 +88,19 @@ def test_websocket_streaming_overlay_dict():
         ("overlay", overlay_output),
     ]
     with patch("web.router.build_graph", return_value=_fake_graph(events)):
-        with client.websocket_connect("/stream?input=x&mode=overlay") as ws:
-            assert ws.receive_text() == "p"
-            assert ws.receive_text() == "r"
-            assert ws.receive_text() == "d"
-            assert ws.receive_text() == "done"
-            assert ws.receive_text() == json.dumps(overlay_output)
-            with pytest.raises(WebSocketDisconnect):
-                ws.receive_text()
+        with patch("web.router.time.monotonic", side_effect=[0.0, 1.0]):
+            with client.websocket_connect("/stream?input=x&mode=overlay") as ws:
+                assert ws.receive_text() == "p"
+                assert ws.receive_text() == "r"
+                assert ws.receive_text() == "d"
+                assert ws.receive_text() == "done"
+                assert ws.receive_text() == json.dumps(overlay_output)
+                stats = json.loads(ws.receive_text())
+                assert stats["stats"]["tokens"] == 6
+                assert stats["stats"]["cost"] == 6 * TOKEN_PRICE
+                assert stats["stats"]["latency"] == 1.0
+                with pytest.raises(WebSocketDisconnect):
+                    ws.receive_text()
 
 
 def test_to_docx_bytes_generates_zip():
@@ -114,14 +125,20 @@ def test_websocket_streaming_overlay_mixed_types():
     for output in outputs:
         events = base_events + [("overlay", output)]
         with patch("web.router.build_graph", return_value=_fake_graph(events)):
-            with client.websocket_connect("/stream?input=x&mode=overlay") as ws:
-                for expected in [
-                    "p",
-                    "r",
-                    "d",
-                    "done",
-                    json.dumps(output) if isinstance(output, dict) else output,
-                ]:
-                    assert ws.receive_text() == expected
-                with pytest.raises(WebSocketDisconnect):
-                    ws.receive_text()
+            with patch("web.router.time.monotonic", side_effect=[0.0, 1.0]):
+                with client.websocket_connect("/stream?input=x&mode=overlay") as ws:
+                    for expected in [
+                        "p",
+                        "r",
+                        "d",
+                        "done",
+                        json.dumps(output) if isinstance(output, dict) else output,
+                    ]:
+                        assert ws.receive_text() == expected
+                    stats = json.loads(ws.receive_text())
+                    expected_tokens = 5 if isinstance(output, str) else 6
+                    assert stats["stats"]["tokens"] == expected_tokens
+                    assert stats["stats"]["cost"] == expected_tokens * TOKEN_PRICE
+                    assert stats["stats"]["latency"] == 1.0
+                    with pytest.raises(WebSocketDisconnect):
+                        ws.receive_text()

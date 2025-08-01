@@ -6,6 +6,7 @@ from io import BytesIO
 from typing import AsyncIterator, cast
 import json
 import pathlib
+import time
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Response
 from fastapi.responses import HTMLResponse
@@ -26,6 +27,9 @@ router = APIRouter()
 # ---------------------------------------------------------------------------
 
 
+TOKEN_PRICE = 0.002 / 1000
+
+
 def _run_stream(text: str, mode: str) -> AsyncIterator[str]:
     """Yield outputs from the conversation graph step by step."""
     overlay = OverlayAgent() if mode == "overlay" else None
@@ -39,13 +43,21 @@ def _run_stream(text: str, mode: str) -> AsyncIterator[str]:
             "history": [],
             "loops": 0,
         }
+        tokens = 0
+        start = time.monotonic()
         async for event in flow.graph.astream(state):
             node, data = next(iter(event.items()))
             output = data["text"]
+            tokens += len(str(output).split())
             if node == "overlay" and isinstance(output, dict):
                 yield json.dumps(output)
             else:
                 yield cast(str, output)
+        latency = time.monotonic() - start
+        cost = tokens * TOKEN_PRICE
+        yield json.dumps(
+            {"stats": {"tokens": tokens, "cost": cost, "latency": latency}}
+        )
 
     return _inner()
 
