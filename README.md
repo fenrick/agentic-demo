@@ -77,3 +77,5 @@ Install the development dependencies and run the test suite using `pytest`:
 pip install -r requirements-dev.txt
 pytest
 ```
+For detailed coding standards and quality checks see
+[`docs/CODING_REQUIREMENTS.md`](docs/CODING_REQUIREMENTS.md).

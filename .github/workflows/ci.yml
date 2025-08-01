@@ -22,6 +22,10 @@ jobs:
           black --check .
           ruff check .
           mypy .
+      - name: Security Scan
+        run: |
+          bandit -r app -ll
+          pip-audit
       - name: Run tests
         run: |
           export PYTHONPATH=$PWD
