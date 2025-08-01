@@ -5,3 +5,4 @@ pytest-asyncio>=0.23
 black>=24.3
 ruff>=0.4
 mypy>=1.8
+bandit>=1.7

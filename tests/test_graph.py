@@ -9,7 +9,6 @@ from app import graph
 from app.graph import build_graph
 
 
-
 def test_graph_cycles_until_review_passes():
     """Flow should repeat draft-review until review approves."""
     with (
@@ -24,6 +23,7 @@ def test_graph_cycles_until_review_passes():
         assert plan_mock.called and research_mock.called
         assert draft_mock.call_count == 2
         assert review_mock.call_count == 2
+
 
 def test_graph_with_overlay():
     """Overlay node should merge draft with review output when provided."""

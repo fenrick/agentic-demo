@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from typing import Dict, List, Optional, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict
 
 from langgraph.graph import StateGraph, END, START
 
@@ -25,9 +25,9 @@ class GraphState(TypedDict):
 class ConversationGraph:
     """Wrapper around a compiled langgraph."""
 
-    graph: StateGraph
+    graph: Any
 
-    async def arun(self, input: str) -> Dict[str, str]:
+    async def arun(self, input: str) -> Dict[str, list[str] | str]:
         """Execute the graph asynchronously."""
         state: GraphState = {
             "text": input,
@@ -38,7 +38,7 @@ class ConversationGraph:
         result: GraphState = await self.graph.ainvoke(state)
         return {"messages": result["history"], "output": result["text"]}
 
-    def run(self, input: str) -> Dict[str, str]:
+    def run(self, input: str) -> Dict[str, list[str] | str]:
         """Execute the graph synchronously."""
         return asyncio.run(self.arun(input))
 
@@ -84,7 +84,8 @@ def build_graph(overlay: Optional[OverlayAgent] = None) -> ConversationGraph:
         }
 
     async def overlay_node(state: GraphState) -> GraphState:
-        assert overlay is not None
+        if overlay is None:
+            raise AssertionError("overlay agent missing")
         result = overlay(state["draft"], state["text"])
         return {
             "text": result,
@@ -106,7 +107,7 @@ def build_graph(overlay: Optional[OverlayAgent] = None) -> ConversationGraph:
     builder.add_edge("research", "draft")
     builder.add_edge("draft", "review")
 
-    def after_review(state: GraphState):
+    def after_review(state: GraphState) -> str:
         if state["approved"]:
             return "overlay" if overlay else END
         return "draft"

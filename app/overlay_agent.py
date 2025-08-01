@@ -26,5 +26,6 @@ class OverlayAgent:
             f"Addition:\n{addition}"
         )
         messages: list[Dict[str, str]] = [{"role": "user", "content": prompt}]
-        assert self.agent is not None
+        if self.agent is None:
+            raise AssertionError("agent not configured")
         return self.agent(messages)

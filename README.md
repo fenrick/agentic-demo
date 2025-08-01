@@ -74,6 +74,19 @@ Open `http://localhost:8000/ui` for the web interface or send requests to
 Install the development dependencies and run the test suite using `pytest`:
 
 ```bash
-pip install -r requirements-dev.txt
+pip install -e '.[dev,test]'
 pytest
 ```
+
+## Code Quality
+
+Ensure consistent formatting, linting and static analysis by running:
+
+```bash
+black .
+ruff .
+mypy .
+bandit -q -r app openai_stub scripts web
+```
+
+The CI workflow runs these same commands and a security scan along with the test suite.

@@ -8,12 +8,18 @@ This repository uses automated code quality tooling for all Python sources.
 ## Linting
 - Execute `ruff .` to check style and catch common bugs.
 
+## Security
+- Run `bandit -q -r app openai_stub scripts web` to scan for vulnerabilities.
+
 ## Static Analysis
 - Run `mypy .` to perform type checking.
 
 ## Testing
-- Install dependencies with `pip install -e .[test]`.
+- Install dependencies with `pip install -e '.[dev,test]'`.
 - Run the full suite with `pytest --cov`.
+
+The CI workflow mirrors these commands and also verifies formatting, linting,
+type checking and security scanning. Run them locally before committing to avoid failures.
 
 ### Development Process
 - Follow Test Driven Development.
