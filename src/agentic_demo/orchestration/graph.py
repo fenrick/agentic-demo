@@ -6,7 +6,7 @@ from dataclasses import asdict
 from typing import AsyncGenerator
 
 from langgraph.graph import END, START, StateGraph
-from langgraph.graph.state import CompiledStateGraph
+from langgraph.graph.graph import CompiledGraph
 
 from .state import State
 
@@ -14,8 +14,10 @@ from .state import State
 # TODO: Implement real planner logic once available
 
 
-def planner(state: State) -> State:
+def planner(state: State) -> dict:
     """Derive an initial plan from the prompt.
+
+    Increments planner confidence to simulate refinement.
 
     Args:
         state: Current orchestration state.
@@ -25,14 +27,18 @@ def planner(state: State) -> State:
     """
 
     state.log.append("planner")
-    return state
+    state.confidence = min(state.confidence + 0.5, 1.0)
+    return asdict(state)
 
 
 # TODO: Replace placeholder with web research implementation
 
 
-def researcher_web(state: State) -> State:
-    """Gather information from web sources.
+def researcher_web(state: State) -> dict:
+    """Gather information from web sources with deduplication.
+
+    Performs a simple case-insensitive deduplication of ``state.sources`` to
+    emulate semantic merge of parallel research tasks.
 
     Args:
         state: Current orchestration state.
@@ -42,13 +48,21 @@ def researcher_web(state: State) -> State:
     """
 
     state.log.append("researcher_web")
-    return state
+    seen = set()
+    deduped = []
+    for src in state.sources:
+        lowered = src.lower()
+        if lowered not in seen:
+            seen.add(lowered)
+            deduped.append(src)
+    state.sources = deduped
+    return asdict(state)
 
 
 # TODO: Flesh out content weaving algorithm
 
 
-def content_weaver(state: State) -> State:
+def content_weaver(state: State) -> dict:
     """Weave gathered content into coherent form.
 
     Args:
@@ -59,14 +73,17 @@ def content_weaver(state: State) -> State:
     """
 
     state.log.append("content_weaver")
-    return state
+    return asdict(state)
 
 
 # TODO: Support multiple critic personas
 
 
-def critic(state: State) -> State:
+def critic(state: State) -> dict:
     """Critically evaluate the woven content.
+
+    Increments the ``critic_attempts`` counter and assigns a ``critic_score``.
+    The third attempt succeeds with a score of ``1.0`` to emulate retry logic.
 
     Args:
         state: Current orchestration state.
@@ -76,13 +93,15 @@ def critic(state: State) -> State:
     """
 
     state.log.append("critic")
-    return state
+    state.critic_attempts += 1
+    state.critic_score = 1.0 if state.critic_attempts >= 3 else 0.0
+    return asdict(state)
 
 
 # TODO: Integrate human approval workflows
 
 
-def approver(state: State) -> State:
+def approver(state: State) -> dict:
     """Approve or refine the content after critique.
 
     Args:
@@ -93,13 +112,13 @@ def approver(state: State) -> State:
     """
 
     state.log.append("approver")
-    return state
+    return asdict(state)
 
 
 # TODO: Export in multiple formats (PDF, DOCX, etc.)
 
 
-def exporter(state: State) -> State:
+def exporter(state: State) -> dict:
     """Export the approved content to its final format.
 
     Args:
@@ -110,14 +129,14 @@ def exporter(state: State) -> State:
     """
 
     state.log.append("exporter")
-    return state
+    return asdict(state)
 
 
-def create_state_graph() -> StateGraph[State]:
+def create_state_graph() -> StateGraph:
     """Construct the orchestration :class:`StateGraph`.
 
     Returns:
-        Graph with all orchestration nodes wired sequentially.
+        Graph with all orchestration nodes wired with policy-driven edges.
     """
 
     graph = StateGraph(State)
@@ -128,16 +147,36 @@ def create_state_graph() -> StateGraph[State]:
     graph.add_node("approver", approver)
     graph.add_node("exporter", exporter)
     graph.add_edge(START, "planner")
-    graph.add_edge("planner", "researcher_web")
-    graph.add_edge("researcher_web", "content_weaver")
+
+    def planner_router(state: State) -> str:
+        return "to_weaver" if state.confidence >= 0.9 else "to_research"
+
+    graph.add_conditional_edges(
+        "planner",
+        planner_router,
+        {"to_research": "researcher_web", "to_weaver": "content_weaver"},
+    )
+    graph.add_edge("researcher_web", "planner")
     graph.add_edge("content_weaver", "critic")
-    graph.add_edge("critic", "approver")
+
+    def critic_router(state: State) -> str:
+        return (
+            "approve"
+            if state.critic_score >= 0.5 or state.critic_attempts >= 3
+            else "revise"
+        )
+
+    graph.add_conditional_edges(
+        "critic",
+        critic_router,
+        {"revise": "content_weaver", "approve": "approver"},
+    )
     graph.add_edge("approver", "exporter")
     graph.add_edge("exporter", END)
     return graph
 
 
-def compile_graph(graph: StateGraph[State] | None = None) -> CompiledStateGraph:
+def compile_graph(graph: StateGraph | None = None) -> CompiledGraph:
     """Compile a :class:`StateGraph` into a runnable graph.
 
     Args:
@@ -151,9 +190,7 @@ def compile_graph(graph: StateGraph[State] | None = None) -> CompiledStateGraph:
     return graph.compile()
 
 
-async def stream_values(
-    app: CompiledStateGraph, state: State
-) -> AsyncGenerator[dict, None]:
+async def stream_values(app: CompiledGraph, state: State) -> AsyncGenerator[dict, None]:
     """Yield state values emitted by the graph.
 
     Args:
@@ -169,7 +206,7 @@ async def stream_values(
 
 
 async def stream_updates(
-    app: CompiledStateGraph, state: State
+    app: CompiledGraph, state: State
 ) -> AsyncGenerator[dict, None]:
     """Yield incremental state updates from the graph.
 
