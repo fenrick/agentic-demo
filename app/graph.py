@@ -63,7 +63,7 @@ def build_graph(
     overlay:
         Optional :class:`OverlayAgent` for the final merge step.
     mode:
-        Conversation variant. When set to ``"overlay"`` a new
+    Conversation variant. When set to ``"overlay"`` a new
         :class:`OverlayAgent` should be created if ``overlay`` is not
         provided.
     skip_plan:
@@ -71,7 +71,7 @@ def build_graph(
         generating a plan first. This is useful when an outline is already
         available.
     """
-
+    # TODO: include PedagogyCritic and QAReviewer in the LangGraph flow.
     if overlay is None and mode == "overlay":
         overlay = OverlayAgent()
 
