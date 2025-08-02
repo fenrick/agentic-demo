@@ -4,7 +4,14 @@ version = "0.1.0"
 description = "Demo project scaffold"
 authors = ["Agent <agent@example.com>"]
 readme = "README.md"
-packages = [{ include = "agentic_demo", from = "src" }]
+packages = [
+    { include = "agentic_demo", from = "src" },
+    { include = "core", from = "src" },
+    { include = "agents", from = "src" },
+    { include = "persistence", from = "src" },
+    { include = "web", from = "src" },
+    { include = "export", from = "src" },
+]
 
 [tool.poetry.dependencies]
 python = ">=3.13,<4.0"

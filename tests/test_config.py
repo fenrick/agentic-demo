@@ -14,6 +14,21 @@ from agentic_demo import config
 def _write_env(tmp_path: Path) -> Path:
     """Create a `.env` file with all required keys."""
 
+ENV_KEYS = ("OPENAI_API_KEY", "PERPLEXITY_API_KEY", "MODEL_NAME", "DATA_DIR")
+
+
+@pytest.fixture(autouse=True)
+def clear_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Remove configuration keys from the environment before each test."""
+
+    for key in ENV_KEYS:
+        monkeypatch.delenv(key, raising=False)
+
+
+@pytest.fixture
+def env_file(tmp_path: Path) -> Path:
+    """Create a temporary `.env` file with valid keys."""
+
     content = (
         "OPENAI_API_KEY=sk-123\n"
         "PERPLEXITY_API_KEY=pp-456\n"
@@ -57,6 +72,19 @@ def test_settings_loads_from_env(
 
 def test_missing_key_raises(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Validation fails when a required key is absent."""
+    
+def test_defaults_apply_when_env_vars_missing(env_file: Path) -> None:
+    """Values from the `.env` file are used when env vars are absent."""
+
+    config = load_env(env_file)
+    assert config.openai_api_key == "sk-123"
+    assert config.perplexity_api_key == "pp-456"
+    assert config.model_name == "gpt-4o"
+    assert config.data_dir == "/data"
+
+
+def test_load_env_missing_key_raises(tmp_path: Path) -> None:
+    """``load_env`` validates required keys."""
 
     file = tmp_path / ".env"
     file.write_text("OPENAI_API_KEY=sk-123\n")
@@ -71,7 +99,7 @@ def test_environment_overrides_file(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Environment variables override values from `.env`."""
-
+    
     _write_env(tmp_path)
     _clear_env(monkeypatch)
     monkeypatch.chdir(tmp_path)
@@ -79,3 +107,15 @@ def test_environment_overrides_file(
     monkeypatch.setenv("MODEL_NAME", "override-model")
     settings = config.Settings()
     assert settings.MODEL_NAME == "override-model"
+
+def test_env_vars_override_env_file(
+    env_file: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Environment variables take precedence over `.env` values."""
+
+    monkeypatch.setenv("MODEL_NAME", "override-model")
+    monkeypatch.setenv("OPENAI_API_KEY", "override-openai")
+    config = load_env(env_file)
+    assert config.model_name == "override-model"
+    assert config.openai_api_key == "override-openai"
+    

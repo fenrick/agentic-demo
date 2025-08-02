@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import asdict
-from typing import AsyncGenerator
+from typing import Any, AsyncGenerator
 
 from langgraph.graph import END, START, StateGraph
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # pragma: no cover - used only for type checking
@@ -17,6 +18,11 @@ else:  # pragma: no cover - runtime import with graceful fallback
         CompiledGraph = Any  # type: ignore[assignment]
 
 from .state import State
+
+# ``langgraph`` does not expose a stable ``CompiledGraph`` in all versions. For
+# type checking, we alias it to :class:`Any` to avoid hard dependency on internal
+# modules while retaining the intended semantics.
+CompiledGraph = Any
 
 
 # TODO: Implement real planner logic once available
