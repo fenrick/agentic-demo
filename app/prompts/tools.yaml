@@ -1,7 +1,0 @@
-tools:
-  search:
-    description: Use a web search API to gather factual references.
-    agents: [research]
-  overlay:
-    description: Merge new information into the existing document.
-    agents: [mcp]

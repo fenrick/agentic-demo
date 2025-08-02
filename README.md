@@ -26,15 +26,12 @@ This project is released under the [Unlicense](LICENSE).
    ```bash
    uvicorn app.api:app --reload
    ```
-4. **Open the web interface**:
-   Navigate to `http://localhost:8000/ui` once the server is running.
-   The page streams intermediate results as they arrive and provides
-   **Download Markdown** and **Download DOCX** buttons for exporting
-   the final output.
-5. **Run the demo script**:
+
+4. **Send a run request**:
    ```bash
-   python scripts/run_demo.py --topic "Quantum"
+   curl -X POST http://localhost:8000/runs -H 'Content-Type: application/json' -d '{"topic":"Quantum"}'
    ```
+
 
 ## `openai_stub`
 
@@ -71,15 +68,12 @@ A Dockerfile is included for local development and deployment. See
 
 ## API
 
-The FastAPI app exposes several endpoints:
+The FastAPI app exposes two endpoints:
 
-- `POST /chat?input=TEXT` – runs the conversation flow and returns
-  `{"response": "..."}`.
-- `GET /ui` – serves a simple browser UI for interactive use.
+- `POST /runs` – start a new run for a given topic and persist its outputs.
+- `GET /runs/{run_id}/stream` – stream the generated tokens via Server-Sent Events.
 
 Start the server using the command shown in the setup section.
-Open `http://localhost:8000/ui` for the web interface or send requests to
-`http://localhost:8000/chat`.
 
 The service streams OpenAI responses using **Server-Sent Events (SSE)**. Tokens
 are forwarded directly from FastAPI to the browser so no WebSocket is required.
@@ -112,13 +106,6 @@ The application orchestrates content creation through five specialised agents. E
 5. **QA-Reviewer** – perform a final pass to confirm style and structure.
 
 The conversation graph in ``app.graph`` repeats steps 2–4 until the review approves the content. Once all subsections are finalized, the final edit produces the polished document.
-
-The :class:`~app.document_dag.DocumentDAG` helper wraps this graph. It starts
-by planning an outline, then iterates over each heading so that every section
-flows through the Research → Draft → Edit → Rewrite cycle before the parts are
-combined. Each section runs through a graph built with ``skip_plan=True`` so the
-outline step isn't repeated. Once the sections are joined, a final review agent
-polishes the document before returning it.
 
 ## Coding requirements
 

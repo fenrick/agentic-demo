@@ -1,5 +1,0 @@
-prompt: |
-  Gather concise background facts supporting {outline}. Use the search tool if additional context is required. Include credible sources when possible.
-
-  Search results:
-  {search_results}
