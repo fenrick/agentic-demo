@@ -10,7 +10,7 @@ This repository uses automated code quality tooling for all Python sources.
 
 ## Static Analysis
 - Run `mypy .` to perform type checking.
-- Execute `bandit -r app -ll` to scan for security issues.
+- Execute `bandit -r src -ll` to scan for security issues.
 - Run `pip-audit` to check dependencies for vulnerabilities.
 
 ## Testing
@@ -25,5 +25,3 @@ This repository uses automated code quality tooling for all Python sources.
   4. Refactor for readability and performance.
 - Keep functions small (cyclomatic complexity < 8).
 - Maintain test coverage above 90%.
-- See [docs/CODING_REQUIREMENTS.md](docs/CODING_REQUIREMENTS.md) for full guidelines.
-
