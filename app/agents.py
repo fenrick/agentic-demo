@@ -203,3 +203,57 @@ def review(
     result = _call_agent(prompt, agent)
     _log_metrics(result, loop)
     return result
+
+
+class PedagogyCritic:
+    """Placeholder agent that will critique generated lessons."""
+
+    def __call__(self, text: str) -> str:
+        """Return pedagogical feedback for ``text``.
+
+        Parameters
+        ----------
+        text:
+            Lesson content to evaluate.
+
+        Returns
+        -------
+        str
+            TODO: provide structured pedagogical critique.
+
+        Raises
+        ------
+        NotImplementedError
+            This placeholder has no behaviour yet.
+        """
+
+        # TODO: implement pedagogy critique logic using ChatAgent.
+        # TODO: update ``app/graph.py`` to include this agent in the LangGraph flow.
+        raise NotImplementedError("PedagogyCritic is not yet implemented")
+
+
+class QAReviewer:
+    """Placeholder agent that will perform quality assurance review."""
+
+    def __call__(self, text: str) -> str:
+        """Return QA notes for ``text``.
+
+        Parameters
+        ----------
+        text:
+            Draft content to review.
+
+        Returns
+        -------
+        str
+            TODO: return quality assurance findings.
+
+        Raises
+        ------
+        NotImplementedError
+            This placeholder has no behaviour yet.
+        """
+
+        # TODO: implement QA review logic using ChatAgent.
+        # TODO: update ``app/graph.py`` to include this agent in the LangGraph flow.
+        raise NotImplementedError("QAReviewer is not yet implemented")
