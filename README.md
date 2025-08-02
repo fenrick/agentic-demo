@@ -83,6 +83,8 @@ Open `http://localhost:8000/ui` for the web interface or send requests to
 
 The service streams OpenAI responses using **Server-Sent Events (SSE)**. Tokens
 are forwarded directly from FastAPI to the browser so no WebSocket is required.
+See [docs/streaming.md](docs/streaming.md) for a detailed overview of this
+flow.
 
 ## Running Tests
 
