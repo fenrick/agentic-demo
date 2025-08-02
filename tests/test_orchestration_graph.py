@@ -34,8 +34,8 @@ def test_graph_nodes_and_edges():
 
 
 @pytest.mark.asyncio
-async def test_streaming_with_loops_and_retries():
-    """Streaming should reflect planner-researcher loop and critic retries."""
+async def test_streaming_with_internal_critic_retries():
+    """Streaming should reflect planner-researcher loop with internal critic retries."""
     app = compile_graph()
     state = State(prompt="question", sources=["A", "a", "B"])
     values = [event async for event in stream_values(app, state)]
@@ -46,17 +46,13 @@ async def test_streaming_with_loops_and_retries():
         "planner",
         "content_weaver",
         "critic",
-        "content_weaver",
-        "critic",
-        "content_weaver",
-        "critic",
         "approver",
         "exporter",
     ]
     assert [list(event.keys())[0] for event in updates] == expected_updates
     assert values[-1]["log"] == expected_updates
     assert values[-1]["confidence"] >= 0.9
-    assert values[-1]["critic_attempts"] == 3
+    assert values[-1]["critic_attempts"] == 1
     assert values[-1]["sources"] == ["A", "B"]
 
 

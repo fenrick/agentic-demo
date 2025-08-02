@@ -7,7 +7,7 @@ from typing import Any, AsyncGenerator
 
 from langgraph.graph import END, START, StateGraph
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover - used only for type checking
     from langgraph.graph import CompiledGraph  # type: ignore[attr-defined]
@@ -18,6 +18,7 @@ else:  # pragma: no cover - runtime import with graceful fallback
         CompiledGraph = Any  # type: ignore[assignment]
 
 from .state import State
+from .retry import retry_async
 
 # ``langgraph`` does not expose a stable ``CompiledGraph`` in all versions. For
 # type checking, we alias it to :class:`Any` to avoid hard dependency on internal
@@ -93,22 +94,42 @@ def content_weaver(state: State) -> dict:
 # TODO: Support multiple critic personas
 
 
-def critic(state: State) -> dict:
-    """Critically evaluate the woven content.
+# TODO: Replace placeholder evaluation with real model call
+async def _evaluate(state: State) -> float:  # pragma: no cover - patched in tests
+    """Evaluate content and return a score.
 
-    Increments the ``critic_attempts`` counter and assigns a ``critic_score``.
-    The third attempt succeeds with a score of ``1.0`` to emulate retry logic.
+    Args:
+        state: Current orchestration state.
+
+    Returns:
+        Perfect score for placeholder implementation.
+    """
+
+    return 1.0
+
+
+@retry_async(max_retries=3)
+async def critic(state: State) -> dict:
+    """Critically evaluate the woven content.
 
     Args:
         state: Current orchestration state.
 
     Returns:
         Updated state with critic step recorded.
+
+    Side Effects:
+        Appends ``"critic"`` to ``state.log`` and updates ``critic_score`` and
+        ``critic_attempts`` only after a successful evaluation.
+
+    Exceptions:
+        Propagates the last exception if all retries fail.
     """
 
+    score = await _evaluate(state)
     state.log.append("critic")
     state.critic_attempts += 1
-    state.critic_score = 1.0 if state.critic_attempts >= 3 else 0.0
+    state.critic_score = score
     return asdict(state)
 
 
