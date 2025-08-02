@@ -4,7 +4,7 @@
 
 1. **Project Initialization**
 
-   * Initialise Git repo, configure `poetry` for Python ≥ 3.11.
+   * Initialise Git repo, configure `poetry` for Python ≥ 3.13.
    * Define folder layout (`/src`, `/tests`, `/workspace`, `/scripts`).
    * Add CI pipeline stub (lint, unit tests).
 
