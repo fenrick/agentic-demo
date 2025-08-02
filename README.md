@@ -81,6 +81,9 @@ Start the server using the command shown in the setup section.
 Open `http://localhost:8000/ui` for the web interface or send requests to
 `http://localhost:8000/chat`.
 
+The service streams OpenAI responses using **Server-Sent Events (SSE)**. Tokens
+are forwarded directly from FastAPI to the browser so no WebSocket is required.
+
 ## Running Tests
 
 Install the development dependencies and run the test suite using `pytest`:
@@ -90,15 +93,21 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
+## Architecture
+
+See [`docs/architecture.md`](docs/architecture.md) for a full overview of the
+system diagram. The FastAPI service orchestrates five cooperating agents through
+LangGraph and persists all runs to SQLite for deterministic versioning.
+
 ## Agentic Workflow
 
-The application orchestrates content creation through a sequence of prompts and agents. Each topic is processed section by section, allowing refinements at every stage.
+The application orchestrates content creation through five specialised agents. Each topic is processed section by section so every phase can refine the output.
 
-1. **Research** – gather background notes for each subheading.
-2. **Draft** – generate initial text from the notes.
-3. **Edit** – review and adjust the draft for clarity and coherence.
-4. **Rewrite** – produce an improved revision using feedback from the edit step.
-5. **Final edit and polish** – complete a last pass to ensure consistent style and structure across all sections.
+1. **Planner** – break the request into an outline of subtopics.
+2. **Researcher** – gather background notes for each subheading.
+3. **Synthesiser** – draft a coherent section from the notes.
+4. **Pedagogy-Critic** – review the draft for clarity and instructional value.
+5. **QA-Reviewer** – perform a final pass to confirm style and structure.
 
 The conversation graph in ``app.graph`` repeats steps 2–4 until the review approves the content. Once all subsections are finalized, the final edit produces the polished document.
 
