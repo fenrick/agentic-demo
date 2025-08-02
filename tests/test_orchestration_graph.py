@@ -5,7 +5,6 @@ import pytest
 from agentic_demo.orchestration import (
     compile_graph,
     create_state_graph,
-    researcher_web,
     stream_updates,
     stream_values,
 )
@@ -61,6 +60,10 @@ async def test_streaming_with_loops_and_retries():
         "exporter",
     ]
     assert [list(event.keys())[0] for event in updates] == expected_updates
+    assert values[-1]["log"] == expected_updates
+    assert values[-1]["confidence"] >= 0.9
+    assert values[-1]["critic_attempts"] == 3
+    assert values[-1]["sources"] == ["A", "B"]
     assert [entry["message"] for entry in values[-1]["log"]] == expected_updates
     assert [s["url"] for s in values[-1]["sources"]] == ["A", "B"]
     assert sum(1 for entry in values[-1]["log"] if entry["message"] == "critic") == 3
