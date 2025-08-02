@@ -6,6 +6,8 @@ from typing import Any, AsyncGenerator, TYPE_CHECKING
 
 from langgraph.graph import END, START, StateGraph
 
+from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:  # pragma: no cover - used only for type checking
     from langgraph.graph import CompiledGraph  # type: ignore[attr-defined]
 else:  # pragma: no cover - runtime import with graceful fallback
