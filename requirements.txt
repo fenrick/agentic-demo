@@ -8,3 +8,5 @@ langsmith
 fastapi
 uvicorn[standard]
 python-docx
+fpdf
+jinja2

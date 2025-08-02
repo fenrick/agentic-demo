@@ -1,4 +1,0 @@
-prompt: |
-  Seamlessly integrate the addition into the existing text.
-  Existing: {original}
-  Addition: {addition}

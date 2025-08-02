@@ -1,3 +1,0 @@
-prompt: |
-  Review the text below for clarity and correct grammar. Return the improved version or 'retry' if major issues remain:
-  {text}
