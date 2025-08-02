@@ -19,6 +19,7 @@ pytest = {version = ">=7.4", optional = true}
 pytest-cov = {version = ">=4.1", optional = true}
 pytest-asyncio = {version = ">=0.23", optional = true}
 langgraph = "*"
+langgraph-checkpoint-sqlite = "*"
 openai = "*"
 perplexity-api = "*"
 pysqlite3-binary = "*" # provides sqlite3
