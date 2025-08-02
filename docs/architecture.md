@@ -17,7 +17,7 @@ Each node wraps a small agent function decorated with `@langsmith.traceable` so 
 
 ## OpenAI Responses SSE streaming
 
-The browser UI receives OpenAI responses as a continuous stream of events. Nodes yield tokens as soon as they arrive, providing near real-time feedback.
+The browser UI receives OpenAI responses as a continuous stream of events. Nodes yield tokens as soon as they arrive, providing near real-time feedback. The FastAPI service forwards these SSE events directly to the browser, so no WebSocket is required.
 
 ## LangGraph coordination
 
