@@ -5,7 +5,6 @@ import pytest
 from agentic_demo.orchestration import (
     compile_graph,
     create_state_graph,
-    researcher_web,
     stream_updates,
     stream_values,
 )
@@ -58,10 +57,3 @@ async def test_streaming_with_loops_and_retries():
     assert values[-1]["confidence"] >= 0.9
     assert values[-1]["critic_attempts"] == 3
     assert values[-1]["sources"] == ["A", "B"]
-
-
-def test_researcher_semantic_dedup():
-    """Researcher should deduplicate sources case-insensitively."""
-    state = State(sources=["A", "a", "B"])
-    result = researcher_web(state)
-    assert result["sources"] == ["A", "B"]

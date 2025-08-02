@@ -7,7 +7,7 @@ from typing import Any, AsyncGenerator
 
 from langgraph.graph import END, START, StateGraph
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover - used only for type checking
     from langgraph.graph import CompiledGraph  # type: ignore[attr-defined]
