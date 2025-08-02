@@ -2,18 +2,24 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
 import logging
-
-from . import utils, perplexity
+from typing import Any, Dict
 from datetime import datetime, timezone
 
+from . import utils, perplexity
 from langsmith import run_helpers
 
 try:  # attempt to use the real client if available
     import openai as _openai
 except ModuleNotFoundError:  # pragma: no cover - fallback for testing
     import openai_stub as _openai  # type: ignore
+
+try:  # optional token counter dependency
+    import tiktoken as _tiktoken  # type: ignore
+
+    tokenizer: Any | None = _tiktoken
+except ModuleNotFoundError:  # pragma: no cover - fallback when missing
+    tokenizer = None
 
 openai: Any = _openai
 
@@ -88,10 +94,34 @@ def _call_agent(prompt: str, agent: ChatAgent | None) -> str:
     return use_agent(messages)
 
 
+def _token_count(text: str) -> int:
+    """Return the number of tokens in ``text``.
+
+    Uses ``tiktoken`` when available and falls back to a simple word count.
+
+    Parameters
+    ----------
+    text:
+        Text to count tokens for.
+
+    Returns
+    -------
+    int
+        Calculated token count.
+    """
+
+    if tokenizer is None:
+        return len(text.split())
+    try:
+        enc = tokenizer.get_encoding("cl100k_base")
+        return len(enc.encode(text))
+    except Exception:  # pragma: no cover - tiktoken internal error
+        return len(text.split())
+
+
 def _log_metrics(text: str, loop: int) -> None:
     """Record token, loop and citation statistics with LangSmith."""
-    # TODO: replace naive token counting with tiktoken when available
-    token_count = len(text.split())
+    token_count = _token_count(text)
     citation_tokens = text.count("[")
     coverage = citation_tokens / token_count if token_count else 0
     run = run_helpers.get_current_run_tree()
