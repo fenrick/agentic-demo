@@ -1,79 +1,47 @@
-"""Environment configuration utilities."""
+"""Application settings management.
+
+Exposes configuration via a :class:`pydantic_settings.BaseSettings` subclass.
+"""
 
 from __future__ import annotations
 
-import os
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict
+
+from dotenv import load_dotenv
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Load environment variables from a `.env` file if present.
+load_dotenv()
 
 
-@dataclass
-class EnvConfig:
-    """Application environment settings."""
+class Settings(BaseSettings):
+    """Strongly-typed application configuration.
 
-    openai_api_key: str
-    perplexity_api_key: str
-    model_name: str
-    data_dir: str
+    Purpose:
+        Provide access to environment-driven settings for the application.
 
+    Inputs:
+        Values are sourced from environment variables or an ``.env`` file.
 
-def load_env(path: str | Path = ".env") -> EnvConfig:
-    """Load environment settings from *path*.
+    Outputs:
+        Instances expose the parsed configuration fields as attributes.
 
-    Args:
-        path: Location of a ``.env`` file.
+    Side Effects:
+        On import, :func:`dotenv.load_dotenv` loads variables from ``.env`` into
+        :mod:`os.environ` if the file exists.
 
-    Returns:
-        Loaded :class:`EnvConfig` instance.
-
-    Raises:
-        FileNotFoundError: If ``path`` does not exist.
-        KeyError: If a required key is missing.
+    Exceptions:
+        :class:`pydantic.ValidationError` is raised if required variables are
+        missing or invalid.
     """
 
-    raw = _parse_env(path)
-    for key in _REQUIRED_KEYS:
-        if key in os.environ:
-            raw[key] = os.environ[key]
-    missing = [key for key in _REQUIRED_KEYS if key not in raw]
-    if missing:
-        raise KeyError(f"Missing keys: {', '.join(missing)}")
-    return EnvConfig(
-        openai_api_key=raw["OPENAI_API_KEY"],
-        perplexity_api_key=raw["PERPLEXITY_API_KEY"],
-        model_name=raw["MODEL_NAME"],
-        data_dir=raw["DATA_DIR"],
+    OPENAI_API_KEY: str = Field(..., description="API key for OpenAI services.")
+    PERPLEXITY_API_KEY: str = Field(..., description="API key for Perplexity services.")
+    MODEL_NAME: str = Field(..., description="Default model identifier to use.")
+    DATA_DIR: Path = Field(..., description="Directory for application data.")
+    OFFLINE_MODE: bool = Field(
+        False, description="Run application without external network calls."
     )
 
-
-_REQUIRED_KEYS = {
-    "OPENAI_API_KEY",
-    "PERPLEXITY_API_KEY",
-    "MODEL_NAME",
-    "DATA_DIR",
-}
-
-
-def _parse_env(path: str | Path) -> Dict[str, str]:
-    """Parse key-value pairs from *path*.
-
-    Args:
-        path: Location of a ``.env`` file.
-
-    Returns:
-        Mapping of keys to values.
-
-    Raises:
-        FileNotFoundError: If ``path`` does not exist.
-    """
-
-    data: Dict[str, str] = {}
-    with open(path) as fh:
-        for raw_line in fh:
-            line = raw_line.strip()
-            if not line or line.startswith("#"):
-                continue
-            key, _, value = line.partition("=")
-            data[key.strip()] = value.strip()
-    return data
+    model_config = SettingsConfigDict(env_prefix="", case_sensitive=True)
