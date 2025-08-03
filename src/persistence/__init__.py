@@ -1,7 +1,5 @@
-"""Persistence interfaces and implementations.
+"""Persistence layer for the agentic demo."""
 
-This package will offer database abstractions and models for storing and
-retrieving application data.
+from .sqlite import AsyncSqliteSaver
 
-TODO: Provide database abstractions and models.
-"""
+__all__ = ["AsyncSqliteSaver"]
