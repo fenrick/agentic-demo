@@ -2,8 +2,32 @@
 
 from dataclasses import is_dataclass
 
-from core.state import ActionLog, Citation, Outline, State
+import pytest
 from pydantic import TypeAdapter
+
+from core.state import (
+    ActionLog,
+    Citation,
+    Outline,
+    State,
+    increment_version,
+    validate_state,
+)
+
+
+@pytest.fixture()
+def sample_state() -> State:
+    """Provide a populated :class:`State` instance for reuse."""
+    citation = Citation(url="https://example.com")
+    outline = Outline(steps=["intro"])
+    log_entry = ActionLog(message="start")
+    return State(
+        prompt="p",
+        sources=[citation],
+        outline=outline,
+        log=[log_entry],
+        version=2,
+    )
 
 
 def test_state_defaults() -> None:
@@ -34,3 +58,38 @@ def test_json_round_trip() -> None:
     assert isinstance(json_data, (bytes, bytearray))
     new_state = adapter.validate_json(json_data)
     assert new_state == state
+
+
+def test_dict_round_trip(sample_state: State) -> None:
+    """``to_dict`` and ``from_dict`` should round-trip the data losslessly."""
+    raw = sample_state.to_dict()
+    assert isinstance(raw, dict)
+    rebuilt = State.from_dict(raw)
+    assert rebuilt == sample_state
+
+
+def test_increment_version(sample_state: State) -> None:
+    """``increment_version`` should mutate and return the incremented value."""
+    original = sample_state.version
+    new_version = increment_version(sample_state)
+    assert new_version == original + 1
+    assert sample_state.version == new_version
+
+
+def test_validate_state_success(sample_state: State) -> None:
+    """Valid state should pass validation without raising errors."""
+    validate_state(sample_state)
+
+
+@pytest.mark.parametrize(
+    "state, message",
+    [
+        (State(), "prompt"),
+        (State(prompt="ok", version=-1), "version"),
+    ],
+)
+def test_validate_state_errors(state: State, message: str) -> None:
+    """Invalid state should raise a ``ValueError`` with a helpful message."""
+    with pytest.raises(ValueError) as exc_info:
+        validate_state(state)
+    assert message in str(exc_info.value)
