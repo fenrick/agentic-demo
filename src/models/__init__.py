@@ -7,6 +7,7 @@ from .critique_report import (
     CritiqueReport,
 )
 from .fact_check_report import ClaimFlag, FactCheckReport, SentenceProbability
+from .action_log import ActionLog
 
 __all__ = [
     "ActivityDiversityReport",
@@ -16,4 +17,5 @@ __all__ = [
     "FactCheckReport",
     "SentenceProbability",
     "ClaimFlag",
+    "ActionLog",
 ]
