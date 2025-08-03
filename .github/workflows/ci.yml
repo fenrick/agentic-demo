@@ -14,8 +14,8 @@ jobs:
           python-version: '3.13'
       - uses: abatilo/actions-poetry@v4
         with:
-          poetry-version: '1.8.3'
-      - run: poetry install --no-interaction --no-ansi
+          poetry-version: '2.1.3'
+      - run: poetry install --with dev,test --no-interaction --no-ansi
       - run: poetry run pre-commit run --all-files
 
   test:
@@ -27,6 +27,6 @@ jobs:
           python-version: '3.13'
       - uses: abatilo/actions-poetry@v4
         with:
-          poetry-version: '1.8.3'
-      - run: poetry install --no-interaction --no-ansi
+          poetry-version: '2.1.3'
+      - run: poetry install --with dev,test --no-interaction --no-ansi
       - run: poetry run pytest --maxfail=1 --disable-warnings -q
