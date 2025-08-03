@@ -36,12 +36,31 @@ class Settings(BaseSettings):
         missing or invalid.
     """
 
-    OPENAI_API_KEY: str = Field(..., description="API key for OpenAI services.")
-    PERPLEXITY_API_KEY: str = Field(..., description="API key for Perplexity services.")
-    MODEL_NAME: str = Field(..., description="Default model identifier to use.")
-    DATA_DIR: Path = Field(..., description="Directory for application data.")
-    OFFLINE_MODE: bool = Field(
-        False, description="Run application without external network calls."
+    openai_api_key: str = Field(
+        ..., alias="OPENAI_API_KEY", description="API key for OpenAI services."
+    )
+    perplexity_api_key: str = Field(
+        ..., alias="PERPLEXITY_API_KEY", description="API key for Perplexity services."
+    )
+    model_name: str = Field(
+        ..., alias="MODEL_NAME", description="Default model identifier to use."
+    )
+    data_dir: Path = Field(
+        ..., alias="DATA_DIR", description="Directory for application data."
+    )
+    offline_mode: bool = Field(
+        False,
+        alias="OFFLINE_MODE",
+        description="Run application without external network calls.",
     )
 
-    model_config = SettingsConfigDict(env_prefix="", case_sensitive=True)
+    model_config = SettingsConfigDict(
+        env_prefix="", case_sensitive=True, populate_by_name=True
+    )
+
+
+def load_env(env_file: Path) -> Settings:
+    """Load :class:`Settings` from a specific ``.env`` file."""
+
+    load_dotenv(env_file)
+    return Settings(_env_file=env_file)  # type: ignore[call-arg]
