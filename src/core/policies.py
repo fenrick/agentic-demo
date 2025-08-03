@@ -5,8 +5,8 @@ from __future__ import annotations
 from typing import List
 from urllib.parse import urlparse
 
-from core.nodes.critics import CritiqueReport, FactCheckReport
-from core.nodes.planner import PlanResult
+from agents.critics import CritiqueReport, FactCheckReport
+from agents.planner import PlanResult
 from core.state import Citation, State
 from web.researcher_web import CitationResult
 

@@ -15,12 +15,8 @@ jobs:
       - uses: abatilo/actions-poetry@v4
         with:
           poetry-version: '1.8.3'
-      - run: poetry install --with dev -E test
-      - run: poetry run black --check .
-      - run: poetry run ruff .
-      - run: poetry run mypy .
-      - run: poetry run bandit -r src -ll
-      - run: poetry run pip-audit
+      - run: poetry install --no-interaction --no-ansi
+      - run: poetry run pre-commit run --all-files
 
   test:
     runs-on: ubuntu-latest
@@ -32,5 +28,5 @@ jobs:
       - uses: abatilo/actions-poetry@v4
         with:
           poetry-version: '1.8.3'
-      - run: poetry install -E test
+      - run: poetry install --no-interaction --no-ansi
       - run: poetry run pytest --maxfail=1 --disable-warnings -q

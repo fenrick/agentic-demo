@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from pytest import MonkeyPatch
 
-from core.nodes.planner import PlanResult
+from agents.planner import PlanResult
 from core.state import State
 
 
@@ -32,7 +32,7 @@ async def test_checkpoint_resume(tmp_path: Path, monkeypatch: MonkeyPatch) -> No
         seen["prompt"] = state.prompt
         return PlanResult()
 
-    monkeypatch.setattr("core.nodes.planner.run_planner", fake_planner)
+    monkeypatch.setattr("agents.planner.run_planner", fake_planner)
 
     await orchestrator.graph_orchestrator.resume()
     assert seen["prompt"] == "orig"
