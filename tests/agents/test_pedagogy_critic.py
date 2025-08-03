@@ -66,3 +66,14 @@ def test_run_pedagogy_critic_compiles_reports():
     critique = run_pedagogy_critic(state)
     assert critique.bloom.missing_levels
     assert critique.recommendations
+
+
+def test_analyze_bloom_coverage_accepts_custom_classifier():
+    outline = build_outline()
+    outline.learning_objectives.append("synthesize approach")
+
+    def fake_classifier(text: str) -> str:
+        return "create" if "synthesize" in text else "remember"
+
+    report = analyze_bloom_coverage(outline, classifier=fake_classifier)
+    assert "create" not in report.missing_levels

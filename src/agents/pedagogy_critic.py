@@ -1,10 +1,14 @@
-"""Pedagogical critic assessing outlines against teaching best practices."""
+"""Pedagogical critic assessing outlines against teaching best practices.
+
+The critic leverages an LLM to interpret learning objectives, falling back to
+keyword heuristics only when necessary.
+"""
 
 from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass
-from typing import Dict, List, cast
+from typing import Callable, Dict, List, cast
 
 from core.state import State
 
@@ -26,7 +30,8 @@ BLOOM_LEVELS: List[str] = [
     "create",
 ]
 
-# Naive verb to level mapping for objective classification
+# Naive verb to level mapping for objective classification. Used as a
+# fallback when an LLM is unavailable.
 _VERB_MAP: Dict[str, str] = {
     "list": "remember",
     "define": "remember",
@@ -51,8 +56,8 @@ class Outline:
     activities: List[Activity]
 
 
-def _classify_text(text: str) -> str:
-    """Map ``text`` to a Bloom level based on keyword matching."""
+def _keyword_classify(text: str) -> str:
+    """Map ``text`` to a Bloom level via keyword matching."""
 
     lowered = text.lower()
     for verb, level in _VERB_MAP.items():
@@ -61,17 +66,48 @@ def _classify_text(text: str) -> str:
     return "unknown"
 
 
-def analyze_bloom_coverage(outline: Outline) -> BloomCoverageReport:
+def classify_bloom_level(text: str) -> str:
+    """Use an LLM to infer the Bloom level for ``text``.
+
+    Falls back to simple keyword matching if the LLM is unavailable or
+    produces an unexpected result.
+    """
+
+    prompt = (
+        "Classify the learning objective below into one of Bloom's levels "
+        "(remember, understand, apply, analyze, evaluate, create). "
+        "Respond with only the level name.\n\n" + text
+    )
+    try:  # pragma: no cover - network dependency
+        from openai import OpenAI  # type: ignore
+
+        client = OpenAI()
+        response = client.responses.create(
+            model="gpt-4o-mini",
+            input=[{"role": "user", "content": prompt}],
+        )
+        level = response.output_text.strip().lower()
+        if level in BLOOM_LEVELS:
+            return level
+    except Exception:
+        pass
+    return _keyword_classify(text)
+
+
+def analyze_bloom_coverage(
+    outline: Outline, classifier: Callable[[str], str] | None = None
+) -> BloomCoverageReport:
     """Assess breadth of Bloom taxonomy coverage for an outline."""
 
+    classify = classifier or classify_bloom_level
     counts: Dict[str, int] = {level: 0 for level in BLOOM_LEVELS}
     for objective in outline.learning_objectives:
-        level = _classify_text(objective)
+        level = classify(objective)
         if level in counts:
             counts[level] += 1
     for act in outline.activities:
         for obj in act.learning_objectives:
-            level = _classify_text(obj)
+            level = classify(obj)
             if level in counts:
                 counts[level] += 1
     covered = {lvl for lvl, cnt in counts.items() if cnt > 0}
