@@ -13,8 +13,8 @@ web_module = importlib.import_module("web.researcher_web")
 @pytest.mark.asyncio
 async def test_researcher_web_deduplicates_and_fetches_concurrently():
     urls = [
-        "https://Example.com/path",
-        "http://example.com/path/",
+        "https://Example.com/path1",
+        "http://example.com/path2",
         "https://another.com/article",
     ]
     call_count = 0
