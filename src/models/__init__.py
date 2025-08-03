@@ -6,10 +6,14 @@ from .critique_report import (
     CognitiveLoadReport,
     CritiqueReport,
 )
+from .fact_check_report import ClaimFlag, FactCheckReport, SentenceProbability
 
 __all__ = [
     "ActivityDiversityReport",
     "BloomCoverageReport",
     "CognitiveLoadReport",
     "CritiqueReport",
+    "FactCheckReport",
+    "SentenceProbability",
+    "ClaimFlag",
 ]

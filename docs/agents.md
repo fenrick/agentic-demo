@@ -7,3 +7,7 @@ content rather than simple keyword heuristics.
 The pedagogy critic, for example, prompts an LLM to map learning objectives to
 Bloom's taxonomy levels. If an LLM is unavailable the agent falls back to a
 lightweight keyword lookup, but high-quality runs should prefer the LLM path.
+
+The fact checker analyzes generated content for hallucinations and unsupported
+claims. It scores sentence confidence and flags phrases like "studies show"
+when no citation is present, providing structured feedback for authors.

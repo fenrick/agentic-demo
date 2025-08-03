@@ -2,27 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-
-from core.state import State
-from models import CritiqueReport
+from models import CritiqueReport, FactCheckReport
 from .pedagogy_critic import run_pedagogy_critic
-
-
-@dataclass(slots=True)
-class FactCheckReport:
-    """Report from the fact checker."""
-
-    issues: list[str] = field(default_factory=list)
-
-
-async def run_fact_checker(state: State) -> FactCheckReport:
-    """Flag potential hallucinations.
-
-    TODO: Implement real fact-checking logic.
-    """
-
-    return FactCheckReport()
+from .fact_checker import run_fact_checker
 
 
 __all__ = [
