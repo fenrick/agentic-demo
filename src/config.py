@@ -6,6 +6,7 @@ Exposes configuration via a :class:`pydantic_settings.BaseSettings` subclass.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import List
 
 from dotenv import load_dotenv
 from pydantic import Field
@@ -52,6 +53,11 @@ class Settings(BaseSettings):
         False,
         alias="OFFLINE_MODE",
         description="Run application without external network calls.",
+    )
+    allowlist_domains: List[str] = Field(
+        default_factory=lambda: ["wikipedia.org", ".edu", ".gov"],
+        alias="ALLOWLIST_DOMAINS",
+        description="Domain patterns permitted for citation use.",
     )
 
     model_config = SettingsConfigDict(

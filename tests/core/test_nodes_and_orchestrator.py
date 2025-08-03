@@ -8,8 +8,7 @@ from langgraph.graph import END, START
 from core.nodes.planner import PlanResult, run_planner
 from core.nodes.researcher_web import run_researcher_web
 from core.orchestrator import GraphOrchestrator
-from core.state import Citation, Outline, State
-from web.researcher_web import CitationResult
+from core.state import Outline, State
 
 
 class OrchestratorState(State):
@@ -29,21 +28,24 @@ async def test_run_planner_returns_plan_result() -> None:
 
 @pytest.mark.asyncio
 async def test_run_researcher_web_delegates(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Researcher node should delegate to web helper."""
-    seen: list[list[str]] = []
+    """Researcher node should delegate to the pipeline."""
+    seen: list[tuple[str, State]] = []
 
-    async def fake_helper(urls: list[str]) -> list[CitationResult]:
-        seen.append(urls)
-        return [CitationResult(url=u, content="") for u in urls]
+    async def fake_pipeline(query: str, state: State):
+        seen.append((query, state))
 
-    monkeypatch.setattr("core.nodes.researcher_web.researcher_web", fake_helper)
+        class Obj:
+            def __init__(self, url: str) -> None:
+                self.url = url
 
-    state = OrchestratorState(
-        sources=[Citation(url="https://a"), Citation(url="https://b")]
-    )
+        return [Obj("https://a"), Obj("https://b")]
+
+    monkeypatch.setattr("core.nodes.researcher_web.researcher_pipeline", fake_pipeline)
+
+    state = OrchestratorState(prompt="q")
     results = await run_researcher_web(state)
-    assert seen == [["https://a", "https://b"]]
     assert [r.url for r in results] == ["https://a", "https://b"]
+    assert seen and seen[0][0] == "q"
 
 
 def test_orchestrator_wires_graph() -> None:

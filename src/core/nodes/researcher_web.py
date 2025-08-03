@@ -1,18 +1,17 @@
-"""Researcher node invoking the web helper."""
+"""Researcher node delegating to the researcher pipeline."""
 
 from __future__ import annotations
 
 from typing import List
 
-from core.state import State
-from web.researcher_web import CitationResult, researcher_web
+from agents.researcher_pipeline import researcher_pipeline
+from core.state import Citation as StateCitation, State
 
 
-async def run_researcher_web(state: State) -> List[CitationResult]:
-    """Fire off web searches and return ranked snippets + metadata.
+async def run_researcher_web(state: State) -> List[StateCitation]:
+    """Execute the web research pipeline and update state sources."""
 
-    TODO: Enhance with query generation and ranking algorithms.
-    """
-
-    urls = [c.url for c in state.sources]
-    return await researcher_web(urls)
+    citations = await researcher_pipeline(state.prompt, state)
+    new_sources = [StateCitation(url=c.url) for c in citations]
+    state.sources.extend(new_sources)
+    return new_sources
