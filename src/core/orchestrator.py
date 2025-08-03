@@ -25,6 +25,9 @@ try:  # pragma: no cover - import path varies with package version
 except ModuleNotFoundError:  # pragma: no cover
     from langgraph.checkpoint.sqlite import SqliteSaver as SqliteCheckpointSaver
 
+from core.state import State
+from core.agents import planner, researcher_web, content_weaver, pedagogy_critic, fact_checker, approver, exporter
+
 
 @dataclass(slots=True)
 class PlanResult:
@@ -39,62 +42,7 @@ class PlanResult:
     confidence: float = 0.0
 
 
-async def planner(state: State) -> PlanResult:
-    """Draft a plan from the current state.
 
-    Purpose:
-        Prepare an outline and confidence score for guiding further steps.
-
-    Inputs:
-        state: Current :class:`State` of the run.
-
-    Outputs:
-        :class:`PlanResult` containing the state's outline and confidence.
-
-    Side Effects:
-        None.
-
-    Exceptions:
-        None.
-    """
-
-    outline = state.outline
-    confidence = getattr(state, "confidence", 0.0)
-    return PlanResult(outline=outline, confidence=confidence)
-
-
-async def researcher_web(state: State) -> Dict[str, List[CitationResult]]:
-    """Collect citations from the web concurrently and deduplicate them.
-
-    Purpose:
-        Fetch external information sources based on URLs in ``state.sources``.
-
-    Inputs:
-        state: Current :class:`State` whose ``sources`` provide seed URLs.
-
-    Outputs:
-        Mapping with ``"sources"`` updated to a deduplicated list of
-        :class:`CitationResult` objects.
-
-    Side Effects:
-        Performs network I/O via the helper in :mod:`web.researcher_web`.
-
-    Exceptions:
-        Propagated from the underlying fetches after helper-level handling.
-    """
-
-    urls = [c.url for c in state.sources]
-    citations = await _web_research(urls)
-    return {"sources": citations}
-
-
-async def writer(state: State) -> State:
-    """Placeholder writer node.
-
-    Currently returns the ``state`` unchanged.
-    """
-
-    return state
 
 
 async def _evaluate(state: State) -> float:  # pragma: no cover - patched in tests
@@ -130,15 +78,23 @@ async def critic(state: State) -> State:
 
 # Build orchestration graph
 graph = StateGraph(State)
-graph.add_node("Planner", planner, streams="values")  # type: ignore[arg-type, call-overload]
-graph.add_node("Researcher", researcher_web, streams="updates")  # type: ignore[arg-type, call-overload]
-graph.add_node("Writer", writer, streams="values")  # type: ignore[arg-type, call-overload]
-graph.add_node("Critic", critic, streams="values")  # type: ignore[arg-type, call-overload]
+graph.add_node(planner, name="Planner", streams="values")
+graph.add_node(researcher_web, name="Researcher-Web", streams="updates")
+graph.add_node(content_weaver, name="Content-Weaver", streams="messages")
+graph.add_node(pedagogy_critic, name="Pedagogy-Critic", streams="debug")
+graph.add_node(fact_checker, name="Fact-Checker", streams="debug")
+graph.add_node(approver, name="Human-In-Loop", streams="values")
+graph.add_node(exporter, name="Exporter")
 
 graph.add_edge(START, "Planner")
-graph.add_edge("Researcher", "Planner")
-graph.add_edge("Writer", "Critic")
-graph.add_edge("Critic", END)
+graph.add_edge("Planner", "Researcher-Web")
+graph.add_edge("Researcher-Web", "Content-Weaver")
+graph.add_edge("Content-Weaver", "Pedagogy-Critic")
+graph.add_edge("Content-Weaver", "Fact-Checker")
+graph.add_edge("Pedagogy-Critic", "Approver")
+graph.add_edge("Fact-Checker", "Approver")
+graph.add_edge("Approver", "Exporter")
+graph.add_edge("Exporter", END)
 
 
 def planner_router(plan: PlanResult) -> str:
