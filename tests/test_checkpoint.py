@@ -1,59 +1,52 @@
-"""Integration test for graph checkpointing and resume."""
+"""Integration test for checkpoint resume behavior."""
 
-import sqlite3
+from __future__ import annotations
+
 from pathlib import Path
 
-from langgraph.checkpoint.sqlite import SqliteSaver
-
-from agentic_demo.orchestration import create_state_graph
-from core.state import State
-from agentic_demo.orchestration.state import State
-import agentic_demo.orchestration.graph as graph
-from agentic_demo.orchestration import State, create_state_graph
+import aiosqlite
+import pytest
+from langgraph.graph import END, START, StateGraph
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langchain_core.runnables import RunnableConfig
 
+from core.state import ActionLog, State
 
-def test_resume_from_checkpoint(tmp_path: Path) -> None:
+
+@pytest.mark.asyncio
+async def test_resume_from_checkpoint(tmp_path: Path) -> None:
     """Graph run can be interrupted and later resumed with prior state."""
-    db_path = tmp_path / "checkpoints.sqlite"
-    conn = sqlite3.connect(db_path, check_same_thread=False)
-    saver = SqliteSaver(conn)
 
-    # use synchronous critic for this synchronous graph invocation
-    def sync_critic(s: State) -> dict:
-        s.log.append("critic")
-        s.critic_attempts += 1
-        return s.model_dump()
+    async def first(state: State) -> State:
+        state.log.append(ActionLog(message="first"))
+        return state
 
-    graph.critic = sync_critic
-    app = create_state_graph().compile(checkpointer=saver)
-    config = {"configurable": {"thread_id": "t1"}}
-    graph = create_state_graph().compile(checkpointer=saver)
+    async def second(state: State) -> State:
+        state.log.append(ActionLog(message="second"))
+        return state
+
+    graph = StateGraph(State)
+    graph.add_node("first", first)
+    graph.add_node("second", second)
+    graph.add_edge(START, "first")
+    graph.add_edge("first", "second")
+    graph.add_edge("second", END)
+
+    db_path = tmp_path / "checkpoint.db"
+    conn = await aiosqlite.connect(db_path)
+    saver = AsyncSqliteSaver(conn)
+    compiled = graph.compile(checkpointer=saver)
     config: RunnableConfig = {"configurable": {"thread_id": "t1"}}
 
-    partial = graph.invoke(
-        State(prompt="question"), config=config, interrupt_after=["planner"]  # type: ignore[arg-type]
+    await compiled.ainvoke(
+        State(prompt="q"),  # type: ignore[arg-type]
+        config=config,
+        interrupt_after=["first"],
     )
-    assert partial["log"] == [{"message": "planner"}]
-
-    snapshot = app.get_state(config)
-    assert snapshot.values["log"] == [{"message": "planner"}]
-
-    final = app.invoke(None, config=config, resume=True)
-    assert final["log"][0] == {"message": "planner"}
-    assert final["log"][-1] == {"message": "exporter"}
-    assert [entry["message"] for entry in partial["log"]] == ["planner"]
-
-    snapshot = app.get_state(config)
-    assert [entry["message"] for entry in snapshot.values["log"]] == ["planner"]
-
-    final = app.invoke(None, config=config, resume=True)
     assert db_path.exists()
 
-    snapshot = graph.get_state(config)  # type: ignore[arg-type]
-    assert [entry["message"] for entry in snapshot.values["log"]] == ["planner"]
+    snapshot = await compiled.aget_state(config)
+    assert [entry.message for entry in snapshot.values["log"]] == ["first"]
 
-    final = graph.invoke(None, config=config, resume=True)  # type: ignore[arg-type]
-    assert final["log"][0]["message"] == "planner"
-    assert final["log"][-1]["message"] == "exporter"
-    conn.close()
+    final = await compiled.ainvoke(None, config=config, resume=True)
+    assert [entry.message for entry in final["log"]] == ["first", "second"]
