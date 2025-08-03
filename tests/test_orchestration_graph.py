@@ -5,6 +5,7 @@ import pytest
 from agentic_demo.orchestration import (
     compile_graph,
     create_state_graph,
+    researcher_web,
     stream_updates,
     stream_values,
 )

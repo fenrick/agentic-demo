@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict
 from typing import Any, AsyncGenerator, TYPE_CHECKING
 
 from langgraph.graph import END, START, StateGraph
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover - used only for type checking
     from langgraph.graph import CompiledGraph  # type: ignore[attr-defined]
@@ -16,9 +15,8 @@ else:  # pragma: no cover - runtime import with graceful fallback
     except Exception:
         CompiledGraph = Any  # type: ignore[assignment]
 
-from .state import State
+from .state import ActionLog, Citation, State
 from .retry import retry_async
-from core.state import ActionLog, Citation, State
 
 
 # ``langgraph`` does not expose a stable ``CompiledGraph`` in all versions. For
@@ -63,7 +61,6 @@ def content_weaver(state: State) -> dict:
     return state.model_dump()
 
 
-
 # TODO: Replace placeholder evaluation with real model call
 async def _evaluate(state: State) -> float:  # pragma: no cover - patched in tests
     """Evaluate content and return a score.
@@ -89,27 +86,19 @@ async def critic(state: State) -> dict:
         Updated state with critic step recorded.
 
     Side Effects:
-        Appends ``"critic"`` to ``state.log`` and updates ``critic_score`` and
-        ``critic_attempts`` only after a successful evaluation.
+        Appends ``ActionLog('critic')`` to ``state.log`` and updates
+        ``critic_score`` and ``critic_attempts`` only after a successful
+        evaluation.
 
     Exceptions:
         Propagates the last exception if all retries fail.
     """
 
     score = await _evaluate(state)
-    state.log.append("critic")
-    state.critic_attempts += 1
-    state.critic_score = score
-    return asdict(state)
-
-
-# TODO: Integrate human approval workflows
-def critic(state: State) -> dict:
-    """Critically evaluate the woven content."""
-
     state.log.append(ActionLog(message="critic"))
-    return state.model_dump()
-
+    state.critic_attempts += 1  # type: ignore[attr-defined]
+    state.critic_score = score  # type: ignore[attr-defined]
+    return asdict(state)
 
 
 def approver(state: State) -> dict:

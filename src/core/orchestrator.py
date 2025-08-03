@@ -3,11 +3,21 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import sqlite3
+from pathlib import Path
 from typing import List
 
 from langgraph.graph import END, START, StateGraph
+from langgraph.graph.state import CompiledStateGraph
 
-from agentic_demo.orchestration.state import State
+from agentic_demo.config import Settings
+from agentic_demo.orchestration.state import ActionLog, Outline, State
+from tenacity import retry, stop_after_attempt
+
+try:  # pragma: no cover - import path varies with package version
+    from langgraph_checkpoint_sqlite import SqliteCheckpointSaver  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover
+    from langgraph.checkpoint.sqlite import SqliteSaver as SqliteCheckpointSaver
 
 
 @dataclass(slots=True)
@@ -19,7 +29,7 @@ class PlanResult:
         confidence: Planner's confidence score.
     """
 
-    outline: List[str]
+    outline: Outline | None
     confidence: float
 
 
@@ -48,7 +58,9 @@ async def planner(state: State) -> PlanResult:
         PlanResult echoing the state's outline and confidence.
     """
 
-    return PlanResult(outline=state.outline, confidence=state.confidence)
+    return PlanResult(
+        outline=state.outline, confidence=getattr(state, "confidence", 0.0)
+    )
 
 
 async def researcher_web(state: State) -> List[CitationResult]:
@@ -63,7 +75,7 @@ async def researcher_web(state: State) -> List[CitationResult]:
         List of :class:`CitationResult` mirroring provided sources.
     """
 
-    return [CitationResult(url=src, title=src) for src in state.sources]
+    return [CitationResult(url=src.url, title=src.url) for src in state.sources]
 
 
 async def writer(state: State) -> State:
@@ -81,18 +93,46 @@ async def writer(state: State) -> State:
     return state
 
 
-async def critic(state: State) -> State:
-    """Placeholder critic node.
+async def _evaluate(state: State) -> float:  # pragma: no cover - patched in tests
+    """Return a dummy quality score.
 
-    TODO: Evaluate drafted content for quality and consistency.
+    TODO: Replace with model-based evaluation.
 
     Args:
         state: The evolving orchestration state.
 
     Returns:
-        Unmodified state for now.
+        Placeholder score used in tests.
     """
 
+    return 1.0
+
+
+@retry(stop=stop_after_attempt(3), reraise=True)
+async def critic(state: State) -> State:
+    """Evaluate content quality with retry on transient errors.
+
+    Purpose:
+        Ensure drafted content meets quality standards while gracefully
+        handling transient evaluation failures.
+
+    Inputs:
+        state: The evolving orchestration state.
+
+    Outputs:
+        The same ``state`` with a critic log entry appended upon success.
+
+    Side Effects:
+        Appends :class:`ActionLog`("critic") to ``state.log`` only after a
+        successful evaluation.
+
+    Exceptions:
+        Propagates the last exception from ``_evaluate`` after exhausting
+        retries.
+    """
+
+    await _evaluate(state)
+    state.log.append(ActionLog(message="critic"))
     return state
 
 
@@ -116,7 +156,7 @@ def planner_router(state: State) -> str:
         ``"research"`` to loop back or ``"write"`` when confident.
     """
 
-    return "research" if state.confidence < 0.9 else "write"
+    return "research" if getattr(state, "confidence", 0.0) < 0.9 else "write"
 
 
 graph.add_conditional_edges(
@@ -125,24 +165,6 @@ graph.add_conditional_edges(
 graph.add_edge("Researcher", "Planner")
 graph.add_edge("Writer", "Critic")
 graph.add_edge("Critic", END)
-"""Graph orchestration utilities."""
-
-from __future__ import annotations
-
-from pathlib import Path
-import sqlite3
-
-from langgraph.graph import StateGraph
-from langgraph.graph.state import CompiledStateGraph
-
-from agentic_demo.config import Settings
-
-try:  # pragma: no cover - import path varies with package version
-    from langgraph_checkpoint_sqlite import SqliteCheckpointSaver  # type: ignore
-except ModuleNotFoundError:  # pragma: no cover
-    from langgraph.checkpoint.sqlite import SqliteSaver as SqliteCheckpointSaver
-
-
 # TODO: Handle alternative checkpoint backends beyond SQLite.
 
 
@@ -168,7 +190,7 @@ def compile_with_sqlite_checkpoint(
         Propagates from file system access or graph compilation.
     """
 
-    data_dir = data_dir or Settings().DATA_DIR  # type: ignore[call-arg]
+    data_dir = data_dir or Settings().DATA_DIR  # type: ignore[attr-defined, call-arg]
     data_dir.mkdir(parents=True, exist_ok=True)
     db_path = data_dir / "checkpoint.db"
 
