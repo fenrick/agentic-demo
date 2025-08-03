@@ -16,6 +16,7 @@ else:  # pragma: no cover - runtime import with graceful fallback
     except Exception:
         CompiledGraph = Any  # type: ignore[assignment]
 
+from core.state import ActionLog, Citation, State
 from .retry import retry_async
 from .state import State
 
@@ -59,6 +60,14 @@ def content_weaver(state: State) -> dict:
     """Weave gathered content into coherent form."""
 
     state.log.append("content_weaver")
+    return state.model_dump()
+
+
+# TODO: Integrate human approval workflows
+def critic(state: State) -> dict:
+    """Critically evaluate the woven content."""
+
+    state.log.append(ActionLog(message="critic"))
     return state.model_dump()
 
 

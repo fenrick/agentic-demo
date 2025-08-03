@@ -6,6 +6,7 @@ from pathlib import Path
 from langgraph.checkpoint.sqlite import SqliteSaver
 
 from agentic_demo.orchestration import create_state_graph
+from core.state import State
 from agentic_demo.orchestration.state import State
 import agentic_demo.orchestration.graph as graph
 from agentic_demo.orchestration import State, create_state_graph
@@ -34,6 +35,11 @@ def test_resume_from_checkpoint(tmp_path: Path) -> None:
         State(prompt="question"), config=config, interrupt_after=["planner"]  # type: ignore[arg-type]
     )
     assert [entry["message"] for entry in partial["log"]] == ["planner"]
+
+    snapshot = app.get_state(config)
+    assert [entry["message"] for entry in snapshot.values["log"]] == ["planner"]
+
+    final = app.invoke(None, config=config, resume=True)
     assert db_path.exists()
 
     snapshot = graph.get_state(config)  # type: ignore[arg-type]
