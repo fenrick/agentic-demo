@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from langgraph.graph import END, START
 
-from agentic_demo.orchestration.state import State
+from core.state import Citation, Outline, State
 from core.orchestrator import (
     CitationResult,
     PlanResult,
@@ -19,21 +19,20 @@ from core.orchestrator import (
 
 @pytest.mark.asyncio
 async def test_planner_returns_plan_result() -> None:
-    """Planner should echo outline and confidence from state."""
-    state = State(outline=["step"], confidence=0.1)
+    """Planner should echo outline from state."""
+    state = State(outline=Outline(steps=["step"]))
     result = await planner(state)
     assert isinstance(result, PlanResult)
-    assert result.outline == state.outline
-    assert result.confidence == state.confidence
+    assert result.outline == ["step"]
 
 
 @pytest.mark.asyncio
 async def test_researcher_web_returns_citation_results() -> None:
     """Researcher should wrap sources into citation results."""
-    state = State(sources=["https://a"])
+    state = State(sources=[Citation(url="https://a")])
     results = await researcher_web(state)
     assert all(isinstance(r, CitationResult) for r in results)
-    assert [r.url for r in results] == state.sources
+    assert [r.url for r in results] == [c.url for c in state.sources]
 
 
 @pytest.mark.asyncio

@@ -8,7 +8,7 @@ import pytest
 from langgraph.graph import StateGraph
 from langgraph.checkpoint.sqlite import SqliteSaver
 
-from agentic_demo.orchestration.state import State
+from core.state import State
 from core import orchestrator
 
 
