@@ -27,7 +27,7 @@ class PersistenceManager:
         async with aiosqlite.connect(self._db_path) as conn:
             state_repo = StateRepo(conn)
             state_id = await state_repo.save_state(state)
-            blob = ParquetSerializer.dumps(outline)
+            blob = ParquetSerializer.serialize_outline(outline)
             doc_repo = DocumentRepo(conn)
             await doc_repo.save_document_version(state_id, blob)
 
@@ -42,5 +42,5 @@ class PersistenceManager:
                 state = await state_repo.get_state_by_version(version)
             doc_repo = DocumentRepo(conn)
             blob = await doc_repo.load_latest_document(version)
-            outline = ParquetSerializer.loads(blob)
+            outline = ParquetSerializer.deserialize_outline(blob)
             return state, outline
