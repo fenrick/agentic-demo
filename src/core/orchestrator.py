@@ -17,6 +17,10 @@ from core.nodes.content_weaver import run_content_weaver
 from core.nodes.critics import run_fact_checker, run_pedagogy_critic
 from core.nodes.approver import run_approver
 from core.nodes.exporter import run_exporter
+from core.policies import (
+    policy_retry_on_critic_failure,
+    policy_retry_on_low_confidence,
+)
 
 try:  # pragma: no cover - import path varies with package version
     from langgraph_checkpoint_sqlite import SqliteCheckpointSaver  # type: ignore
@@ -48,12 +52,24 @@ class GraphOrchestrator:
             raise RuntimeError("Graph must be initialized before registering edges")
         graph = self.graph
         graph.add_edge(START, "Planner")
-        graph.add_edge("Planner", "Researcher-Web")
-        graph.add_edge("Researcher-Web", "Content-Weaver")
+        graph.add_conditional_edges(
+            "Planner",
+            policy_retry_on_low_confidence,
+            {True: "Researcher-Web", False: "Content-Weaver"},
+        )
+        graph.add_edge("Researcher-Web", "Planner")
         graph.add_edge("Content-Weaver", "Pedagogy-Critic")
         graph.add_edge("Content-Weaver", "Fact-Checker")
-        graph.add_edge("Pedagogy-Critic", "Human-In-Loop")
-        graph.add_edge("Fact-Checker", "Human-In-Loop")
+        graph.add_conditional_edges(
+            "Pedagogy-Critic",
+            policy_retry_on_critic_failure,
+            {True: "Content-Weaver", False: "Human-In-Loop"},
+        )
+        graph.add_conditional_edges(
+            "Fact-Checker",
+            policy_retry_on_critic_failure,
+            {True: "Content-Weaver", False: "Human-In-Loop"},
+        )
         graph.add_edge("Human-In-Loop", "Exporter")
         graph.add_edge("Exporter", END)
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import field as dc_field
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
 from pydantic.dataclasses import dataclass
@@ -52,6 +52,7 @@ class State:
         sources: Collected citations from research steps.
         outline: Draft structure for the eventual output.
         log: List of actions performed so far.
+        retries: Mapping of node name to how many times it has retried.
         version: Monotonic revision number for persistence.
     """
 
@@ -63,6 +64,8 @@ class State:
     outline: Optional[Outline] = None
     # TODO: Include structured log entries with metadata like timestamps.
     log: List[ActionLog] = dc_field(default_factory=list)
+    # TODO: Track retry counts for individual nodes.
+    retries: Dict[str, int] = dc_field(default_factory=dict)
     # TODO: Revisit versioning strategy for future schema evolution.
     version: int = 1
 
@@ -78,6 +81,7 @@ class State:
             "sources": [source.model_dump() for source in self.sources],
             "outline": self.outline.model_dump() if self.outline else None,
             "log": [entry.model_dump() for entry in self.log],
+            "retries": self.retries,
             "version": self.version,
         }
 
@@ -96,6 +100,7 @@ class State:
             sources=[Citation(**c) for c in raw.get("sources", [])],
             outline=Outline(**raw["outline"]) if raw.get("outline") else None,
             log=[ActionLog(**entry_data) for entry_data in raw.get("log", [])],
+            retries=raw.get("retries", {}),
             version=raw.get("version", 1),
         )
 

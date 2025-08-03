@@ -64,7 +64,9 @@ def test_orchestrator_wires_graph() -> None:
         "Exporter",
     }.issubset(nodes)
     assert (START, "Planner") in graph.edges
-    assert ("Researcher-Web", "Content-Weaver") in graph.edges
+    assert ("Planner", "Researcher-Web") in graph.edges
+    assert ("Planner", "Content-Weaver") in graph.edges
+    assert ("Researcher-Web", "Planner") in graph.edges
     assert ("Human-In-Loop", "Exporter") in graph.edges
     assert ("Exporter", END) in graph.edges
 

@@ -38,6 +38,7 @@ def test_state_defaults() -> None:
     assert state.sources == []
     assert state.outline is None
     assert state.log == []
+    assert state.retries == {}
     assert state.version == 1
 
 
