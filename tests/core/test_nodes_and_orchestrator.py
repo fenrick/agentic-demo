@@ -5,8 +5,8 @@ from __future__ import annotations
 import pytest
 from langgraph.graph import END, START
 
-from core.nodes.planner import PlanResult, run_planner
-from core.nodes.researcher_web import run_researcher_web
+from agents.planner import PlanResult, run_planner
+from agents.researcher_web_node import run_researcher_web
 from core.orchestrator import GraphOrchestrator
 from core.state import Outline, State
 
@@ -40,7 +40,7 @@ async def test_run_researcher_web_delegates(monkeypatch: pytest.MonkeyPatch) -> 
 
         return [Obj("https://a"), Obj("https://b")]
 
-    monkeypatch.setattr("core.nodes.researcher_web.researcher_pipeline", fake_pipeline)
+    monkeypatch.setattr("agents.researcher_web_node.researcher_pipeline", fake_pipeline)
 
     state = OrchestratorState(prompt="q")
     results = await run_researcher_web(state)
@@ -82,7 +82,7 @@ async def test_start_invokes_planner(monkeypatch: pytest.MonkeyPatch) -> None:
         called["prompt"] = state.prompt
         return PlanResult()
 
-    monkeypatch.setattr("core.nodes.planner.run_planner", fake_planner)
+    monkeypatch.setattr("agents.planner.run_planner", fake_planner)
     orchestrator = GraphOrchestrator()
     result = await orchestrator.start("hello")
     assert called["prompt"] == "hello"
