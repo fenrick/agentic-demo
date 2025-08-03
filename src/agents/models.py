@@ -25,11 +25,39 @@ class SlideBullet:
 
 
 @dataclass(slots=True)
+class AssessmentItem:
+    """Assessment or quiz used to evaluate understanding."""
+
+    type: str
+    description: str
+    max_score: Optional[float] = None
+
+
+@dataclass(slots=True)
+class Citation:
+    """Reference to an external source."""
+
+    url: str
+    title: str
+    retrieved_at: str
+    licence: Optional[str] = None
+
+
+@dataclass(slots=True)
 class WeaveResult:
     """Typed container mirroring the weave schema output."""
 
+    title: str
     learning_objectives: List[str]
     activities: List[Activity]
     duration_min: int
+    author: Optional[str] = None
+    date: Optional[str] = None
+    version: Optional[str] = None
+    summary: Optional[str] = None
+    tags: Optional[List[str]] = None
+    prerequisites: Optional[List[str]] = None
     slide_bullets: Optional[List[SlideBullet]] = None
     speaker_notes: Optional[str] = None
+    assessment: Optional[List[AssessmentItem]] = None
+    references: Optional[List[Citation]] = None

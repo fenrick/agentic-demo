@@ -10,7 +10,13 @@ from typing import AsyncGenerator, List
 from jsonschema import Draft202012Validator
 
 from core.state import State
-from .models import Activity, SlideBullet, WeaveResult
+from .models import (
+    Activity,
+    SlideBullet,
+    AssessmentItem,
+    Citation,
+    WeaveResult,
+)
 
 
 class RetryableError(RuntimeError):
@@ -123,12 +129,31 @@ async def content_weaver(state: State) -> WeaveResult:
         if payload.get("slide_bullets")
         else None
     )
+    assessment = (
+        [AssessmentItem(**a) for a in payload.get("assessment", [])]
+        if payload.get("assessment")
+        else None
+    )
+    references = (
+        [Citation(**c) for c in payload.get("references", [])]
+        if payload.get("references")
+        else None
+    )
     return WeaveResult(
+        title=payload.get("title", ""),
         learning_objectives=payload.get("learning_objectives", []),
         activities=activities,
         duration_min=payload.get("duration_min", 0),
+        author=payload.get("author"),
+        date=payload.get("date"),
+        version=payload.get("version"),
+        summary=payload.get("summary"),
+        tags=payload.get("tags"),
+        prerequisites=payload.get("prerequisites"),
         slide_bullets=slide_bullets,
         speaker_notes=payload.get("speaker_notes"),
+        assessment=assessment,
+        references=references,
     )
 
 
