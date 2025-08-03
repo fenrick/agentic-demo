@@ -24,9 +24,14 @@ class RetryableError(RuntimeError):
 
 
 def stream_messages(token: str) -> None:
-    """Placeholder streamer forwarding ``token`` to an observer."""
+    """Forward ``token`` over the LangGraph "messages" channel."""
 
-    print(token, end="", flush=True)
+    try:
+        from langgraph_sdk import stream  # type: ignore
+
+        stream("messages", token)
+    except Exception:  # pragma: no cover - optional dependency
+        print(token, end="", flush=True)
 
 
 _schema_cache: dict | None = None
