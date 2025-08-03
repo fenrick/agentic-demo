@@ -1,5 +1,7 @@
 """Tests for the :mod:`agentic_demo.config` module."""
 
+# ruff: noqa
+
 from __future__ import annotations
 
 import importlib
