@@ -16,6 +16,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
 from agentic_demo.config import Settings
+from core.state import State
 from agentic_demo.orchestration.state import ActionLog, Outline, State
 from tenacity import retry, stop_after_attempt
 
@@ -35,6 +36,7 @@ class PlanResult:
         outline: Proposed outline for the document.
     """
 
+    outline: List[str]
     outline: Outline | None
     confidence: float
 
@@ -64,6 +66,8 @@ async def planner(state: State) -> PlanResult:
         PlanResult echoing the state's outline.
     """
 
+    steps = state.outline.steps if state.outline else []
+    return PlanResult(outline=steps)
     return PlanResult(
         outline=state.outline, confidence=getattr(state, "confidence", 0.0)
     )
@@ -72,8 +76,6 @@ async def planner(state: State) -> PlanResult:
 
 async def researcher_web(state: State) -> List[CitationResult]:
     """Collect citations from the web.
-
-    TODO: Implement real web retrieval and citation scoring.
 
     Args:
         state: The evolving orchestration state containing source hints.
@@ -86,20 +88,13 @@ async def researcher_web(state: State) -> List[CitationResult]:
 
 
 async def writer(state: State) -> State:
-    """Placeholder writer node.
-
-    TODO: Weave researched content into final narrative.
-
-    Args:
-        state: The evolving orchestration state.
-
-    Returns:
-        Unmodified state for now.
-    """
+    """Placeholder writer node."""
 
     return state
 
 
+async def critic(state: State) -> State:
+    """Placeholder critic node."""
 async def _evaluate(state: State) -> float:  # pragma: no cover - patched in tests
     """Return a dummy quality score.
 
@@ -143,11 +138,10 @@ async def critic(state: State) -> State:
     return state
 
 
+# Build orchestration graph
 graph = StateGraph(State)
 graph.add_node("Planner", planner, streams="values")  # type: ignore[arg-type, call-overload]
-graph.add_node(
-    "Researcher", researcher_web, streams="updates"
-)  # type: ignore[arg-type, call-overload]
+graph.add_node("Researcher", researcher_web, streams="updates")  # type: ignore[arg-type, call-overload]
 graph.add_node("Writer", writer, streams="values")  # type: ignore[arg-type, call-overload]
 graph.add_node("Critic", critic, streams="values")  # type: ignore[arg-type, call-overload]
 
@@ -155,8 +149,9 @@ graph.add_edge(START, "Planner")
 
 
 def planner_router(state: State) -> str:
-    """Decide whether more research is required.
+    """Decide whether more research is required."""
 
+    return "research" if not state.sources else "write"
     Args:
         state: Current state carrying collected sources.
 
@@ -175,6 +170,9 @@ graph.add_conditional_edges(
 graph.add_edge("Researcher", "Planner")
 graph.add_edge("Writer", "Critic")
 graph.add_edge("Critic", END)
+
+
+# TODO: Handle alternative checkpoint backends beyond SQLite.
 """Graph orchestration utilities."""
 
 from pathlib import Path
@@ -234,31 +232,32 @@ def compile_with_sqlite_checkpoint(
 ) -> CompiledStateGraph:
     """Compile ``graph`` with SQLite-backed checkpointing.
 
-    Purpose:
-        Ensure graphs persist state between runs using a SQLite checkpoint saver.
-
-    Inputs:
+    Args:
         graph: StateGraph to compile.
         data_dir: Optional directory for database storage. Defaults to ``Settings.DATA_DIR``.
 
-    Outputs:
+    Returns:
         Compiled graph configured with a SQLite checkpoint saver.
-
-    Side Effects:
-        Creates ``data_dir`` and a ``checkpoint.db`` file if absent.
-
-    Exceptions:
-        Propagates from file system access or graph compilation.
     """
 
+    data_dir = data_dir or Settings().data_dir  # type: ignore[attr-defined, call-arg]
     data_dir = data_dir or Settings().DATA_DIR  # type: ignore[attr-defined, call-arg]
     data_dir = data_dir or Settings().data_dir  # type: ignore[call-arg]
     data_dir.mkdir(parents=True, exist_ok=True)
     db_path = data_dir / "checkpoint.db"
 
     try:
+        from langgraph_checkpoint_sqlite import SqliteCheckpointSaver  # type: ignore
+
         saver = SqliteCheckpointSaver(path=str(db_path))  # type: ignore[arg-type]
+    except ModuleNotFoundError:  # pragma: no cover
+        from langgraph.checkpoint.sqlite import SqliteSaver as SqliteCheckpointSaver
+
+        conn = sqlite3.connect(db_path, check_same_thread=False)
+        saver = SqliteCheckpointSaver(conn)  # type: ignore[arg-type]
     except TypeError:  # pragma: no cover - fallback for older API
+        from langgraph.checkpoint.sqlite import SqliteSaver as SqliteCheckpointSaver
+
         conn = sqlite3.connect(db_path, check_same_thread=False)
         saver = SqliteCheckpointSaver(conn)  # type: ignore[arg-type]
     """Compile ``graph`` with SQLite-backed checkpointing."""

@@ -75,7 +75,7 @@ def critic(state: State) -> dict:
 
 
 # TODO: Replace placeholder evaluation with real model call
-async def _evaluate(state: State) -> float:  # pragma: no cover - patched in tests
+def _evaluate(state: State) -> float:  # pragma: no cover - patched in tests
     """Evaluate content and return a score.
 
     Args:
@@ -86,6 +86,25 @@ async def _evaluate(state: State) -> float:  # pragma: no cover - patched in tes
     """
 
     return 1.0
+
+
+def critic(state: State) -> dict:
+    """Critically evaluate the woven content with retries."""
+
+    attempts = 0
+    while True:
+        try:
+            _evaluate(state)
+            break
+        except Exception:  # pragma: no cover - exercised via tests
+            attempts += 1
+            if attempts >= 3:
+                raise
+    state.log.append(ActionLog(message="critic"))
+    return state.model_dump()
+
+
+# TODO: Integrate human approval workflows in a separate step
 
 
 @retry_async(max_retries=3)

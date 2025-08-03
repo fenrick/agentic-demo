@@ -26,5 +26,6 @@ def test_json_round_trip():
         version=2,
     )
     json_data = state.model_dump_json()
+    assert isinstance(json_data, str)
     new_state = State.model_validate_json(json_data)
     assert new_state == state

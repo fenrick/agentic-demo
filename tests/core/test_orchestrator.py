@@ -21,6 +21,10 @@ from core.orchestrator import (
 @pytest.mark.asyncio
 async def test_planner_returns_plan_result() -> None:
     """Planner should echo outline from state."""
+    state = State(outline=Outline(steps=["step"]))
+    result = await planner(state)
+    assert isinstance(result, PlanResult)
+    assert result.outline == ["step"]
     outline = Outline(steps=["step"])
     state = State(outline=outline)
     result = await planner(state)
@@ -31,6 +35,10 @@ async def test_planner_returns_plan_result() -> None:
 @pytest.mark.asyncio
 async def test_researcher_web_returns_citation_results() -> None:
     """Researcher should wrap sources into citation results."""
+    state = State(sources=[Citation(url="https://a")])
+    results = await researcher_web(state)
+    assert all(isinstance(r, CitationResult) for r in results)
+    assert [r.url for r in results] == [c.url for c in state.sources]
     citation = Citation(url="https://a")
     state = State(sources=[citation])
     results = await researcher_web(state)
