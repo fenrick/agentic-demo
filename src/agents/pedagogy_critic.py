@@ -146,7 +146,7 @@ def assess_cognitive_load(outline: Outline) -> CognitiveLoadReport:
     return CognitiveLoadReport(total_duration=total, overloaded_segments=overloaded)
 
 
-def run_pedagogy_critic(state: State) -> CritiqueReport:
+async def run_pedagogy_critic(state: State) -> CritiqueReport:
     """Orchestrate pedagogical checks against the current state outline."""
 
     outline = cast(Outline, state.outline)

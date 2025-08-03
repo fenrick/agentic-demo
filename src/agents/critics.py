@@ -5,22 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from core.state import State
-
-
-@dataclass(slots=True)
-class CritiqueReport:
-    """Report from the pedagogy critic."""
-
-    issues: list[str] = field(default_factory=list)
-
-
-async def run_pedagogy_critic(state: State) -> CritiqueReport:
-    """Validate pedagogy coverage.
-
-    TODO: Implement real critique logic.
-    """
-
-    return CritiqueReport()
+from models import CritiqueReport
+from .pedagogy_critic import run_pedagogy_critic
 
 
 @dataclass(slots=True)
@@ -37,3 +23,11 @@ async def run_fact_checker(state: State) -> FactCheckReport:
     """
 
     return FactCheckReport()
+
+
+__all__ = [
+    "run_pedagogy_critic",
+    "run_fact_checker",
+    "CritiqueReport",
+    "FactCheckReport",
+]

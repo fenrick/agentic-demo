@@ -1,5 +1,7 @@
 """Tests for the pedagogy critic."""
 
+import asyncio
+
 from core.state import State
 
 from agents.models import Activity
@@ -63,7 +65,7 @@ def test_run_pedagogy_critic_compiles_reports():
     outline = build_outline()
     state = State()
     state.outline = outline
-    critique = run_pedagogy_critic(state)
+    critique = asyncio.run(run_pedagogy_critic(state))
     assert critique.bloom.missing_levels
     assert critique.recommendations
 
