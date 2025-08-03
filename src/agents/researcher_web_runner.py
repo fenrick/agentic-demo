@@ -2,22 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import List
 
 from config import Settings
 from core.state import State
 
-from .researcher_web import PerplexityClient, RawSearchResult
-
-
-@dataclass(slots=True)
-class CitationDraft:
-    """Preliminary citation information from a web search."""
-
-    url: str
-    snippet: str
-    title: str
+from .researcher_web import CitationDraft, PerplexityClient, RawSearchResult
 
 
 def _to_draft(result: RawSearchResult) -> CitationDraft:
