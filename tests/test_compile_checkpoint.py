@@ -7,13 +7,9 @@ from pathlib import Path
 import pytest
 from langgraph.graph import StateGraph
 
-<<<<<<<< HEAD:tests/test_orchestrator_compile.py
-from core.state import State
-========
 <<<<<<<< HEAD:tests/test_compile_checkpoint.py
 from core.state import State
 ========
->>>>>>>> main:tests/test_checkpoint_saver.py
 >>>>>>>> main:tests/test_checkpoint_saver.py
 from core import orchestrator
 from agentic_demo.orchestration.state import State

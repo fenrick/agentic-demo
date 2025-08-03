@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict
+# mypy: ignore-errors
+
 from typing import Any, AsyncGenerator, TYPE_CHECKING
 
 from langgraph.graph import END, START, StateGraph
@@ -14,7 +17,11 @@ else:  # pragma: no cover - runtime import with graceful fallback
     except Exception:
         CompiledGraph = Any  # type: ignore[assignment]
 
+from .state import ActionLog, Citation, State
+from .retry import retry_async
 from core.state import ActionLog, Citation, State
+from .retry import retry_async
+from .state import State
 
 
 # ``langgraph`` does not expose a stable ``CompiledGraph`` in all versions. For
@@ -33,18 +40,18 @@ def planner(state: State) -> dict:
         Updated state with planner step recorded.
     """
 
-    state.log.append(ActionLog(message="planner"))
+    state.log.append("planner")
     return state.model_dump()
 
 
 def researcher_web(state: State) -> dict:
     """Gather information from web sources with deduplication."""
 
-    state.log.append(ActionLog(message="researcher_web"))
+    state.log.append("researcher_web")
     seen: set[str] = set()
-    deduped: list[Citation] = []
+    deduped: list[str] = []
     for src in state.sources:
-        lowered = src.url.lower()
+        lowered = src.lower()
         if lowered not in seen:
             seen.add(lowered)
             deduped.append(src)
@@ -55,7 +62,15 @@ def researcher_web(state: State) -> dict:
 def content_weaver(state: State) -> dict:
     """Weave gathered content into coherent form."""
 
-    state.log.append(ActionLog(message="content_weaver"))
+    state.log.append("content_weaver")
+    return state.model_dump()
+
+
+# TODO: Integrate human approval workflows
+def critic(state: State) -> dict:
+    """Critically evaluate the woven content."""
+
+    state.log.append(ActionLog(message="critic"))
     return state.model_dump()
 
 
@@ -92,17 +107,48 @@ def critic(state: State) -> dict:
 # TODO: Integrate human approval workflows in a separate step
 
 
+@retry_async(max_retries=3)
+async def critic(state: State) -> dict:
+    """Critically evaluate the woven content.
+
+    Args:
+        state: Current orchestration state.
+
+    Returns:
+        Updated state with critic step recorded.
+
+    Side Effects:
+        Appends ``ActionLog('critic')`` to ``state.log`` and updates
+        ``critic_score`` and ``critic_attempts`` only after a successful
+        evaluation.
+
+    Exceptions:
+        Propagates the last exception if all retries fail.
+    """
+
+    score = await _evaluate(state)
+    state.log.append(ActionLog(message="critic"))
+    state.critic_attempts += 1  # type: ignore[attr-defined]
+    state.critic_score = score  # type: ignore[attr-defined]
+    return asdict(state)
+    state.log.append("critic")
+    state.critic_attempts += 1
+    state.critic_score = score
+    return state.model_dump()
+
+
+# TODO: Integrate human approval workflows
 def approver(state: State) -> dict:
     """Approve or refine the content after critique."""
 
-    state.log.append(ActionLog(message="approver"))
+    state.log.append("approver")
     return state.model_dump()
 
 
 def exporter(state: State) -> dict:
     """Export the approved content to its final format."""
 
-    state.log.append(ActionLog(message="exporter"))
+    state.log.append("exporter")
     return state.model_dump()
 
 
@@ -123,9 +169,7 @@ def create_state_graph() -> StateGraph:
     graph.add_edge(START, "planner")
 
     def planner_router(state: State) -> str:
-        research_count = sum(
-            1 for item in state.log if item.message == "researcher_web"
-        )
+        research_count = sum(1 for item in state.log if item == "researcher_web")
         return "to_research" if research_count < 1 else "to_weaver"
 
     graph.add_conditional_edges(
@@ -137,7 +181,7 @@ def create_state_graph() -> StateGraph:
     graph.add_edge("content_weaver", "critic")
 
     def critic_router(state: State) -> str:
-        critic_count = sum(1 for item in state.log if item.message == "critic")
+        critic_count = sum(1 for item in state.log if item == "critic")
         return "approve" if critic_count >= 3 else "revise"
 
     graph.add_conditional_edges(

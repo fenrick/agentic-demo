@@ -34,13 +34,19 @@ async def _fetch(url: str) -> CitationResult:
 
 
 def _normalize(url: str) -> str:
-    """Normalize a URL for similarity comparison."""
+    """Normalize ``url`` to its canonical domain.
+
+    Args:
+        url: URL string to normalize.
+
+    Returns:
+        Lower-cased domain without scheme or a leading ``www``.
+    """
     parsed = urlparse(url)
     netloc = parsed.netloc.lower()
     if netloc.startswith("www."):
         netloc = netloc[4:]
-    path = parsed.path.rstrip("/").lower()
-    return f"{netloc}{path}"
+    return netloc
 
 
 async def researcher_web(
@@ -56,6 +62,7 @@ async def researcher_web(
 
     Returns:
         Deduplicated list of :class:`CitationResult` objects preserving input order.
+        Only the first result for each domain is retained.
 
     Exceptions are suppressed; failed fetches are omitted from the results.
     """
