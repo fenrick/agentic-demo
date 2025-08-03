@@ -6,12 +6,13 @@ from pathlib import Path
 import pytest
 from pytest import MonkeyPatch
 
+from core.nodes.planner import PlanResult
 from core.state import State
 
 
 @pytest.mark.asyncio
 async def test_checkpoint_resume(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
-    """Graph should resume from SQLite checkpoint after interruption."""
+    """Orchestrator should persist state and resume from SQLite checkpoint."""
     monkeypatch.setenv("OPENAI_API_KEY", "x")
     monkeypatch.setenv("PERPLEXITY_API_KEY", "y")
     monkeypatch.setenv("MODEL_NAME", "m")
@@ -20,30 +21,18 @@ async def test_checkpoint_resume(tmp_path: Path, monkeypatch: MonkeyPatch) -> No
     import core.orchestrator as orchestrator
 
     reload(orchestrator)
-    try:
-        compiled = orchestrator.graph.compile(checkpointer=orchestrator.saver)
-    except NotImplementedError:  # pragma: no cover - saver lacks async support
-        pytest.skip("Async checkpoint saver not supported")
 
-    state = State(prompt="orig")
-    config = {"configurable": {"thread_id": "t"}}
+    await orchestrator.graph_orchestrator.start("orig")
+    db_path = tmp_path / "checkpoint.db"
+    assert db_path.exists()
 
-    try:
-        await compiled.ainvoke(state, config=config, interrupt_after=["Planner"])
-    except NotImplementedError:  # pragma: no cover - saver lacks async support
-        pytest.skip("Async checkpoint saver not supported")
-    assert (tmp_path / "checkpoint.db").exists()
+    seen: dict[str, str] = {}
 
-    state.prompt = "mutated"
-    try:
-        resumed = await compiled.ainvoke(
-            state,
-            config=config,
-            resume=True,
-            interrupt_after=["Researcher-Web"],
-        )
-    except NotImplementedError:  # pragma: no cover - saver lacks async support
-        pytest.skip("Async checkpoint saver not supported")
-    else:
-        assert resumed["prompt"] == "orig"
-        assert resumed["log"] == []
+    async def fake_planner(state: State) -> PlanResult:
+        seen["prompt"] = state.prompt
+        return PlanResult()
+
+    monkeypatch.setattr("core.nodes.planner.run_planner", fake_planner)
+
+    await orchestrator.graph_orchestrator.resume()
+    assert seen["prompt"] == "orig"
