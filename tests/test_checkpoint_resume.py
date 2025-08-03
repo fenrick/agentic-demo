@@ -37,7 +37,10 @@ async def test_checkpoint_resume(tmp_path: Path, monkeypatch: MonkeyPatch) -> No
     state.prompt = "mutated"
     try:
         resumed = await compiled.ainvoke(
-            state, config=config, resume=True, interrupt_after=["Researcher"]
+            state,
+            config=config,
+            resume=True,
+            interrupt_after=["Researcher-Web"],
         )
     except NotImplementedError:  # pragma: no cover - saver lacks async support
         pytest.skip("Async checkpoint saver not supported")

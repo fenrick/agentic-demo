@@ -1,6 +1,8 @@
-from pydantic import BaseModel
-from typing import List, Optional
 from datetime import datetime
+from typing import List
+
+from pydantic import BaseModel
+
 
 class ActionLog(BaseModel):
     agent: str
@@ -10,11 +12,13 @@ class ActionLog(BaseModel):
     cost: float
     timestamp: datetime
 
+
 class Citation(BaseModel):
     url: str
     title: str
     retrieved_at: datetime
     licence: str
+
 
 class Outline(BaseModel):
     sections: List[str]
