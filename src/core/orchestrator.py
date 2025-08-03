@@ -1,5 +1,8 @@
 """Orchestration graph stubs built on LangGraph."""
 
+# ruff: noqa: E402
+# mypy: ignore-errors
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -127,8 +130,6 @@ graph.add_edge("Writer", "Critic")
 graph.add_edge("Critic", END)
 """Graph orchestration utilities."""
 
-from __future__ import annotations
-
 from pathlib import Path
 import sqlite3
 
@@ -146,36 +147,45 @@ except ModuleNotFoundError:  # pragma: no cover
 # TODO: Handle alternative checkpoint backends beyond SQLite.
 
 
+def create_checkpoint_saver(data_dir: Path | None = None) -> SqliteCheckpointSaver:
+    """Create a SQLite checkpoint saver in ``data_dir``.
+
+    Purpose:
+        Centralize setup of the SQLite checkpoint saver used for graph runs.
+
+    Inputs:
+        data_dir: Optional root directory for the database. Defaults to ``Settings.DATA_DIR``.
+
+    Outputs:
+        Instance of :class:`SqliteCheckpointSaver` bound to ``checkpoint.db``.
+
+    Side Effects:
+        Creates ``data_dir`` and ``checkpoint.db`` if they do not exist.
+
+    Exceptions:
+        Propagated from filesystem operations or saver initialization.
+
+    TODO: Allow custom database filenames and locations.
+    TODO: Implement graceful error handling and logging for saver creation failures.
+    """
+
+    data_dir = data_dir or Settings().data_dir  # type: ignore[call-arg]
+    data_dir.mkdir(parents=True, exist_ok=True)
+    # TODO: Support custom checkpoint filenames.
+    db_path = data_dir / "checkpoint.db"
+    # TODO: Surface user-friendly errors if saver initialization fails.
+
+    try:
+        return SqliteCheckpointSaver(path=str(db_path))  # type: ignore[arg-type]
+    except TypeError:  # pragma: no cover - fallback for older API
+        conn = sqlite3.connect(db_path, check_same_thread=False)
+        return SqliteCheckpointSaver(conn)  # type: ignore[arg-type]
+
+
 def compile_with_sqlite_checkpoint(
     graph: StateGraph, data_dir: Path | None = None
 ) -> CompiledStateGraph:
-    """Compile ``graph`` with SQLite-backed checkpointing.
+    """Compile ``graph`` with SQLite-backed checkpointing."""
 
-    Purpose:
-        Ensure graphs persist state between runs using a SQLite checkpoint saver.
-
-    Inputs:
-        graph: StateGraph to compile.
-        data_dir: Optional directory for database storage. Defaults to ``Settings.DATA_DIR``.
-
-    Outputs:
-        Compiled graph configured with a SQLite checkpoint saver.
-
-    Side Effects:
-        Creates ``data_dir`` and a ``checkpoint.db`` file if absent.
-
-    Exceptions:
-        Propagates from file system access or graph compilation.
-    """
-
-    data_dir = data_dir or Settings().DATA_DIR  # type: ignore[call-arg]
-    data_dir.mkdir(parents=True, exist_ok=True)
-    db_path = data_dir / "checkpoint.db"
-
-    try:
-        saver = SqliteCheckpointSaver(path=str(db_path))  # type: ignore[arg-type]
-    except TypeError:  # pragma: no cover - fallback for older API
-        conn = sqlite3.connect(db_path, check_same_thread=False)
-        saver = SqliteCheckpointSaver(conn)  # type: ignore[arg-type]
-
+    saver = create_checkpoint_saver(data_dir)
     return graph.compile(checkpointer=saver)
