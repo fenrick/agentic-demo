@@ -6,6 +6,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import sqlite3
+from pathlib import Path
 from pathlib import Path
 import sqlite3
 from typing import List
@@ -14,6 +16,8 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
 from agentic_demo.config import Settings
+from agentic_demo.orchestration.state import ActionLog, Outline, State
+from tenacity import retry, stop_after_attempt
 
 from .state import Outline, State
 
@@ -32,6 +36,7 @@ class PlanResult:
     """
 
     outline: Outline | None
+    confidence: float
 
 
 @dataclass(slots=True)
@@ -59,6 +64,9 @@ async def planner(state: State) -> PlanResult:
         PlanResult echoing the state's outline.
     """
 
+    return PlanResult(
+        outline=state.outline, confidence=getattr(state, "confidence", 0.0)
+    )
     return PlanResult(outline=state.outline)
 
 
@@ -92,18 +100,46 @@ async def writer(state: State) -> State:
     return state
 
 
-async def critic(state: State) -> State:
-    """Placeholder critic node.
+async def _evaluate(state: State) -> float:  # pragma: no cover - patched in tests
+    """Return a dummy quality score.
 
-    TODO: Evaluate drafted content for quality and consistency.
+    TODO: Replace with model-based evaluation.
 
     Args:
         state: The evolving orchestration state.
 
     Returns:
-        Unmodified state for now.
+        Placeholder score used in tests.
     """
 
+    return 1.0
+
+
+@retry(stop=stop_after_attempt(3), reraise=True)
+async def critic(state: State) -> State:
+    """Evaluate content quality with retry on transient errors.
+
+    Purpose:
+        Ensure drafted content meets quality standards while gracefully
+        handling transient evaluation failures.
+
+    Inputs:
+        state: The evolving orchestration state.
+
+    Outputs:
+        The same ``state`` with a critic log entry appended upon success.
+
+    Side Effects:
+        Appends :class:`ActionLog`("critic") to ``state.log`` only after a
+        successful evaluation.
+
+    Exceptions:
+        Propagates the last exception from ``_evaluate`` after exhausting
+        retries.
+    """
+
+    await _evaluate(state)
+    state.log.append(ActionLog(message="critic"))
     return state
 
 
@@ -128,6 +164,7 @@ def planner_router(state: State) -> str:
         ``"research"`` to loop back or ``"write"`` when sources exist.
     """
 
+    return "research" if getattr(state, "confidence", 0.0) < 0.9 else "write"
     return "write" if state.sources else "research"
 
 
@@ -214,6 +251,7 @@ def compile_with_sqlite_checkpoint(
         Propagates from file system access or graph compilation.
     """
 
+    data_dir = data_dir or Settings().DATA_DIR  # type: ignore[attr-defined, call-arg]
     data_dir = data_dir or Settings().data_dir  # type: ignore[call-arg]
     data_dir.mkdir(parents=True, exist_ok=True)
     db_path = data_dir / "checkpoint.db"

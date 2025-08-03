@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict
 # mypy: ignore-errors
 
 from typing import Any, AsyncGenerator, TYPE_CHECKING
@@ -16,6 +17,8 @@ else:  # pragma: no cover - runtime import with graceful fallback
     except Exception:
         CompiledGraph = Any  # type: ignore[assignment]
 
+from .state import ActionLog, Citation, State
+from .retry import retry_async
 from core.state import ActionLog, Citation, State
 from .retry import retry_async
 from .state import State
@@ -96,14 +99,19 @@ async def critic(state: State) -> dict:
         Updated state with critic step recorded.
 
     Side Effects:
-        Appends ``"critic"`` to ``state.log`` and updates ``critic_score`` and
-        ``critic_attempts`` only after a successful evaluation.
+        Appends ``ActionLog('critic')`` to ``state.log`` and updates
+        ``critic_score`` and ``critic_attempts`` only after a successful
+        evaluation.
 
     Exceptions:
         Propagates the last exception if all retries fail.
     """
 
     score = await _evaluate(state)
+    state.log.append(ActionLog(message="critic"))
+    state.critic_attempts += 1  # type: ignore[attr-defined]
+    state.critic_score = score  # type: ignore[attr-defined]
+    return asdict(state)
     state.log.append("critic")
     state.critic_attempts += 1
     state.critic_score = score
