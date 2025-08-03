@@ -23,6 +23,10 @@ class RetryableError(RuntimeError):
     """Signal that the operation can be retried."""
 
 
+class SchemaError(RetryableError):
+    """Raised when LLM output fails schema validation."""
+
+
 def stream_messages(token: str) -> None:
     """Forward ``token`` over the LangGraph "messages" channel."""
 
@@ -32,6 +36,17 @@ def stream_messages(token: str) -> None:
         stream("messages", token)
     except Exception:  # pragma: no cover - optional dependency
         print(token, end="", flush=True)
+
+
+def stream_debug(message: str) -> None:
+    """Forward ``message`` over the LangGraph "debug" channel."""
+
+    try:
+        from langgraph_sdk import stream  # type: ignore
+
+        stream("debug", message)
+    except Exception:  # pragma: no cover - optional dependency
+        print(message, flush=True)
 
 
 _schema_cache: dict | None = None
@@ -128,7 +143,9 @@ async def content_weaver(state: State) -> WeaveResult:
     payload = parse_function_response(tokens)
     validation = validate_against_schema(payload)
     if not validation.valid:
-        raise RetryableError("; ".join(validation.errors))
+        error_msg = "; ".join(validation.errors)
+        stream_debug(error_msg)
+        raise SchemaError(error_msg)
     activities = [Activity(**a) for a in payload.get("activities", [])]
     slide_bullets = (
         [SlideBullet(**b) for b in payload.get("slide_bullets", [])]
