@@ -1,11 +1,15 @@
-"""Tests for core State model."""
+"""Tests for core :mod:`core.state` dataclass implementation."""
+
+from dataclasses import is_dataclass
 
 from core.state import ActionLog, Citation, Outline, State
+from pydantic import TypeAdapter
 
 
-def test_state_defaults():
-    """State should provide expected default values."""
+def test_state_defaults() -> None:
+    """State should expose dataclass structure with expected defaults."""
     state = State()
+    assert is_dataclass(state)
     assert state.prompt == ""
     assert state.sources == []
     assert state.outline is None
@@ -13,7 +17,7 @@ def test_state_defaults():
     assert state.version == 1
 
 
-def test_json_round_trip():
+def test_json_round_trip() -> None:
     """State should serialize and deserialize via JSON consistently."""
     citation = Citation(url="https://example.com")
     outline = Outline(steps=["intro"])
@@ -25,7 +29,8 @@ def test_json_round_trip():
         log=[log_entry],
         version=2,
     )
-    json_data = state.model_dump_json()
-    assert isinstance(json_data, str)
-    new_state = State.model_validate_json(json_data)
+    adapter = TypeAdapter(State)
+    json_data = adapter.dump_json(state)
+    assert isinstance(json_data, (bytes, bytearray))
+    new_state = adapter.validate_json(json_data)
     assert new_state == state

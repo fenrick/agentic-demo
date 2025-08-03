@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from dataclasses import field as dc_field
 from typing import List, Optional
 
 from pydantic import BaseModel, Field
+from pydantic.dataclasses import dataclass
 
 
 # TODO: Replace placeholder models with domain-specific implementations and
@@ -41,7 +43,8 @@ class ActionLog(BaseModel):
     message: str
 
 
-class State(BaseModel):
+@dataclass
+class State:
     """Represents the evolving application state.
 
     Attributes:
@@ -55,10 +58,10 @@ class State(BaseModel):
     # TODO: Add validation rules (e.g., non-empty prompt) once requirements are defined.
     prompt: str = ""
     # TODO: Ensure citations are unique and URLs valid.
-    sources: List[Citation] = Field(default_factory=list)
+    sources: List[Citation] = dc_field(default_factory=list)
     # TODO: Provide a sensible default outline when planner is implemented.
     outline: Optional[Outline] = None
     # TODO: Include structured log entries with metadata like timestamps.
-    log: List[ActionLog] = Field(default_factory=list)
+    log: List[ActionLog] = dc_field(default_factory=list)
     # TODO: Revisit versioning strategy for future schema evolution.
     version: int = 1
