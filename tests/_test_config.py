@@ -7,6 +7,12 @@ from __future__ import annotations
 import importlib
 from pathlib import Path
 
+# ruff: noqa
+# pragma: no cover
+
+import importlib
+from pathlib import Path
+
 import pytest
 from pydantic import ValidationError
 

@@ -1,7 +1,5 @@
-"""Web-facing components for the project.
+"""Web-facing components for the project."""
 
-This package will include API endpoints, web user interfaces, and related
-utilities.
+from .researcher_web import CitationResult, researcher_web
 
-TODO: Implement web server and routing.
-"""
+__all__ = ["CitationResult", "researcher_web"]
