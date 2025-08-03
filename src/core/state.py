@@ -65,3 +65,64 @@ class State:
     log: List[ActionLog] = dc_field(default_factory=list)
     # TODO: Revisit versioning strategy for future schema evolution.
     version: int = 1
+
+    def to_dict(self) -> dict:
+        """Serialize the current state into a plain dict for persistence.
+
+        Returns:
+            dict: Plain dictionary capturing the state values using only
+            built-in types.
+        """
+        return {
+            "prompt": self.prompt,
+            "sources": [source.model_dump() for source in self.sources],
+            "outline": self.outline.model_dump() if self.outline else None,
+            "log": [entry.model_dump() for entry in self.log],
+            "version": self.version,
+        }
+
+    @classmethod
+    def from_dict(cls, raw: dict) -> "State":
+        """Rehydrate a :class:`State` instance from a raw dictionary.
+
+        Args:
+            raw: Data previously produced by :meth:`to_dict`.
+
+        Returns:
+            State: New instance populated with ``raw`` values.
+        """
+        return cls(
+            prompt=raw.get("prompt", ""),
+            sources=[Citation(**c) for c in raw.get("sources", [])],
+            outline=Outline(**raw["outline"]) if raw.get("outline") else None,
+            log=[ActionLog(**entry_data) for entry_data in raw.get("log", [])],
+            version=raw.get("version", 1),
+        )
+
+
+def increment_version(state: State) -> int:
+    """Bump the version counter whenever a mutation is saved.
+
+    Args:
+        state: The state object whose version should be incremented.
+
+    Returns:
+        int: The incremented version number.
+    """
+    state.version += 1
+    return state.version
+
+
+def validate_state(state: State) -> None:
+    """Quick sanity check before running the graph.
+
+    Args:
+        state: The state instance to validate.
+
+    Raises:
+        ValueError: If ``prompt`` is empty or ``version`` is negative.
+    """
+    if not state.prompt:
+        raise ValueError("prompt must be non-empty")
+    if state.version < 0:
+        raise ValueError("version must be non-negative")
