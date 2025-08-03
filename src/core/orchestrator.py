@@ -8,12 +8,12 @@ iterations.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
+import asyncio
 import sqlite3
-from typing import List
+from pathlib import Path
+from typing import Dict, List
 
 from langgraph.graph import END, START, StateGraph
-from langgraph.graph.state import CompiledStateGraph
 from tenacity import retry, stop_after_attempt
 
 from agentic_demo.config import Settings
@@ -63,7 +63,7 @@ async def planner(state: State) -> PlanResult:
     return PlanResult(outline=outline, confidence=confidence)
 
 
-async def researcher_web(state: State) -> List[CitationResult]:
+async def researcher_web(state: State) -> Dict[str, List[CitationResult]]:
     """Collect citations from the web concurrently and deduplicate them.
 
     Purpose:
@@ -73,7 +73,8 @@ async def researcher_web(state: State) -> List[CitationResult]:
         state: Current :class:`State` whose ``sources`` provide seed URLs.
 
     Outputs:
-        List of :class:`CitationResult` objects from unique domains.
+        Mapping with ``"sources"`` updated to a deduplicated list of
+        :class:`CitationResult` objects.
 
     Side Effects:
         Performs network I/O via the helper in :mod:`web.researcher_web`.
@@ -83,7 +84,8 @@ async def researcher_web(state: State) -> List[CitationResult]:
     """
 
     urls = [c.url for c in state.sources]
-    return await _web_research(urls)
+    citations = await _web_research(urls)
+    return {"sources": citations}
 
 
 async def writer(state: State) -> State:
@@ -153,52 +155,37 @@ graph.add_conditional_edges(
 )
 
 
+# Configure checkpoint saver
+
+
 def create_checkpoint_saver(data_dir: Path | None = None) -> SqliteCheckpointSaver:
-    """Create a SQLite checkpoint saver in ``data_dir``.
-
-    Purpose:
-        Centralize setup of the SQLite checkpoint saver used for graph runs.
-
-    Inputs:
-        data_dir: Optional root directory for the database. Defaults to
-            ``Settings.data_dir``.
-
-    Outputs:
-        Instance of :class:`SqliteCheckpointSaver` bound to ``checkpoint.db``.
-
-    Side Effects:
-        Creates ``data_dir`` and ``checkpoint.db`` if they do not exist.
-
-    Exceptions:
-        Propagated from filesystem operations or saver initialization.
-    """
+    """Create a SQLite checkpoint saver in ``data_dir``."""
 
     data_dir = data_dir or Settings().data_dir  # type: ignore[call-arg]
     data_dir.mkdir(parents=True, exist_ok=True)
     db_path = data_dir / "checkpoint.db"
-
     try:
         return SqliteCheckpointSaver(path=str(db_path))  # type: ignore[arg-type]
-    except TypeError:  # pragma: no cover - fallback for older API
-        conn = sqlite3.connect(db_path, check_same_thread=False)
-        return SqliteCheckpointSaver(conn)  # type: ignore[arg-type]
+    except TypeError:  # pragma: no cover - handle async variant
+        try:
+            from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+            import aiosqlite
+
+            async def _create() -> AsyncSqliteSaver:
+                conn = await aiosqlite.connect(db_path)
+                return AsyncSqliteSaver(conn)
+
+            return asyncio.run(_create())  # type: ignore[return-value]
+        except Exception:  # pragma: no cover - fallback to sync connection
+            conn = sqlite3.connect(db_path, check_same_thread=False)
+            return SqliteCheckpointSaver(conn)  # type: ignore[arg-type]
 
 
-def compile_with_sqlite_checkpoint(
-    graph: StateGraph, data_dir: Path | None = None
-) -> CompiledStateGraph:
-    """Compile ``graph`` with SQLite-backed checkpointing.
-
-    Args:
-        graph: :class:`StateGraph` to compile.
-        data_dir: Optional directory for database storage.
-
-    Returns:
-        Compiled graph configured with a SQLite checkpoint saver.
-    """
-
-    saver = create_checkpoint_saver(data_dir)
-    return graph.compile(checkpointer=saver)
+saver = create_checkpoint_saver()
+try:  # pragma: no cover - method added in recent versions
+    graph.set_checkpoint_saver(saver)  # type: ignore[attr-defined]
+except AttributeError:
+    graph.checkpointer = saver  # type: ignore[attr-defined]
 
 
 __all__ = [
@@ -210,7 +197,4 @@ __all__ = [
     "planner_router",
     "researcher_web",
     "writer",
-    "create_checkpoint_saver",
-    "compile_with_sqlite_checkpoint",
-    "SqliteCheckpointSaver",
 ]

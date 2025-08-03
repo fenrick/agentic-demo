@@ -4,6 +4,12 @@ from __future__ import annotations
 
 import pytest
 from langgraph.graph import END, START
+import os
+
+os.environ.setdefault("OPENAI_API_KEY", "k")
+os.environ.setdefault("PERPLEXITY_API_KEY", "p")
+os.environ.setdefault("MODEL_NAME", "m")
+os.environ.setdefault("DATA_DIR", "/tmp")
 
 from core.orchestrator import (
     CitationResult,
@@ -53,7 +59,7 @@ async def test_researcher_web_returns_citation_results(
     )
     results = await researcher_web(state)
     assert seen == [["https://a", "https://b"]]
-    assert [r.url for r in results] == ["https://a", "https://b"]
+    assert [r.url for r in results["sources"]] == ["https://a", "https://b"]
 
 
 @pytest.mark.asyncio
