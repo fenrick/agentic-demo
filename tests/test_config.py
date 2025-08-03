@@ -34,7 +34,6 @@ def _write_env(tmp_path: Path) -> Path:
     file.write_text(content)
     return file
 
-
     content = (
         "OPENAI_API_KEY=sk-123\n"
         "PERPLEXITY_API_KEY=pp-456\n"
@@ -142,7 +141,6 @@ def test_environment_overrides_file(
     monkeypatch.setenv("MODEL_NAME", "override-model")
     settings = config.Settings()
     assert settings.model_name == "override-model"
-
 
 
 def test_env_vars_override_env_file(

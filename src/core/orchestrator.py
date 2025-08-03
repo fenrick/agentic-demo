@@ -1,156 +1,130 @@
-"""LangGraph-based orchestration stubs.
-
-This module wires together placeholder nodes using :class:`langgraph.graph.StateGraph`.
-Each node is intentionally minimal and will be expanded with real logic in future
-iterations.
-"""
+"""LangGraph orchestration and node registration."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-import asyncio
-import sqlite3
 from pathlib import Path
-from typing import Dict, List
+from typing import Awaitable, Callable, Optional, TypeVar
 
 from langgraph.graph import END, START, StateGraph
-from tenacity import retry, stop_after_attempt
 
 from agentic_demo.config import Settings
-from core.state import ActionLog, Outline, State
-from web.researcher_web import CitationResult, researcher_web as _web_research
-
-try:  # pragma: no cover - import path varies with package version
-    from langgraph_checkpoint_sqlite import SqliteCheckpointSaver  # type: ignore
-except ModuleNotFoundError:  # pragma: no cover
-    from langgraph.checkpoint.sqlite import SqliteSaver as SqliteCheckpointSaver
-
-from core.state import State
-from core.agents import planner, researcher_web, content_weaver, pedagogy_critic, fact_checker, approver, exporter
-
-
-@dataclass(slots=True)
-class PlanResult:
-    """Output of the planner node.
-
-    Attributes:
-        outline: Proposed structure for downstream processing.
-        confidence: Heuristic confidence score in the plan.
-    """
-
-    outline: Outline | None = None
-    confidence: float = 0.0
-
-
-
-
-
-async def _evaluate(state: State) -> float:  # pragma: no cover - patched in tests
-    """Return a dummy quality score."""
-
-    return 1.0
-
-
-@retry(stop=stop_after_attempt(3), reraise=True)
-async def critic(state: State) -> State:
-    """Evaluate content quality with retry on transient errors.
-
-    Purpose:
-        Append a log entry indicating the critic ran successfully.
-
-    Inputs:
-        state: Current :class:`State` of the run.
-
-    Outputs:
-        The same ``state`` with a new ``ActionLog`` entry.
-
-    Side Effects:
-        Mutates ``state.log`` on success.
-
-    Exceptions:
-        Propagates the last exception from ``_evaluate`` after exhausting retries.
-    """
-
-    await _evaluate(state)
-    state.log.append(ActionLog(message="critic"))
-    return state
-
-
-# Build orchestration graph
-graph = StateGraph(State)
-graph.add_node(planner, name="Planner", streams="values")
-graph.add_node(researcher_web, name="Researcher-Web", streams="updates")
-graph.add_node(content_weaver, name="Content-Weaver", streams="messages")
-graph.add_node(pedagogy_critic, name="Pedagogy-Critic", streams="debug")
-graph.add_node(fact_checker, name="Fact-Checker", streams="debug")
-graph.add_node(approver, name="Human-In-Loop", streams="values")
-graph.add_node(exporter, name="Exporter")
-
-graph.add_edge(START, "Planner")
-graph.add_edge("Planner", "Researcher-Web")
-graph.add_edge("Researcher-Web", "Content-Weaver")
-graph.add_edge("Content-Weaver", "Pedagogy-Critic")
-graph.add_edge("Content-Weaver", "Fact-Checker")
-graph.add_edge("Pedagogy-Critic", "Approver")
-graph.add_edge("Fact-Checker", "Approver")
-graph.add_edge("Approver", "Exporter")
-graph.add_edge("Exporter", END)
-
-
-def planner_router(plan: PlanResult) -> str:
-    """Route based on planner confidence.
-
-    Returns ``"research"`` when ``plan.confidence < 0.9`` else ``"write"``.
-    """
-
-    return "research" if plan.confidence < 0.9 else "write"
-
-
-graph.add_conditional_edges(
-    "Planner", planner_router, {"research": "Researcher", "write": "Writer"}
+from core.checkpoint import SqliteCheckpointManager
+from core.nodes.approver import run_approver
+from core.nodes.content_weaver import run_content_weaver
+from core.nodes.critics import run_fact_checker, run_pedagogy_critic
+from core.nodes.exporter import run_exporter
+from core.nodes.planner import PlanResult, run_planner
+from core.nodes.researcher_web import run_researcher_web
+from core.policies import (
+    policy_retry_on_critic_failure,
+    policy_retry_on_low_confidence,
 )
+from core.state import State
+
+T = TypeVar("T")
 
 
-# Configure checkpoint saver
+class GraphOrchestrator:
+    """Wrapper around :class:`~langgraph.graph.StateGraph` setup."""
+
+    def __init__(
+        self, checkpoint_manager: SqliteCheckpointManager | None = None
+    ) -> None:
+        self.graph: Optional[StateGraph[State]] = None
+        self.checkpoint_manager = checkpoint_manager
+
+    def _wrap(
+        self, node: Callable[[State], Awaitable[T]]
+    ) -> Callable[[State], Awaitable[T]]:
+        async def wrapped(state: State) -> T:
+            result = await node(state)
+            if self.checkpoint_manager is not None:
+                self.checkpoint_manager.save_checkpoint(state)
+            return result
+
+        return wrapped
+
+    def initialize_graph(self) -> None:
+        """Instantiate the graph and register nodes."""
+        graph = StateGraph(State)
+        graph.add_node(self._wrap(run_planner), name="Planner", streams="values")
+        graph.add_node(
+            self._wrap(run_researcher_web), name="Researcher-Web", streams="updates"
+        )
+        graph.add_node(
+            self._wrap(run_content_weaver), name="Content-Weaver", streams="messages"
+        )
+        graph.add_node(
+            self._wrap(run_pedagogy_critic), name="Pedagogy-Critic", streams="debug"
+        )
+        graph.add_node(
+            self._wrap(run_fact_checker), name="Fact-Checker", streams="debug"
+        )
+        graph.add_node(self._wrap(run_approver), name="Human-In-Loop", streams="values")
+        graph.add_node(self._wrap(run_exporter), name="Exporter")
+        self.graph = graph
+
+    def register_edges(self) -> None:
+        """Wire node-to-node transitions."""
+        if self.graph is None:
+            raise RuntimeError("Graph must be initialized before registering edges")
+        graph = self.graph
+        graph.add_edge(START, "Planner")
+        graph.add_conditional_edges(
+            "Planner",
+            policy_retry_on_low_confidence,
+            {True: "Researcher-Web", False: "Content-Weaver"},
+        )
+        graph.add_edge("Researcher-Web", "Planner")
+        graph.add_edge("Content-Weaver", "Pedagogy-Critic")
+        graph.add_edge("Content-Weaver", "Fact-Checker")
+        graph.add_conditional_edges(
+            "Pedagogy-Critic",
+            policy_retry_on_critic_failure,
+            {True: "Content-Weaver", False: "Human-In-Loop"},
+        )
+        graph.add_conditional_edges(
+            "Fact-Checker",
+            policy_retry_on_critic_failure,
+            {True: "Content-Weaver", False: "Human-In-Loop"},
+        )
+        graph.add_edge("Human-In-Loop", "Exporter")
+        graph.add_edge("Exporter", END)
+
+    async def start(self, initial_prompt: str) -> PlanResult:
+        """Create initial state and invoke the planner."""
+        if self.graph is None:
+            self.initialize_graph()
+            self.register_edges()
+        state = State(prompt=initial_prompt)
+        planner = self._wrap(run_planner)
+        return await planner(state)
+
+    async def resume(self) -> PlanResult:
+        """Resume a previously checkpointed run."""
+        if self.graph is None:
+            self.initialize_graph()
+            self.register_edges()
+        if self.checkpoint_manager is None:
+            raise RuntimeError("Checkpoint manager required to resume")
+        state = self.checkpoint_manager.load_checkpoint()
+        planner = self._wrap(run_planner)
+        return await planner(state)
 
 
-def create_checkpoint_saver(data_dir: Path | None = None) -> SqliteCheckpointSaver:
-    """Create a SQLite checkpoint saver in ``data_dir``."""
-
+def _create_checkpoint_manager(data_dir: Path | None = None) -> SqliteCheckpointManager:
     data_dir = data_dir or Settings().data_dir  # type: ignore[call-arg]
     data_dir.mkdir(parents=True, exist_ok=True)
     db_path = data_dir / "checkpoint.db"
-    try:
-        return SqliteCheckpointSaver(path=str(db_path))  # type: ignore[arg-type]
-    except TypeError:  # pragma: no cover - handle async variant
-        try:
-            from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
-            import aiosqlite
-
-            async def _create() -> AsyncSqliteSaver:
-                conn = await aiosqlite.connect(db_path)
-                return AsyncSqliteSaver(conn)
-
-            return asyncio.run(_create())  # type: ignore[return-value]
-        except Exception:  # pragma: no cover - fallback to sync connection
-            conn = sqlite3.connect(db_path, check_same_thread=False)
-            return SqliteCheckpointSaver(conn)  # type: ignore[arg-type]
+    return SqliteCheckpointManager(str(db_path))
 
 
-saver = create_checkpoint_saver()
-try:  # pragma: no cover - method added in recent versions
-    graph.set_checkpoint_saver(saver)  # type: ignore[attr-defined]
-except AttributeError:
-    graph.checkpointer = saver  # type: ignore[attr-defined]
+checkpoint_manager = _create_checkpoint_manager()
 
+graph_orchestrator = GraphOrchestrator(checkpoint_manager)
+graph_orchestrator.initialize_graph()
+graph_orchestrator.register_edges()
 
-__all__ = [
-    "CitationResult",
-    "PlanResult",
-    "critic",
-    "graph",
-    "planner",
-    "planner_router",
-    "researcher_web",
-    "writer",
-]
+graph = graph_orchestrator.graph
+
+__all__ = ["GraphOrchestrator", "PlanResult", "graph", "checkpoint_manager"]
