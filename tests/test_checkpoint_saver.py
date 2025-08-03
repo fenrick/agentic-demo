@@ -6,10 +6,13 @@ from pathlib import Path
 
 import pytest
 from langgraph.graph import StateGraph
-from langgraph.checkpoint.sqlite import SqliteSaver
 
-from agentic_demo.orchestration.state import State
+<<<<<<<< HEAD:tests/test_compile_checkpoint.py
+from core.state import State
+========
+>>>>>>>> main:tests/test_checkpoint_saver.py
 from core import orchestrator
+from agentic_demo.orchestration.state import State
 
 
 @pytest.fixture
@@ -30,7 +33,7 @@ def test_compile_with_checkpoint_creates_db(
 
     compiled = orchestrator.compile_with_sqlite_checkpoint(simple_graph, tmp_path)
     assert (tmp_path / "checkpoint.db").exists()
-    assert isinstance(compiled.checkpointer, SqliteSaver)
+    assert isinstance(compiled.checkpointer, orchestrator.SqliteCheckpointSaver)
 
 
 def test_compile_with_checkpoint_uses_settings(
@@ -45,4 +48,27 @@ def test_compile_with_checkpoint_uses_settings(
 
     compiled = orchestrator.compile_with_sqlite_checkpoint(simple_graph)
     assert (tmp_path / "checkpoint.db").exists()
-    assert isinstance(compiled.checkpointer, SqliteSaver)
+    assert isinstance(compiled.checkpointer, orchestrator.SqliteCheckpointSaver)
+
+
+def test_create_checkpoint_saver_creates_db(tmp_path: Path) -> None:
+    """Saver factory creates database in provided directory."""
+
+    saver = orchestrator.create_checkpoint_saver(tmp_path)
+    assert isinstance(saver, orchestrator.SqliteCheckpointSaver)
+    assert (tmp_path / "checkpoint.db").exists()
+
+
+def test_create_checkpoint_saver_uses_settings(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Factory defaults to settings when path not given."""
+
+    monkeypatch.setenv("OPENAI_API_KEY", "k")
+    monkeypatch.setenv("PERPLEXITY_API_KEY", "p")
+    monkeypatch.setenv("MODEL_NAME", "m")
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+
+    saver = orchestrator.create_checkpoint_saver()
+    assert isinstance(saver, orchestrator.SqliteCheckpointSaver)
+    assert (tmp_path / "checkpoint.db").exists()
