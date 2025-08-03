@@ -9,12 +9,12 @@ from langgraph.graph import END, START, StateGraph
 
 from agentic_demo.config import Settings
 from core.checkpoint import SqliteCheckpointManager
-from core.nodes.approver import run_approver
-from core.nodes.content_weaver import run_content_weaver
-from core.nodes.critics import run_fact_checker, run_pedagogy_critic
-from core.nodes.exporter import run_exporter
-from core.nodes.planner import PlanResult, run_planner
-from core.nodes.researcher_web import run_researcher_web
+from agents.approver import run_approver
+from agents.content_weaver import run_content_weaver
+from agents.critics import run_fact_checker, run_pedagogy_critic
+from agents.exporter import run_exporter
+from agents.planner import PlanResult, run_planner
+from agents.researcher_web_node import run_researcher_web
 from core.policies import (
     policy_retry_on_critic_failure,
     policy_retry_on_low_confidence,

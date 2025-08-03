@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from core.nodes.critics import CritiqueReport
-from core.nodes.planner import PlanResult
+from agents.critics import CritiqueReport
+from agents.planner import PlanResult
 from core.policies import (
     merge_research_results,
     policy_retry_on_critic_failure,
