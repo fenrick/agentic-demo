@@ -11,10 +11,10 @@ web_module = importlib.import_module("web.researcher_web")
 
 
 @pytest.mark.asyncio
-async def test_researcher_web_deduplicates_and_fetches_concurrently():
+async def test_researcher_web_deduplicates_similar_urls_concurrently():
     urls = [
-        "https://Example.com/path1",
-        "http://example.com/path2",
+        "https://Example.com/path?x=1",
+        "http://example.com/path?y=2",
         "https://another.com/article",
     ]
     call_count = 0
@@ -32,6 +32,20 @@ async def test_researcher_web_deduplicates_and_fetches_concurrently():
     assert call_count == len(urls)
     assert [r.url for r in results] == [urls[0], urls[2]]
     assert elapsed < 0.2
+
+
+@pytest.mark.asyncio
+async def test_researcher_web_retains_distinct_paths() -> None:
+    urls = [
+        "https://example.com/path1",
+        "http://example.com/path2",
+    ]
+
+    async def fake_fetch(url: str) -> CitationResult:
+        return CitationResult(url=url, content=url)
+
+    results = await researcher_web(urls, fetch=fake_fetch)
+    assert [r.url for r in results] == urls
 
 
 @pytest.mark.asyncio

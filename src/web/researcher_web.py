@@ -33,20 +33,19 @@ async def _fetch(url: str) -> CitationResult:
     return CitationResult(url=url, content=content)
 
 
-def _normalize(url: str) -> str:
-    """Normalize ``url`` to its canonical domain.
+def _canonical(url: str) -> str:
+    """Return a canonical form of ``url`` for deduplication.
 
-    Args:
-        url: URL string to normalize.
-
-    Returns:
-        Lower-cased domain without scheme or a leading ``www``.
+    The canonical form strips scheme, query, and fragment components,
+    lower-cases the hostname and path, and removes any leading ``www``.
     """
+
     parsed = urlparse(url)
     netloc = parsed.netloc.lower()
     if netloc.startswith("www."):
         netloc = netloc[4:]
-    return netloc
+    path = parsed.path.lower().rstrip("/")
+    return f"{netloc}{path}"
 
 
 async def researcher_web(
@@ -62,7 +61,7 @@ async def researcher_web(
 
     Returns:
         Deduplicated list of :class:`CitationResult` objects preserving input order.
-        Only the first result for each domain is retained.
+        Only the first result for each *similar* URL is retained.
 
     Exceptions are suppressed; failed fetches are omitted from the results.
     """
@@ -76,7 +75,7 @@ async def researcher_web(
     for result in responses:
         if isinstance(result, BaseException):
             continue
-        key = _normalize(result.url)
+        key = _canonical(result.url)
         if key not in deduped:
             deduped[key] = result
     return list(deduped.values())
