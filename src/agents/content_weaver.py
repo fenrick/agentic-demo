@@ -68,9 +68,10 @@ def validate_against_schema(payload: dict) -> ValidationResult:
     return ValidationResult(valid=not errors, errors=errors)
 
 
-def parse_function_response(raw: str) -> dict:
-    """Parse a raw JSON string returned by the model."""
+def parse_function_response(tokens: List[str]) -> dict:
+    """Assemble streamed ``tokens`` into a JSON object."""
 
+    raw = "".join(tokens)
     try:
         return json.loads(raw)
     except json.JSONDecodeError as exc:  # pragma: no cover - defensive
@@ -120,11 +121,11 @@ async def content_weaver(state: State) -> WeaveResult:
     """Generate lecture content via an LLM and enforce schema compliance."""
 
     schema = load_schema()
-    raw = ""
+    tokens: List[str] = []
     async for token in call_openai_function(state.prompt, schema):
-        raw += token
+        tokens.append(token)
         stream_messages(token)
-    payload = parse_function_response(raw)
+    payload = parse_function_response(tokens)
     validation = validate_against_schema(payload)
     if not validation.valid:
         raise RetryableError("; ".join(validation.errors))
