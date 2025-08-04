@@ -82,11 +82,11 @@ def setup_graph(app: FastAPI) -> None:
 
 
 def mount_frontend(app: FastAPI) -> None:
-    """Serve the React build directory at the root path."""
+    """Serve the built frontend from `frontend/dist`."""
 
-    dist_path = Path(__file__).resolve().parents[2] / "frontend" / "dist"
-    if dist_path.exists():
-        app.mount("/", StaticFiles(directory=dist_path, html=True), name="frontend")
+    frontend_dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+    if frontend_dist.exists():
+        app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
 
 
 def register_routes(app: FastAPI) -> None:
