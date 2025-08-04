@@ -92,7 +92,7 @@ The system comprises:
 3. Frontend dependencies:
 
    ```bash
-   cd web
+   cd frontend
    npm install
    ```
 
@@ -114,13 +114,13 @@ cp .env.example .env
 1. **Start the backend** (FastAPI + LangGraph):
 
    ```bash
-   poetry run uvicorn backend.main:app --reload
+   poetry run uvicorn web.main:create_app --reload
    ```
 
 2. **Start the frontend**:
 
    ```bash
-   cd web
+   cd frontend
    npm run dev
    ```
 
@@ -132,13 +132,13 @@ cp .env.example .env
 
 ### Orchestration (LangGraph)
 
-- **StateGraph definition** in `backend/graph.py`.
+- **StateGraph setup** in `src/core/orchestrator.py`.
 - **Checkpointing** via `AsyncSqliteSaver`.
 - **Edge policies** enforce confidence thresholds and retry loops.
 
 ### Retrieval & Citation
 
-- **PerplexitySearchClient** in `backend/retrieval/`
+- **PerplexitySearchClient** in `src/agents/researcher_web.py`
 - Citation objects stored in `state.citations` table.
 - Filtering by domain allowlist and SPDX license checks.
 
@@ -156,21 +156,21 @@ cp .env.example .env
 
 ### Persistence & Versioning
 
-- SQLite schema in `backend/storage/schema.sql`.
+- SQLite schema managed in `src/persistence/`.
 - Parquet blobs for document versions.
 - Optional Postgres: swap `storage/sqlite.py` with `storage/postgres.py`.
 
 ### Frontend UX
 
-- React app (`web/src/`): Panels for Document, Log, Sources.
-- SSE client in `web/src/services/stream.ts`.
+- React app (`frontend/src/`): Panels for Document, Log, Sources.
+- SSE client in `frontend/src/services/stream.ts`.
 - Diff highlighting via `diff-match-patch`.
 
 ### Exporters
 
 - Markdown: direct from outline JSON → Markdown converter.
-- DOCX: templates in `backend/export/docx_templates/`.
-- PDF: headless WeasyPrint configured in `backend/export/pdf.py`.
+- DOCX: generated via `src/export/docx_exporter.py`.
+- PDF: headless WeasyPrint configured in `src/export/pdf_exporter.py`.
 
 ---
 
@@ -204,9 +204,9 @@ cp .env.example .env
 
 ## Operational Governance
 
-- Metrics emitted via Prometheus client in `backend/metrics.py`.
+- Metrics emitted via Prometheus client in `src/metrics/`.
 - Alerts: configurable thresholds for latency, error rates, unsupported-claim rate.
-- Audit: use `backend/cli/audit.py` to verify hash chain integrity.
+- Audit: verify hash chain integrity using CLI tools.
 
 ---
 
