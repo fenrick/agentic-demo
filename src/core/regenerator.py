@@ -48,7 +48,11 @@ def apply_regeneration(
 ) -> None:
     """Invoke the Content Weaver node for the specified sections."""
     for section_id in sections:
-        graph.invoke("Content-Weaver", state, section_id=section_id)  # type: ignore[attr-defined]
+        try:
+            idx = int(section_id)
+        except ValueError:
+            continue
+        graph.invoke("Content-Weaver", state, section_id=idx)  # type: ignore[attr-defined]
 
 
 def orchestrate_regeneration(

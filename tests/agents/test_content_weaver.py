@@ -2,7 +2,7 @@ import asyncio
 import json
 
 from agents import content_weaver as cw
-from core.state import State
+from core.state import Outline, State
 
 
 def test_call_openai_function_streams_tokens(monkeypatch):
@@ -53,6 +53,32 @@ def test_parse_and_validate_success(monkeypatch):
     state_result = asyncio.run(run_test())
     assert state_result.title == "Sample"
     assert state_result.activities[0].type == "Lecture"
+
+
+def test_section_specific_prompt(monkeypatch):
+    captured: list[str] = []
+
+    async def fake_call_openai_function(prompt: str, schema: dict):
+        captured.append(prompt)
+        yield json.dumps(
+            {
+                "title": "Sec",
+                "learning_objectives": [],
+                "activities": [],
+                "duration_min": 0,
+            }
+        )
+
+    monkeypatch.setattr(cw, "call_openai_function", fake_call_openai_function)
+    monkeypatch.setattr(cw, "stream_messages", lambda token: None)
+
+    async def run_test():
+        outline = Outline(steps=["first", "second"])
+        state = State(prompt="topic", outline=outline)
+        return await cw.content_weaver(state, section_id=1)
+
+    asyncio.run(run_test())
+    assert captured == ["second"]
 
 
 def test_schema_validation_fails_and_raises(monkeypatch):

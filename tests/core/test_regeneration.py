@@ -2,23 +2,25 @@
 
 import core.regenerator as regen
 from core.state import State
-from models.critique_report import (ActivityDiversityReport,
-                                    BloomCoverageReport, CognitiveLoadReport,
-                                    CritiqueReport)
-from models.fact_check_report import (ClaimFlag, FactCheckReport,
-                                      SentenceProbability)
+from models.critique_report import (
+    ActivityDiversityReport,
+    BloomCoverageReport,
+    CognitiveLoadReport,
+    CritiqueReport,
+)
+from models.fact_check_report import ClaimFlag, FactCheckReport, SentenceProbability
 
 
 def build_critique_report() -> CritiqueReport:
     bloom = BloomCoverageReport(level_counts={}, missing_levels=[], coverage_score=1.0)
     diversity = ActivityDiversityReport(type_percentages={}, is_balanced=True)
-    cognitive = CognitiveLoadReport(total_duration=0, overloaded_segments=["A"])
+    cognitive = CognitiveLoadReport(total_duration=0, overloaded_segments=["1"])
     return CritiqueReport(bloom=bloom, diversity=diversity, cognitive_load=cognitive)
 
 
 def test_get_sections_to_regenerate_handles_reports():
     critique = build_critique_report()
-    assert regen.get_sections_to_regenerate(critique) == ["A"]
+    assert regen.get_sections_to_regenerate(critique) == ["1"]
 
     fact_report = FactCheckReport(
         hallucinations=[
@@ -66,3 +68,14 @@ def test_orchestrate_regeneration_stops_after_three_attempts(monkeypatch):
         regen.orchestrate_regeneration(state, report, graph=dummy_graph)
     assert len(calls) == 3
     assert state.retry_counts["1"] == 3
+
+
+def test_apply_regeneration_passes_integer_section_id(monkeypatch):
+    calls: list[int] = []
+
+    class DummyGraph:
+        def invoke(self, name, state, section_id=None):  # type: ignore[no-untyped-def]
+            calls.append(section_id)
+
+    regen.apply_regeneration(DummyGraph(), State(), ["0", "1"])
+    assert calls == [0, 1]

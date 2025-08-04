@@ -130,12 +130,26 @@ async def call_openai_function(prompt: str, schema: dict) -> AsyncGenerator[str,
     return generator()
 
 
-async def content_weaver(state: State) -> WeaveResult:
-    """Generate lecture content via an LLM and enforce schema compliance."""
+async def content_weaver(state: State, section_id: int | None = None) -> WeaveResult:
+    """Generate lecture content via an LLM and enforce schema compliance.
+
+    Args:
+        state: Current orchestration state providing the outline and prompt.
+        section_id: Optional index into ``state.outline.steps`` specifying a
+            particular section to generate. When omitted the full ``state.prompt``
+            is used.
+    """
 
     schema = load_schema()
     tokens: List[str] = []
-    async for token in call_openai_function(state.prompt, schema):
+
+    prompt = state.prompt
+    if section_id is not None and state.outline:
+        if section_id < 0 or section_id >= len(state.outline.steps):
+            raise IndexError("section_id out of range")
+        prompt = state.outline.steps[section_id]
+
+    async for token in call_openai_function(prompt, schema):
         tokens.append(token)
         stream_messages(token)
     payload = parse_function_response(tokens)
@@ -178,7 +192,14 @@ async def content_weaver(state: State) -> WeaveResult:
     )
 
 
-async def run_content_weaver(state: State) -> WeaveResult:
-    """Entry point used by the orchestrator."""
+async def run_content_weaver(
+    state: State, section_id: int | None = None
+) -> WeaveResult:
+    """Entry point used by the orchestrator.
 
-    return await content_weaver(state)
+    Args:
+        state: Orchestrator state passed through the graph.
+        section_id: Optional outline index to generate only a specific section.
+    """
+
+    return await content_weaver(state, section_id=section_id)
