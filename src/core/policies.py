@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import List
+from typing import List, Literal
 from urllib.parse import urlparse
 
 from agents.critics import CritiqueReport, FactCheckReport
@@ -17,12 +17,14 @@ def policy_retry_on_low_confidence(
     threshold: float = 0.8,
     *,
     agent_name: str = "Planner",
-) -> bool:
-    """Return ``True`` when planner confidence is below ``threshold``.
+) -> Literal["loop", "continue"]:
+    """Decide whether to loop back for more research or continue planning.
 
-    The retry tracker is consulted before allowing the loop to continue. If the
-    retry limit is exceeded a :class:`RuntimeError` is raised, signalling a
-    terminal failure.
+    This policy consults the retry tracker to enforce a maximum of three
+    retries. When planner confidence falls below ``threshold`` the function
+    allows another research cycle only if the retry count has not been
+    exhausted. Once the limit is reached the workflow proceeds without raising
+    an error.
 
     Args:
         prev: Result object emitted by the planner node.
@@ -31,14 +33,17 @@ def policy_retry_on_low_confidence(
         agent_name: Identifier passed to :func:`retry_tracker`.
 
     Returns:
-        ``True`` if the planner should hand control back to the researcher,
-        ``False`` otherwise.
+        ``"loop"`` if the planner should hand control back to the researcher,
+        ``"continue"`` when the planner may proceed forward.
     """
 
-    should_retry = prev.confidence < threshold
-    if should_retry:
-        retry_tracker(state, agent_name)
-    return should_retry
+    should_loop = prev.confidence < threshold
+    if should_loop:
+        try:
+            retry_tracker(state, agent_name)
+        except RuntimeError:
+            should_loop = False
+    return "loop" if should_loop else "continue"
 
 
 def policy_retry_on_critic_failure(
