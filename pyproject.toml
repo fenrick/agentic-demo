@@ -28,7 +28,9 @@ dependencies = [
     "sqlalchemy (>=2.0.42,<3.0.0)",
     "weasyprint (>=66,<67)",
     "fastapi (>=0.111,<1.0)",
-    "langsmith (>=0.4,<0.5)"
+    "langsmith (>=0.4,<0.5)",
+    "loguru (>=0.7,<1.0)",
+    "opentelemetry-instrumentation (>=0.50b0,<0.51)"
 ]
 
 [build-system]

@@ -8,9 +8,9 @@ pkg.config = config
 sys.modules["agentic_demo"] = pkg
 sys.modules["agentic_demo.config"] = config
 
-from agents.researcher_web import CitationDraft, RawSearchResult
-from agents.researcher_web_runner import run_web_search
-from core.state import State
+from agents.researcher_web import CitationDraft, RawSearchResult  # noqa: E402
+from agents.researcher_web_runner import run_web_search  # noqa: E402
+from core.state import State  # noqa: E402
 
 
 def _set_env(monkeypatch, offline: bool, provider: str = "perplexity") -> None:

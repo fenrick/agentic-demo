@@ -177,6 +177,7 @@ Risk assessment assumes default deployment in a secure network.
 ### 8.1 Logging
 
 - **Structured JSON logs** via `loguru` with fields: `timestamp, level, module, message, job_id, user_id`
+- **Central configuration** in `core/logging.py` binds `job_id` and `user_id` across the application.
 - **Log Aggregation:** ELK stack (Elasticsearch, Logstash, Kibana) or hosted Splunk
 - **Retention:** 30 days, then archived
 
@@ -191,6 +192,11 @@ Risk assessment assumes default deployment in a secure network.
 - **Playbooks:** Stored in `docs/INCIDENT_RESPONSE.md`
 - **Contacts:** On-call rotation via OpsGenie
 - **Postmortem:** All incidents >1 hour require formal postmortem within 72 hours
+
+### 8.4 Tracing
+
+- **OpenTelemetry** initialized in `src/web/main.py` with console exporter.
+- **Span propagation** ensures all agent nodes participate in request traces.
 
 ---
 

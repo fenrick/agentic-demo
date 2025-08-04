@@ -7,15 +7,19 @@ os.environ.setdefault("PERPLEXITY_API_KEY", "x")
 os.environ.setdefault("TAVILY_API_KEY", "x")
 os.environ.setdefault("DATA_DIR", "/tmp")
 
-import config
+import config  # noqa: E402
 
 pkg = types.ModuleType("agentic_demo")
 pkg.config = config
 sys.modules["agentic_demo"] = pkg
 sys.modules["agentic_demo.config"] = config
 
-from agents import offline_cache
-from agents.researcher_web import PerplexityClient, RawSearchResult, TavilyClient
+from agents import offline_cache  # noqa: E402
+from agents.researcher_web import (  # noqa: E402
+    PerplexityClient,
+    RawSearchResult,
+    TavilyClient,
+)
 
 
 def test_perplexity_search_hits_api_and_caches_results(monkeypatch, tmp_path):
