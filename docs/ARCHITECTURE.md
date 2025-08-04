@@ -37,9 +37,9 @@ This document provides a **comprehensive** and **explicit** description of the L
    - **Endpoints**:
     - `POST /run` — start new lecture build job
     - `POST /resume/{job_id}` — resume after crash
-     - `SSE /stream/state` — state snapshots
-     - `SSE /stream/actions` — action log
-     - `SSE /stream/citations` — new citations
+     - `SSE /stream/{workspace_id}/state` — state snapshots
+     - `SSE /stream/{workspace_id}/actions` — action log
+     - `SSE /stream/{workspace_id}/citations` — new citations
      - `GET /download/{job_id}/{format}` — retrieve final artifact
 
 2. **LangGraph Orchestrator**
