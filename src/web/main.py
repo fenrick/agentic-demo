@@ -66,6 +66,7 @@ async def setup_database(app: FastAPI) -> None:
             yield session
 
     app.state.db = _session_factory
+    app.state.db_path = str(db_path)
 
 
 def setup_graph(app: FastAPI) -> None:
@@ -91,12 +92,16 @@ def mount_frontend(app: FastAPI) -> None:
 def register_routes(app: FastAPI) -> None:
     """Include API routers."""
 
+    from .alert_endpoint import post_alerts
+    from .metrics_endpoint import get_metrics
     from .routes import citation, control, export, stream
 
     app.include_router(stream.router)
     app.include_router(control.router)
     app.include_router(export.router)
     app.include_router(citation.router)
+    app.add_api_route("/metrics", get_metrics, methods=["GET"])
+    app.add_api_route("/alerts/{workspace_id}", post_alerts, methods=["POST"])
 
 
 def main() -> None:
