@@ -13,8 +13,13 @@ from typing import Callable, Dict, List, cast
 from agents.agent_wrapper import get_llm_params
 from agents.models import Activity
 from core.state import State
-from models import (ActivityDiversityReport, BloomCoverageReport,
-                    CognitiveLoadReport, CritiqueReport)
+from prompts import get_prompt
+from models import (
+    ActivityDiversityReport,
+    BloomCoverageReport,
+    CognitiveLoadReport,
+    CritiqueReport,
+)
 
 # Bloom's taxonomy levels used for coverage analysis
 BLOOM_LEVELS: List[str] = [
@@ -69,11 +74,7 @@ def classify_bloom_level(text: str) -> str:
     produces an unexpected result.
     """
 
-    prompt = (
-        "Classify the learning objective below into one of Bloom's levels "
-        "(remember, understand, apply, analyze, evaluate, create). "
-        "Respond with only the level name.\n\n" + text
-    )
+    prompt = get_prompt("pedagogy_critic_classify") + "\n\n" + text
     try:  # pragma: no cover - network dependency
         from openai import OpenAI  # type: ignore
 

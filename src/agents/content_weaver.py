@@ -10,10 +10,16 @@ from typing import AsyncGenerator, List
 from jsonschema import Draft202012Validator
 
 from core.state import State
+from prompts import get_prompt
 
 from .agent_wrapper import get_llm_params
-from .models import (Activity, AssessmentItem, Citation, SlideBullet,
-                     WeaveResult)
+from .models import (
+    Activity,
+    AssessmentItem,
+    Citation,
+    SlideBullet,
+    WeaveResult,
+)
 
 
 class RetryableError(RuntimeError):
@@ -111,7 +117,7 @@ async def call_openai_function(prompt: str, schema: dict) -> AsyncGenerator[str,
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an academic content weaver producing lectures.",
+                    "content": get_prompt("content_weaver_system"),
                 },
                 {"role": "user", "content": prompt},
             ],
