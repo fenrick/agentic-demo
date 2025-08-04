@@ -129,7 +129,7 @@ project-root/
   - **Invokes**: `poetry run pre-commit run --all-files` then `poetry run pytest`.
 
 - **File**: `scripts/reset_workspace.sh`
-  - **Deletes**: `workspace/*.db` and `workspace/cache/*` to start fresh.
+  - **Deletes**: `${DATA_DIR}/*.db` and `${DATA_DIR}/cache/*` to start fresh.
 
 ---
 
@@ -293,7 +293,7 @@ Each node module defines a single `async` handler function and its input/output 
 #### 2. `src/agents/offline_cache.py`
 
 - **`load_cached_results(query: str) → Optional[List[RawSearchResult]]`**
-  Reads `workspace/cache/{sanitized_query}.json` if present.
+  Reads `${DATA_DIR}/cache/{sanitized_query}.json` if present.
 - **`save_cached_results(query: str, results: List[RawSearchResult])`**
   Persists fresh API responses for offline reuse.
 
@@ -1043,7 +1043,7 @@ def from_schema(weave: WeaveResult) -> str:
 - **Steps**:
   1. Delete `${DATA_DIR}/workspace.db`.
   2. Run `alembic downgrade base` then `alembic upgrade head`.
-  3. Optionally clear `workspace/cache/*`.
+  3. Optionally clear `${DATA_DIR}/cache/*`.
 
 #### 3. `scripts/build_frontend.sh`
 
@@ -1065,7 +1065,7 @@ def from_schema(weave: WeaveResult) -> str:
 #### 2. In Agents
 
 - **`CacheBackedResearcher.search()`**
-  - First look in `workspace/cache/{query}.json`; if missing, error fast.
+  - First look in `${DATA_DIR}/cache/{query}.json`; if missing, error fast.
 
 - **`FactChecker.verify_sources()`**
   - If offline, skip HTTP calls and mark “unchecked” but pass.

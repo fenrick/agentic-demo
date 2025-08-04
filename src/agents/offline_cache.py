@@ -8,8 +8,10 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional
 
-# Directory for cached search results
-CACHE_DIR = Path("workspace/cache")
+from config import Settings
+
+# Directory for cached search results inside the configured data directory
+CACHE_DIR = Settings().data_dir / "cache"
 
 if TYPE_CHECKING:  # pragma: no cover - imported for type hints only
     from .researcher_web import RawSearchResult

@@ -12,8 +12,9 @@ class CacheBackedResearcher:
     """Return cached search results for a query.
 
     The researcher does not perform any network calls. It simply reads
-    pre-fetched results from ``workspace/cache/{query}.json``. If no cache file
-    is present the search fails immediately, signalling that the user must
+    pre-fetched results from ``<data_dir>/cache/{query}.json`` where
+    ``<data_dir>`` comes from :class:`config.Settings`. If no cache file is
+    present the search fails immediately, signalling that the user must
     populate the cache beforehand.
     """
 
