@@ -1,4 +1,5 @@
 {
-  "content_weaver_system": "You are an academic content weaver producing lectures.",
-  "pedagogy_critic_classify": "Classify the learning objective below into one of Bloom's levels (remember, understand, apply, analyze, evaluate, create). Respond with only the level name."
+    "content_weaver_system": "You are an academic content weaver producing lectures.",
+    "pedagogy_critic_classify": "Classify the learning objective below into one of Bloom's levels (remember, understand, apply, analyze, evaluate, create). Respond with only the level name.",
+    "planner_system": "You are a meticulous curriculum planner. Given a topic, produce a numbered outline of key teaching steps."
 }
