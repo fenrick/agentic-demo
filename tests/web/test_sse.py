@@ -4,35 +4,37 @@ import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
-import web.sse as sse_module
 from web.routes import register_sse_routes
 
 
 @pytest.mark.asyncio
-async def test_sse_sequence(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_sse_uses_app_graph() -> None:
+    events = [
+        {"type": "state", "payload": {"n": 1}},
+        {"type": "state", "payload": {"n": 2}},
+        {"type": "state", "payload": {"n": 3}},
+    ]
+    called = {"flag": False}
+
     async def fake_astream(*args, **kwargs):
-        events = [
-            {"type": "start", "payload": {}},
-            {"type": "update", "payload": {}},
-            {"type": "end", "payload": {}},
-        ]
+        called["flag"] = True
         for ev in events:
             yield ev
 
-    monkeypatch.setattr(sse_module, "graph", type("G", (), {"astream": fake_astream})())
-
     app = FastAPI()
+    app.state.graph = type("G", (), {"astream": fake_astream})()
     register_sse_routes(app)
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        async with client.stream("GET", "/stream/foo") as response:
-            types: list[str] = []
+        async with client.stream("GET", "/stream/foo/state") as response:
+            payloads: list[dict[str, int]] = []
             async for line in response.aiter_lines():
                 if line.startswith("data:"):
                     data = json.loads(line[5:])
-                    types.append(data["type"])
-                if len(types) == 3:
+                    payloads.append(data["payload"])
+                if len(payloads) == 3:
                     break
 
-    assert types == ["start", "update", "end"]
+    assert called["flag"] is True
+    assert payloads == [{"n": 1}, {"n": 2}, {"n": 3}]
