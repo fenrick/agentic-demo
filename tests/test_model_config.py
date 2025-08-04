@@ -1,5 +1,3 @@
-"""Tests for model configuration enforcement."""
-
 from __future__ import annotations
 
 import importlib
@@ -43,6 +41,10 @@ def test_validate_model_configuration_rejects_override(monkeypatch, tmp_path):
         """No-op stub used to satisfy imports."""
         return None
 
+    async def noop_async(*_args: object, **_kwargs: object) -> None:
+        """Async no-op used for async interfaces."""
+        return None
+
     sg = types.SimpleNamespace(add_node=noop, add_edge=noop, add_conditional_edges=noop)
     _stub_module(
         "langgraph.graph",
@@ -55,7 +57,11 @@ def test_validate_model_configuration_rejects_override(monkeypatch, tmp_path):
         SqliteCheckpointManager=type(
             "CM",
             (),
-            {"__init__": noop, "save_checkpoint": noop, "load_checkpoint": noop},
+            {
+                "__init__": noop,
+                "save_checkpoint": noop_async,
+                "load_checkpoint": noop_async,
+            },
         ),
     )
     _stub_module("agents.approver", run_approver=noop)

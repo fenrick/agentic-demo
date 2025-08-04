@@ -92,7 +92,7 @@ class GraphOrchestrator:
             input_hash = compute_hash(input_dict)
             result = await node(state)
             if self.checkpoint_manager is not None:
-                self.checkpoint_manager.save_checkpoint(state)
+                await self.checkpoint_manager.save_checkpoint(state)
             output_hash = compute_hash(result)
             tokens = _token_count(input_dict) + _token_count(result)
             workspace_id = getattr(state, "workspace_id", "default")
@@ -160,7 +160,7 @@ class GraphOrchestrator:
             self.register_edges()
         if self.checkpoint_manager is None:
             raise RuntimeError("Checkpoint manager required to resume")
-        state = self.checkpoint_manager.load_checkpoint()
+        state = await self.checkpoint_manager.load_checkpoint()
         planner = self._wrap("Planner", _import_callable("agents.planner.run_planner"))
         return await planner(state)
 
