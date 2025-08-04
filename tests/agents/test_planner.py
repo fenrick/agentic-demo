@@ -16,6 +16,10 @@ def test_run_planner_parses_outline_and_confidence(monkeypatch):
         return "1. Intro\n2. Body\n3. Conclusion"
 
     monkeypatch.setattr(planner, "call_planner_llm", fake_llm)
+    tokens: list[str] = []
+    debugs: list[str] = []
+    monkeypatch.setattr(planner, "stream_messages", tokens.append)
+    monkeypatch.setattr(planner, "stream_debug", debugs.append)
 
     async def run_test():
         state = State(prompt="topic")
@@ -24,6 +28,8 @@ def test_run_planner_parses_outline_and_confidence(monkeypatch):
     result = asyncio.run(run_test())
     assert result.outline.steps == ["Intro", "Body", "Conclusion"]
     assert result.confidence == 0.8
+    assert tokens == ["1. Intro\n2. Body\n3. Conclusion"]
+    assert debugs == []
 
 
 def test_run_planner_empty_response(monkeypatch):
@@ -31,6 +37,10 @@ def test_run_planner_empty_response(monkeypatch):
         return ""
 
     monkeypatch.setattr(planner, "call_planner_llm", fake_llm)
+    tokens: list[str] = []
+    debugs: list[str] = []
+    monkeypatch.setattr(planner, "stream_messages", tokens.append)
+    monkeypatch.setattr(planner, "stream_debug", debugs.append)
 
     async def run_test():
         state = State(prompt="topic")
@@ -39,3 +49,5 @@ def test_run_planner_empty_response(monkeypatch):
     result = asyncio.run(run_test())
     assert result.outline.steps == []
     assert result.confidence == 0.0
+    assert tokens == [""]
+    assert debugs == ["planner produced empty outline"]

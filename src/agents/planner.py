@@ -9,6 +9,7 @@ from core.state import Outline, State
 from prompts import get_prompt
 
 from .agent_wrapper import init_chat_model
+from .streaming import stream_debug, stream_messages
 
 
 @dataclass(slots=True)
@@ -64,10 +65,13 @@ async def run_planner(state: State) -> PlanResult:
     """Analyze ``state.prompt`` and draft an outline."""
 
     raw = await call_planner_llm(state.prompt)
+    stream_messages(raw)
     outline = extract_outline(raw)
     confidence = 0.0
     if outline.steps:
         confidence = min(1.0, round(0.5 + 0.1 * len(outline.steps), 2))
+    else:
+        stream_debug("planner produced empty outline")
     return PlanResult(outline=outline, confidence=confidence)
 
 

@@ -1,8 +1,21 @@
 import asyncio
 import json
+import sys
+import types
 
-from agents import content_weaver as cw
-from core.state import Outline, State
+
+class _Msg:
+    def __init__(self, content: str):
+        self.content = content
+
+
+sys.modules.setdefault(
+    "langchain_core.messages",
+    types.SimpleNamespace(HumanMessage=_Msg, SystemMessage=_Msg),
+)
+
+from agents import content_weaver as cw  # noqa: E402
+from core.state import Outline, State  # noqa: E402
 
 
 def test_call_openai_function_streams_tokens(monkeypatch):
@@ -71,6 +84,11 @@ def test_section_specific_prompt(monkeypatch):
 
     monkeypatch.setattr(cw, "call_openai_function", fake_call_openai_function)
     monkeypatch.setattr(cw, "stream_messages", lambda token: None)
+    monkeypatch.setattr(
+        cw,
+        "validate_against_schema",
+        lambda payload: cw.ValidationResult(valid=True, errors=[]),
+    )
 
     async def run_test():
         outline = Outline(steps=["first", "second"])
