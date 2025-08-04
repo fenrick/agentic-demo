@@ -54,7 +54,7 @@ This document provides a **comprehensive** and **explicit** description of the L
    - **Dense Retriever**: optional fallback using `faiss` index of CC-BY abstracts
 
 4. **Synthesis Layer**
-   - **OpenAIClient**: wraps function-call chat completions with streaming
+   - **LangChain ChatOpenAI**: wraps chat completions with streaming
    - **Schema Validator**: enforces `schemas/outline.json`
    - **Stream Manager**: channels LangGraph streams to HTTP SSE
 

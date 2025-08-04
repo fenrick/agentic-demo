@@ -133,7 +133,7 @@ project-root/
 
 ---
 
-## B. Orchestration Core (LangGraph StateGraph)
+## B. Orchestration Core (LangGraph JSON Graph)
 
 ---
 
@@ -214,7 +214,7 @@ Each node module defines a single `async` handler function and its input/output 
 - **Class `GraphOrchestrator`**
 
 - **Method `initialize_graph()`**
-  - Instantiate a `StateGraph<State>` and register all nodes with their stream channels (`values`, `updates`, `messages`, `debug`).
+  - Load `langgraph.json` and register all nodes with their stream channels (`values`, `updates`, `messages`, `debug`).
 
 - **Method `register_edges()`**
   - Wire node-to-node transitions, referencing policies (see B.3).

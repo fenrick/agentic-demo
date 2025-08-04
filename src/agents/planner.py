@@ -27,23 +27,22 @@ class PlanResult:
 async def call_planner_llm(topic: str) -> str:
     """Call an LLM to produce an outline for ``topic``.
 
-    Falls back to an empty string if the OpenAI client is unavailable.
+    Falls back to an empty string if the LLM client is unavailable.
     """
 
     try:  # pragma: no cover - exercised via monkeypatch in tests
-        from openai import AsyncOpenAI  # type: ignore
+        from langchain_openai import ChatOpenAI  # type: ignore
+        from langchain_core.messages import HumanMessage, SystemMessage
     except Exception:  # dependency missing
         return ""
 
-    client = AsyncOpenAI()
-    response = await client.responses.create(
-        **get_llm_params(),
-        messages=[
-            {"role": "system", "content": get_prompt("planner_system")},
-            {"role": "user", "content": topic},
-        ],
-    )
-    return getattr(response, "output_text", "")
+    model = ChatOpenAI(**get_llm_params())
+    messages = [
+        SystemMessage(content=get_prompt("planner_system")),
+        HumanMessage(content=topic),
+    ]
+    response = await model.ainvoke(messages)
+    return response.content or ""
 
 
 _LINE_RE = re.compile(r"^\s*(?:[-*]|\d+\.)\s+(.*)")

@@ -55,8 +55,9 @@ Agents communicate via typed state transitions and stream deltas to the frontend
 
 ## 4. Orchestration Layer
 
-### 4.1 LangGraph StateGraph
+### 4.1 LangGraph Orchestrator
 
+- Graph topology defined in `langgraph.json` and loaded at runtime.
 - Maintains a `State` class with attributes:
   - `prompt: str`
   - `learning_objectives: List[str]`

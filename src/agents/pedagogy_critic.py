@@ -76,14 +76,11 @@ def classify_bloom_level(text: str) -> str:
 
     prompt = get_prompt("pedagogy_critic_classify") + "\n\n" + text
     try:  # pragma: no cover - network dependency
-        from openai import OpenAI  # type: ignore
+        from langchain_openai import ChatOpenAI  # type: ignore
 
-        client = OpenAI()
-        response = client.responses.create(
-            **get_llm_params(),
-            input=[{"role": "user", "content": prompt}],
-        )
-        level = response.output_text.strip().lower()
+        model = ChatOpenAI(**get_llm_params())
+        response = model.invoke(prompt)
+        level = (response.content or "").strip().lower()
         if level in BLOOM_LEVELS:
             return level
     except Exception:
