@@ -8,6 +8,7 @@ export interface SseEvent {
 }
 
 interface WorkspaceStore {
+  workspaceId: string | null;
   document: unknown;
   logs: SseEvent[];
   sources: unknown[];
@@ -15,6 +16,7 @@ interface WorkspaceStore {
   status: 'idle' | 'running' | 'paused';
   model: string;
   connect: (workspaceId: string) => void;
+  setWorkspaceId: (workspaceId: string | null) => void;
   updateState: (event: SseEvent) => void;
   setStatus: (status: 'idle' | 'running' | 'paused') => void;
   setModel: (model: string) => void;
@@ -22,6 +24,7 @@ interface WorkspaceStore {
 
 // Global workspace state accessed throughout the UI.
 export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
+  workspaceId: null,
   document: null,
   logs: [],
   sources: [],
@@ -29,6 +32,7 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   status: 'idle',
   model: 'o4-mini',
   connect: (workspaceId: string) => {
+    set({ workspaceId });
     const es = connectToWorkspaceStream(workspaceId);
     es.onmessage = (e: MessageEvent) => {
       try {
@@ -39,6 +43,7 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
       }
     };
   },
+  setWorkspaceId: (workspaceId) => set({ workspaceId }),
   updateState: (event: SseEvent) => {
     switch (event.type) {
       case 'document':
@@ -68,3 +73,4 @@ export const sources = () => useWorkspaceStore.getState().sources;
 export const exportStatus = () => useWorkspaceStore.getState().exportStatus;
 export const runStatus = () => useWorkspaceStore.getState().status;
 export const selectedModel = () => useWorkspaceStore.getState().model;
+export const currentWorkspaceId = () => useWorkspaceStore.getState().workspaceId;

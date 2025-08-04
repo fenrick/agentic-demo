@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getCitation, type Citation } from '../api/citationClient';
+import { useWorkspaceStore } from '../store/useWorkspaceStore';
 
 interface Props {
   citationId: string;
@@ -10,18 +11,20 @@ interface Props {
  */
 const CitationPopover: React.FC<Props> = ({ citationId }) => {
   const [data, setData] = useState<Citation | null>(null);
+  const workspaceId = useWorkspaceStore((s) => s.workspaceId);
 
   useEffect(() => {
     const loadMetadata = async () => {
+      if (!workspaceId) return;
       try {
-        const meta = await getCitation('default', citationId);
+        const meta = await getCitation(workspaceId, citationId);
         setData(meta);
       } catch (err) {
         console.error('Failed to load citation', err);
       }
     };
     loadMetadata();
-  }, [citationId]);
+  }, [workspaceId, citationId]);
 
   if (!data) return <div>Loading...</div>;
 
