@@ -1273,3 +1273,175 @@ def from_schema(weave: WeaveResult) -> str:
      - Inserts two known state blobs, computes expected hashes, and verifies `list_hashes()` and `compare_states()` behave correctly.
 
 ---
+
+## K: Validate & Confirm
+
+---
+
+### K.1 Enforce OpenAI o4-mini for All Agents
+
+> **Objective:** Guarantee every LLM call uses `o4-mini` by default.
+
+1. **`src/config.py`**
+
+   - **Field:** `MODEL_NAME: str = "o4-mini"`
+     _Default model string; never null._
+
+2. **`src/core/orchestrator.py`**
+
+   - **Method:** `validate_model_configuration()`
+     _Runs at startup to assert `config.MODEL_NAME == "o4-mini"`, or raise a clear error._
+
+3. **`src/agents/agent_wrapper.py`**
+
+   - **Method:** `get_llm_params()`
+     _Reads `config.MODEL_NAME` and injects into every OpenAI API call payload._
+
+4. **Acceptance:**
+
+   - Startup log prints “Using LLM engine o4-mini”
+   - Unit test in `tests/test_model_config.py` covers a mis-set environment var.
+
+---
+
+### K.2 Surface CritiqueReport Metrics in UI
+
+> **Objective:** Push pedagogy/fact-check scores to a new “Quality” tab via SSE, with colour coding for thresholds.
+
+1. **`src/agents/pedagogy_critic.py`**
+
+   - **Method:** `generate_critique_report(state: State) → CritiqueReport`
+     _Already returns metrics; no change._
+
+2. **`src/web/sse_quality_stream.py`**
+
+   - **Function:** `quality_stream(workspace_id: str)`
+     _Subscribes to Critic node outputs, wraps each `CritiqueReport` as SSE event with type `"quality"`._
+   - **Integration:** Mount to FastAPI under `GET /stream/{workspace}/quality`.
+
+3. **`src/store/qualityStore.js`**
+
+   - **Action:** `receiveQualityMetrics(report)`
+     _Ingests SSE payloads into React state._
+
+4. **`src/components/QualityTab.jsx`**
+
+   - **Component:** `QualityTab`
+     _Renders a table/list of metrics, applies green/orange/red styling based on each score vs. its threshold._
+
+5. **Acceptance:**
+
+   - Academics see a new “Quality” tab next to “Document” and “Log.”
+   - Scores below threshold are red, above are green.
+
+---
+
+### K.3 Add Citation-Style Configuration
+
+> **Objective:** Allow users to supply a CSL file (e.g. APA, Harvard) and have all exporters honour it.
+
+1. **`src/config.py`**
+
+   - **Field:** `CSL_PATH: Optional[str] = None`
+     _Path to user-provided CSL file._
+
+2. **`src/export/exporter_base.py`**
+
+   - **Method:** `set_citation_style(self, csl_path: str)`
+     _Loads CSL into a `citeproc-python` processor instance on the exporter._
+
+3. **`src/export/markdown.py`**
+
+   - **Class:** `MarkdownExporter(ExporterBase)`
+
+     - **Override:** `render_citations(self, citations: List[Citation]) → str`
+       _Passes citations through `citeproc-python` using the loaded CSL._
+
+4. **`src/export/docx.py`**
+
+   - **Class:** `DocxExporter(ExporterBase)`
+
+     - **Override:** `apply_citations(self)`
+       _Formats footnotes via `citeproc-python` with the CSL._
+
+5. **`src/export/pdf.py`**
+
+   - **Class:** `PdfExporter(ExporterBase)`
+
+     - **Override:** `apply_citations(self)`
+       _Same as DOCX but in the HTML → PDF pipeline._
+
+6. **`src/web/routes/config_routes.py`**
+
+   - **Route:** `POST /config/csl`
+     _Accepts file upload, saves to `config.CSL_PATH`, and triggers a reload of all exporter instances._
+
+7. **Acceptance:**
+
+   - Engineer can upload an APA or Harvard CSL via UI; all exports reflect that style.
+
+---
+
+### K.4 Log Panel & CSV Download
+
+> **Objective:** Expose the persisted action log next to the DocumentPanel and allow CSV export.
+
+1. **`src/persistence/log_repo.py`**
+
+   - **Method:** `export_logs_csv(workspace_id: str) → str`
+     _Queries `logs` table and serialises rows to a CSV string._
+
+2. **`src/web/routes/log_routes.py`**
+
+   - **Route:** `GET /logs/{workspace_id}.csv`
+     _Returns `export_logs_csv(...)` with `text/csv` headers._
+
+3. **`src/components/LogPanel.jsx`**
+
+   - **Component:** `LogPanel`
+     _Fetches `/logs/{workspace}` as JSON for inline display; shows columns: agent, timestamp, tokens, cost._
+
+4. **`src/components/DownloadCsvButton.jsx`**
+
+   - **Component:** `DownloadCsvButton`
+     _Triggers a download from `/logs/{workspace}.csv` when clicked._
+
+5. **Acceptance:**
+
+   - Users can scroll through the log in-app and click “Download CSV” to get the raw audit data.
+
+---
+
+### K.5 Robust SSE & Reconnect UX
+
+> **Objective:** Harden the SSE client with exponential back-off, heartbeat pings, and a reconnect toast.
+
+1. **`src/web/middleware/sse_client.js`**
+
+   - **Function:** `connectWithBackoff(url: string, onMessage, onError)`
+     _Attempts initial `EventSource`; on connection failure or `error` event, retries with back-off delays (e.g. 1s, 2s, 4s…)._
+
+   - **Function:** `startHeartbeat(eventSource)`
+     _Every 30 s, sends a dummy ping; if no `open` event in window, triggers `eventSource.close()` and restarts back-off._
+
+2. **`src/store/connectionStore.js`**
+
+   - **Action:** `setConnectionStatus(status: "connected"|"disconnected"|"reconnecting")`
+   - **State:** holds current SSE status for UI use.
+
+3. **`src/components/SSEProvider.jsx`**
+
+   - **Component:** `SSEProvider`
+     _Initialises `connectWithBackoff`, wires `onopen`/`onerror` to update `connectionStore`, and calls `startHeartbeat`._
+
+4. **`src/components/Toast.jsx`**
+
+   - **Component:** `Toast`
+     _Listens to `connectionStore`; when status transitions to `"reconnecting"`, displays a dismissible “Attempting to reconnect…” toast._
+
+5. **Acceptance:**
+
+   - Network interruption triggers the toast and automatic reconnection attempts.
+   - Once reconnected, a brief “Reconnected” message appears and normal SSE events resume.
+
+---
