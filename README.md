@@ -106,6 +106,14 @@ subscribe to:
    npm install
    ```
 
+4. Build the frontend:
+
+   ```bash
+   ./scripts/build_frontend.sh
+   ```
+
+   This generates the static assets in `frontend/dist` that the FastAPI server serves.
+
 ### Configuration
 
 Copy the sample environment file and provide your secrets:
