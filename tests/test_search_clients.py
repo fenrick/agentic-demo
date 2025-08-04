@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 import types
@@ -19,7 +20,10 @@ from agents.researcher_web import (  # noqa: E402
     PerplexityClient,
     RawSearchResult,
     TavilyClient,
+    cached_search,
 )
+from agents.dense_retriever import DenseRetriever  # noqa: E402
+from persistence import get_db_session  # noqa: E402
 
 
 def test_perplexity_search_hits_api_and_caches_results(monkeypatch, tmp_path):
@@ -107,3 +111,71 @@ def test_tavily_search_hits_api_and_caches_results(monkeypatch, tmp_path):
     assert (tmp_path / "hello_world.json").exists()
     assert tokens == ["snippet"]
     assert debugs == ["tavily search: hello world"]
+
+
+CREATE_CACHE_SQL = """
+CREATE TABLE retrieval_cache (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    query TEXT UNIQUE NOT NULL,
+    results TEXT NOT NULL,
+    hit_count INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL
+)
+"""
+
+
+def test_cached_search_uses_retrieval_cache(monkeypatch, tmp_path):
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+
+    async def init_db() -> None:
+        async with get_db_session() as conn:
+            await conn.execute(CREATE_CACHE_SQL)
+            await conn.commit()
+
+    asyncio.run(init_db())
+
+    class DummyClient:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def search(self, query: str):
+            self.calls += 1
+            return [RawSearchResult(url="http://x", snippet="s", title="t")]
+
+    client = DummyClient()
+    first = cached_search("q", client)
+    second = cached_search("q", client)
+    assert first == second
+    assert client.calls == 1
+
+    async def hit_count() -> int:
+        async with get_db_session() as conn:
+            cur = await conn.execute(
+                "SELECT hit_count FROM retrieval_cache WHERE query = ?",
+                ("q",),
+            )
+            row = await cur.fetchone()
+            await cur.close()
+            return row[0]
+
+    assert asyncio.run(hit_count()) == 1
+
+
+def test_cached_search_falls_back_to_dense(monkeypatch, tmp_path):
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+
+    async def init_db() -> None:
+        async with get_db_session() as conn:
+            await conn.execute(CREATE_CACHE_SQL)
+            await conn.commit()
+
+    asyncio.run(init_db())
+
+    class FailingClient:
+        def search(self, query: str):  # pragma: no cover - simple
+            raise RuntimeError("boom")
+
+    docs = [RawSearchResult(url="http://a", snippet="hello world", title="A")]
+    dense = DenseRetriever(docs)
+    results = cached_search("hello", FailingClient(), dense)
+    assert results == docs
