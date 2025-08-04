@@ -10,7 +10,7 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import Callable, Dict, List, cast
 
-from agents.agent_wrapper import get_llm_params
+from agents.agent_wrapper import init_chat_model
 from agents.models import Activity
 from core.state import State
 from prompts import get_prompt
@@ -76,13 +76,12 @@ def classify_bloom_level(text: str) -> str:
 
     prompt = get_prompt("pedagogy_critic_classify") + "\n\n" + text
     try:  # pragma: no cover - network dependency
-        from langchain_openai import ChatOpenAI  # type: ignore
-
-        model = ChatOpenAI(**get_llm_params())
-        response = model.invoke(prompt)
-        level = (response.content or "").strip().lower()
-        if level in BLOOM_LEVELS:
-            return level
+        model = init_chat_model()
+        if model is not None:
+            response = model.invoke(prompt)
+            level = (response.content or "").strip().lower()
+            if level in BLOOM_LEVELS:
+                return level
     except Exception:
         pass
     return _keyword_classify(text)

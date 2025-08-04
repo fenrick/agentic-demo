@@ -10,10 +10,7 @@ def test_call_openai_function_streams_tokens(monkeypatch):
         def __init__(self, content: str):
             self.content = content
 
-    class FakeChatOpenAI:
-        def __init__(self, **_kwargs: object) -> None:
-            pass
-
+    class FakeLLM:
         async def astream(self, *args, **kwargs):
             async def gen():
                 yield FakeChunk("foo")
@@ -21,7 +18,7 @@ def test_call_openai_function_streams_tokens(monkeypatch):
 
             return gen()
 
-    monkeypatch.setattr(cw, "ChatOpenAI", FakeChatOpenAI)
+    monkeypatch.setattr(cw, "init_chat_model", lambda **_kwargs: FakeLLM())
 
     async def run_test():
         gen = await cw.call_openai_function("prompt", {})

@@ -12,7 +12,7 @@ from jsonschema import Draft202012Validator
 from core.state import State
 from prompts import get_prompt
 
-from .agent_wrapper import get_llm_params
+from .agent_wrapper import init_chat_model
 from .models import (
     Activity,
     AssessmentItem,
@@ -100,7 +100,6 @@ async def call_openai_function(prompt: str, schema: dict) -> AsyncGenerator[str,
     """Invoke an LLM via LangChain and yield streamed tokens."""
 
     try:
-        from langchain_openai import ChatOpenAI  # type: ignore
         from langchain_core.messages import HumanMessage, SystemMessage
     except Exception:  # pragma: no cover - dependency not installed
 
@@ -110,7 +109,14 @@ async def call_openai_function(prompt: str, schema: dict) -> AsyncGenerator[str,
 
         return empty()
 
-    model = ChatOpenAI(**get_llm_params(), streaming=True)
+    model = init_chat_model(streaming=True)
+    if model is None:
+
+        async def empty() -> AsyncGenerator[str, None]:
+            if False:
+                yield ""  # type: ignore
+
+        return empty()
 
     async def generator() -> AsyncGenerator[str, None]:
         messages = [

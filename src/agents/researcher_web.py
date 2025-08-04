@@ -6,8 +6,7 @@ from dataclasses import dataclass
 from typing import Any, List, Optional, Protocol
 from urllib.parse import urlparse
 
-from langchain_perplexity import ChatPerplexity
-
+from .agent_wrapper import init_chat_model
 from .offline_cache import load_cached_results, save_cached_results
 
 
@@ -33,7 +32,10 @@ class PerplexityClient:
     """Wrapper around the Perplexity Sonar model via LangChain."""
 
     def __init__(self, api_key: str, llm: Optional[Any] = None) -> None:
-        self.llm = llm or ChatPerplexity(model="sonar", pplx_api_key=api_key)
+        model = llm or init_chat_model(model="sonar", pplx_api_key=api_key)
+        if model is None:  # pragma: no cover - dependency missing
+            raise RuntimeError("Perplexity chat model unavailable")
+        self.llm = model
 
     def search(self, query: str) -> List[RawSearchResult]:
         """Call the Sonar model and cache its cited search results."""
