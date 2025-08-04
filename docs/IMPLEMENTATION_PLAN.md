@@ -806,19 +806,16 @@ def from_schema(weave: WeaveResult) -> str:
 ### H1. SSE Backend
 
 1. **`src/web/sse.py`**
-
    - `stream_workspace_events(workspace_id: str) -> AsyncGenerator[SseEvent]`
      • **What**: connect to your LangGraph `graph.astream()` for the given workspace, wrap each update in an `SseEvent` namedtuple/dict (`type`, `payload`, `timestamp`).
      • **Why**: centralises SSE logic so routes stay thin.
 
 1. **`src/web/schemas/sse.py`**
-
    - `class SseEvent(BaseModel)` with fields `type: str`, `payload: dict`, `timestamp: datetime`
      • **What**: JSON schema for all SSE messages.
      • **Why**: ensures consistent typing for clients.
 
 1. **`src/web/routes.py`**
-
    - `register_sse_routes(app: FastAPI)`
      • **Registers**:
 
@@ -831,7 +828,6 @@ def from_schema(weave: WeaveResult) -> str:
      • **Why**: binds SSE generator to HTTP endpoint.
 
 1. **`tests/web/test_sse.py`**
-
    - Test `test_sse_sequence()`
      • **What**: spin up test FastAPI app, connect via `httpx.AsyncClient` to `/stream/foo`, assert a known sequence of event types.
      • **Why**: validates end-to-end event streaming.
@@ -841,31 +837,26 @@ def from_schema(weave: WeaveResult) -> str:
 ### H2. React App Scaffolding
 
 1. **`frontend/src/index.tsx`**
-
    - **What**: bootstraps React, renders `<App />` into root.
    - **Why**: entrypoint for your SPA.
 
 1. **`frontend/src/App.tsx`**
-
    - **What**: top-level layout; imports panels and initialises workspace store.
    - **Why**: glues together UI panels and global state.
 
 1. **`frontend/src/store/useWorkspaceStore.ts`**
-
    - **Methods**:
-
      - `connect(workspaceId: string)` → opens SSE and subscribes
      - `updateState(event: SseEvent)` → dispatches to slices
      - Selectors: `documentState()`, `logEvents()`, `sources()`, `exportStatus()`
+
    - **Why**: single source of truth; panels subscribe here.
 
 1. **`frontend/src/api/sseClient.ts`**
-
    - `connectToWorkspaceStream(workspaceId: string): EventSource`
    - **Why**: encapsulates browser SSE setup (reconnect logic, backoff).
 
 1. **Directory `frontend/src/components/`**
-
    - Create stub files for each panel (see H3–H6).
    - Each exports a default React component accepting props tied to the store.
 
@@ -874,26 +865,22 @@ def from_schema(weave: WeaveResult) -> str:
 ### H3. Diff Highlighting & Typewriter (DocumentPanel)
 
 1. **`frontend/src/utils/diffUtils.ts`**
-
    - `computeDiff(oldText: string, newText: string): DiffPatch[]`
    - `tokenize(text: string): string[]`
    - **Why**: reusable helpers to turn raw markdown into change sets.
 
 1. **`frontend/src/components/DocumentPanel.tsx`**
-
    - **Props**: `text: string` (current markdown), `onAcceptDiff: (diffs)→void`
    - **Methods inside**:
-
      - `handleIncomingText(newText)` calls `computeDiff` + `animateDiff`
      - `animateDiff(diffs: DiffPatch[])` highlights insertions token-by-token
+
    - **Why**: shows live outline with diff highlighting and typewriter effect.
 
 1. **`tests/frontend/utils/testDiffUtils.ts`**
-
    - Validate `computeDiff` output on sample before/after strings.
 
 1. **`tests/frontend/components/DocumentPanel.test.tsx`**
-
    - Simulate prop changes, assert that newly inserted text is rendered with `.highlight` class for a brief period.
 
 ---
@@ -901,21 +888,18 @@ def from_schema(weave: WeaveResult) -> str:
 ### H4. Citation Popover
 
 1. **`frontend/src/api/citationClient.ts`**
-
    - `getCitation(workspaceId: string, citationId: string): Promise<Citation>`
    - **Why**: centralises fetch logic for metadata popover.
 
 1. **`frontend/src/components/CitationPopover.tsx`**
-
    - **Props**: `citationId: string`
    - **State/Methods**:
-
      - `loadMetadata()` calls `getCitation` on mount
      - Renders `url`, `title`, `retrieved_at`, `licence` in a modal/popup
+
    - **Why**: provides inline “click-to-see” citation details.
 
 1. **`tests/frontend/components/CitationPopover.test.tsx`**
-
    - Mock `citationClient.getCitation`, render popover, verify fields.
 
 ---
@@ -923,21 +907,18 @@ def from_schema(weave: WeaveResult) -> str:
 ### H5. Controls & Model Selector
 
 1. **`frontend/src/api/controlClient.ts`**
-
    - `run(workspaceId: string)`, `pause(workspaceId: string)`, `retry(workspaceId: string)`, `resume(workspaceId: string)`, `selectModel(workspaceId: string, model: string)`
    - **Why**: wrappers for all control endpoints.
 
 1. **`frontend/src/components/ControlsPanel.tsx`**
-
    - **Buttons**: Run, Pause, Retry, Resume
    - **Dropdown**: Model (o4-mini/o3)
    - **Handlers**:
-
      - `onRunClick()`, `onPauseClick()`, etc., invoking respective `controlClient` methods and updating store.
+
    - **Why**: let users drive the graph and switch models.
 
 1. **`tests/frontend/components/ControlsPanel.test.tsx`**
-
    - Simulate clicks, verify correct API calls and disabled states.
 
 ---
@@ -945,21 +926,18 @@ def from_schema(weave: WeaveResult) -> str:
 ### H6. Downloads Panel
 
 1. **`frontend/src/api/exportClient.ts`**
-
    - `getStatus(workspaceId: string): Promise<ExportStatus>`
    - `getUrls(workspaceId: string): Promise<Record<"md"|"docx"|"pdf"|"zip", string>>`
    - **Why**: hides REST details for polling and link retrieval.
 
 1. **`frontend/src/components/DownloadsPanel.tsx`**
-
    - **State/Methods**:
-
      - `startPolling()` on mount: calls `exportClient.getStatus` every 2s until `ready===true`
      - `renderLinks(urls)` once ready
+
    - **Why**: shows progress and final download buttons.
 
 1. **`tests/frontend/components/DownloadsPanel.test.tsx`**
-
    - Mock status transitions (`pending` → `ready`), assert polling stops and links render.
 
 ---
@@ -973,31 +951,29 @@ def from_schema(weave: WeaveResult) -> str:
 #### 1. `src/web/main.py`
 
 - **`create_app()`**
-
   - Instantiate and configure the FastAPI application.
   - Load settings from `src/config.py`.
   - Register middleware (CORS, error handlers).
-- **`setup_database(app)`**
 
+- **`setup_database(app)`**
   - Connect to SQLite, apply migrations (via Alembic).
   - Attach the DB session factory to `app.state.db`.
-- **`setup_graph(app)`**
 
+- **`setup_graph(app)`**
   - Initialize the LangGraph `StateGraph` and checkpoint saver.
   - Store graph instance on `app.state.graph` for endpoint handlers.
+
 - **`mount_frontend(app)`**
-
   - Serve the React build directory (`/frontend/dist`) at the root path.
+
 - **`register_routes(app)`**
-
   - Include routers from:
-
     - `src/web/routes/stream.py`
     - `src/web/routes/control.py`
     - `src/web/routes/export.py`
     - `src/web/routes/citation.py`
-- **`main()`**
 
+- **`main()`**
   - Parse `--offline` flag (e.g. via `argparse` or Typer).
   - Set `Settings.OFFLINE_MODE` accordingly.
   - Launch Uvicorn server with `app = create_app()`.
@@ -1005,7 +981,6 @@ def from_schema(weave: WeaveResult) -> str:
 #### 2. `src/config.py`
 
 - **`load_settings()`**
-
   - Read environment variables (`OPENAI_API_KEY`, `PERPLEXITY_API_KEY`, `MODEL_NAME`, `DATA_DIR`, `OFFLINE_MODE`).
   - Validate types/defaults via Pydantic.
   - Expose a global `Settings` object.
@@ -1013,11 +988,10 @@ def from_schema(weave: WeaveResult) -> str:
 #### 3. `src/persistence/database.py`
 
 - **`init_db()`**
-
   - Create `aiosqlite` engine pointing at `${DATA_DIR}/workspace.db`.
   - Run Alembic migrations to create or upgrade tables.
-- **`get_db_session()`**
 
+- **`get_db_session()`**
   - Yield async DB sessions for request handlers.
 
 ---
@@ -1027,29 +1001,27 @@ def from_schema(weave: WeaveResult) -> str:
 #### 1. `Dockerfile`
 
 - **Base Image**
-
   - Python 3.11 slim + OS deps for WeasyPrint (e.g. `libpango`, `libcairo`).
+
 - **Dependencies Installation**
-
   - Copy `pyproject.toml` & `poetry.lock`; run `poetry install --no-dev`.
+
 - **Build Frontend**
-
   - Copy `frontend/`; run `npm ci` & `npm run build`.
-- **App Copy & Entry**
 
+- **App Copy & Entry**
   - Copy `src/` into container; set `WORKDIR`.
   - Define default `CMD ["uvicorn", "web.main:app", "--host", "0.0.0.0", "--port", "8000"]`.
 
 #### 2. `docker-compose.yml`
 
 - **Service: `app`**
-
   - Build context `.` using above `Dockerfile`.
   - Mount `./workspace:/app/data` for persistent SQLite.
   - Environment variables from `.env`.
   - Ports `8000:8000`.
-- **Optional Service: `db-migrations`**
 
+- **Optional Service: `db-migrations`**
   - One-off container running `alembic upgrade head`.
 
 ---
@@ -1060,7 +1032,6 @@ def from_schema(weave: WeaveResult) -> str:
 
 - **Purpose**: start the entire stack locally without Docker.
 - **Steps**:
-
   1. Source `.env`.
   2. Poetry environment: `poetry run alembic upgrade head` (migrations).
   3. Poetry run: `uvicorn web.main:app --reload`.
@@ -1070,7 +1041,6 @@ def from_schema(weave: WeaveResult) -> str:
 
 - **Purpose**: nuke and rebuild the SQLite workspace.
 - **Steps**:
-
   1. Delete `${DATA_DIR}/workspace.db`.
   2. Run `alembic downgrade base` then `alembic upgrade head`.
   3. Optionally clear `workspace/cache/*`.
@@ -1079,7 +1049,6 @@ def from_schema(weave: WeaveResult) -> str:
 
 - **Purpose**: compile the React/Tailwind UI.
 - **Steps**:
-
   1. `cd frontend && npm ci && npm run build`.
   2. Copy `frontend/dist` into `src/web/static`.
 
@@ -1090,17 +1059,15 @@ def from_schema(weave: WeaveResult) -> str:
 #### 1. In `create_app()` (main.py)
 
 - Read `Settings.OFFLINE_MODE` and:
-
   - For search routes: bind `ResearcherWebClient` to either real Perplexity API or `CacheBackedResearcher`.
   - For FactChecker: disable external URL fetches and license checks if `OFFLINE_MODE=True`.
 
 #### 2. In Agents
 
 - **`CacheBackedResearcher.search()`**
-
   - First look in `workspace/cache/{query}.json`; if missing, error fast.
-- **`FactChecker.verify_sources()`**
 
+- **`FactChecker.verify_sources()`**
   - If offline, skip HTTP calls and mark “unchecked” but pass.
 
 ---
@@ -1114,40 +1081,30 @@ def from_schema(weave: WeaveResult) -> str:
 **Goal:** Record key performance metrics at each agent run and expose them for monitoring.
 
 1. **File:** `src/metrics/collector.py`
-
    - **Class:** `MetricsCollector`
-
      - **Method:** `record(metric_name: str, value: float)`
-
        - _What:_ Incrementally logs a metric (e.g. token count, cost) into an in-memory buffer or lightweight store.
-     - **Method:** `flush_to_db()`
 
+     - **Method:** `flush_to_db()`
        - _What:_ Persists buffered metrics into SQLite (table `metrics`).
 
 2. **File:** `src/metrics/repository.py`
-
    - **Class:** `MetricsRepository`
-
      - **Method:** `save(metric: MetricRecord)`
-
        - _What:_ Inserts a single metric row into the `metrics` table.
-     - **Method:** `query(time_range: TimeRange) -> List[MetricRecord]`
 
+     - **Method:** `query(time_range: TimeRange) -> List[MetricRecord]`
        - _What:_ Fetches metrics for dashboards or alerts.
 
 3. **File:** `src/web/metrics_endpoint.py`
-
    - **Function:** `get_metrics()`
-
      - _What:_ FastAPI GET handler on `/metrics`; pulls recent metrics via `MetricsRepository.query()` and renders in Prometheus format.
 
 4. **Tests:**
-
    - `tests/test_metrics_collector.py`
-
      - Verifies `record()` and `flush_to_db()` correctly writes to SQLite.
-   - `tests/test_metrics_endpoint.py`
 
+   - `tests/test_metrics_endpoint.py`
      - Mocks some metric rows and asserts the HTTP response contains valid Prometheus lines.
 
 ---
@@ -1157,37 +1114,28 @@ def from_schema(weave: WeaveResult) -> str:
 **Goal:** After each lecture run, ensure metrics meet targets; if not, fire a webhook.
 
 1. **File:** `src/metrics/alerts.py`
-
    - **Class:** `AlertManager`
-
      - **Method:** `evaluate_thresholds(workspace_id: str) -> AlertSummary`
-
        - _What:_ Aggregates metrics for the given workspace, compares against configuration (e.g. pedagogical ≥ 90 %, hallucination ≤ 2 %, cost ≤ 0.60 A\$).
-     - **Method:** `send_webhook(alert: AlertSummary)`
 
+     - **Method:** `send_webhook(alert: AlertSummary)`
        - _What:_ POSTs alert details to a configured webhook URL (from settings).
 
 2. **File:** `src/config/thresholds.yaml`
-
    - **Contents:**
-
      - `pedagogical_score: 0.90`
      - `max_hallucination_rate: 0.02`
      - `max_cost_per_lecture: 0.60`
 
 3. **File:** `src/web/alert_endpoint.py`
-
    - **Function:** `post_alerts(workspace_id: str)`
-
      - _What:_ FastAPI POST handler at `/alerts/{workspace}` that invokes `AlertManager.evaluate_thresholds()`, then `send_webhook()` if any breach.
 
 4. **Tests:**
-
    - `tests/test_alert_evaluation.py`
-
      - Supplies synthetic metric sets to `evaluate_thresholds()` and checks correct breach flags.
-   - `tests/test_alert_webhook.py`
 
+   - `tests/test_alert_webhook.py`
      - Mocks an HTTP server and asserts `send_webhook()` posts the right payload.
 
 ---
@@ -1197,38 +1145,30 @@ def from_schema(weave: WeaveResult) -> str:
 **Goal:** Enforce role-based access on API routes: viewer, editor, admin.
 
 1. **File:** `src/web/auth.py`
-
    - **Function:** `get_current_user(token: str) -> UserContext`
-
      - _What:_ Decodes JWT or API key into a `UserContext` object with `role` attribute.
-   - **Function:** `require_role(required: Literal["viewer","editor","admin"])`
 
+   - **Function:** `require_role(required: Literal["viewer","editor","admin"])`
      - _What:_ Returns a FastAPI dependency that raises 403 unless `current_user.role ≥ required`.
 
 2. **File:** `src/web/dependencies.py`
-
    - **Function:** `ensure_viewer(user=Depends(get_current_user))`
-
      - _What:_ Alias for `require_role("viewer")`.
+
    - **Function:** `ensure_editor(user=Depends(get_current_user))`
-
      - _What:_ Alias for `require_role("editor")`.
-   - **Function:** `ensure_admin(user=Depends(get_current_user))`
 
+   - **Function:** `ensure_admin(user=Depends(get_current_user))`
      - _What:_ Alias for `require_role("admin")`.
 
 3. **File:** `src/web/routes/*.py`
-
    - **Usage:**
-
      - In `export` routes: add `dependencies=[Depends(ensure_viewer)]`.
      - In `run/pause/retry` routes: `dependencies=[Depends(ensure_editor)]`.
      - In governance or metrics endpoints: `dependencies=[Depends(ensure_admin)]`.
 
 4. **Tests:**
-
    - `tests/test_rbac.py`
-
      - Parametrised tests that simulate tokens with different roles and assert 200 vs. 403 responses on key endpoints.
 
 ---
@@ -1238,38 +1178,29 @@ def from_schema(weave: WeaveResult) -> str:
 **Goal:** Provide a tamper-evident listing of saved state hashes and a CLI tool to compare them.
 
 1. **File:** `src/audit/trail.py`
-
    - **Class:** `AuditTrailManager`
-
      - **Method:** `list_hashes(workspace_id: str) -> List[StateHashRecord]`
-
        - _What:_ Queries the `state` table for each version’s stored SHA-256 hash and timestamp.
-     - **Method:** `compare_states(hash1: str, hash2: str) -> DiffSummary`
 
+     - **Method:** `compare_states(hash1: str, hash2: str) -> DiffSummary`
        - _What:_ Retrieves the two serialized state blobs and reports whether they match or not (and which fields differ).
 
 2. **File:** `src/web/audit_endpoint.py`
-
    - **Function:** `get_audit_list(workspace_id: str)`
-
      - _What:_ FastAPI GET on `/audit/{workspace}`; returns the list of hashes and timestamps.
-   - **Function:** `compare_audit(workspace_id: str, h1: str, h2: str)`
 
+   - **Function:** `compare_audit(workspace_id: str, h1: str, h2: str)`
      - _What:_ GET on `/audit/{workspace}/compare?h1=…&h2=…`; returns `DiffSummary`.
 
 3. **File:** `cli/audit_cli.py`
-
    - **Command:** `python -m audit_cli list --workspace X`
-
      - _What:_ Prints all state hashes to console in a table.
-   - **Command:** `python -m audit_cli compare --workspace X --h1 … --h2 …`
 
+   - **Command:** `python -m audit_cli compare --workspace X --h1 … --h2 …`
      - _What:_ Calls `AuditTrailManager.compare_states()` and prints whether identical or shows diff summary.
 
 4. **Tests:**
-
    - `tests/test_audit_trail.py`
-
      - Inserts two known state blobs, computes expected hashes, and verifies `list_hashes()` and `compare_states()` behave correctly.
 
 ---
@@ -1283,22 +1214,18 @@ def from_schema(weave: WeaveResult) -> str:
 > **Objective:** Guarantee every LLM call uses `o4-mini` by default.
 
 1. **`src/config.py`**
-
    - **Field:** `MODEL_NAME: str = "o4-mini"`
      _Default model string; never null._
 
 2. **`src/core/orchestrator.py`**
-
    - **Method:** `validate_model_configuration()`
      _Runs at startup to assert `config.MODEL_NAME == "o4-mini"`, or raise a clear error._
 
 3. **`src/agents/agent_wrapper.py`**
-
    - **Method:** `get_llm_params()`
      _Reads `config.MODEL_NAME` and injects into every OpenAI API call payload._
 
 4. **Acceptance:**
-
    - Startup log prints “Using LLM engine o4-mini”
    - Unit test in `tests/test_model_config.py` covers a mis-set environment var.
 
@@ -1309,28 +1236,23 @@ def from_schema(weave: WeaveResult) -> str:
 > **Objective:** Push pedagogy/fact-check scores to a new “Quality” tab via SSE, with colour coding for thresholds.
 
 1. **`src/agents/pedagogy_critic.py`**
-
    - **Method:** `generate_critique_report(state: State) → CritiqueReport`
      _Already returns metrics; no change._
 
 2. **`src/web/sse_quality_stream.py`**
-
    - **Function:** `quality_stream(workspace_id: str)`
      _Subscribes to Critic node outputs, wraps each `CritiqueReport` as SSE event with type `"quality"`._
    - **Integration:** Mount to FastAPI under `GET /stream/{workspace}/quality`.
 
 3. **`src/store/qualityStore.js`**
-
    - **Action:** `receiveQualityMetrics(report)`
      _Ingests SSE payloads into React state._
 
 4. **`src/components/QualityTab.jsx`**
-
    - **Component:** `QualityTab`
      _Renders a table/list of metrics, applies green/orange/red styling based on each score vs. its threshold._
 
 5. **Acceptance:**
-
    - Academics see a new “Quality” tab next to “Document” and “Log.”
    - Scores below threshold are red, above are green.
 
@@ -1341,43 +1263,33 @@ def from_schema(weave: WeaveResult) -> str:
 > **Objective:** Allow users to supply a CSL file (e.g. APA, Harvard) and have all exporters honour it.
 
 1. **`src/config.py`**
-
    - **Field:** `CSL_PATH: Optional[str] = None`
      _Path to user-provided CSL file._
 
 2. **`src/export/exporter_base.py`**
-
    - **Method:** `set_citation_style(self, csl_path: str)`
      _Loads CSL into a `citeproc-python` processor instance on the exporter._
 
 3. **`src/export/markdown.py`**
-
    - **Class:** `MarkdownExporter(ExporterBase)`
-
      - **Override:** `render_citations(self, citations: List[Citation]) → str`
        _Passes citations through `citeproc-python` using the loaded CSL._
 
 4. **`src/export/docx.py`**
-
    - **Class:** `DocxExporter(ExporterBase)`
-
      - **Override:** `apply_citations(self)`
        _Formats footnotes via `citeproc-python` with the CSL._
 
 5. **`src/export/pdf.py`**
-
    - **Class:** `PdfExporter(ExporterBase)`
-
      - **Override:** `apply_citations(self)`
        _Same as DOCX but in the HTML → PDF pipeline._
 
 6. **`src/web/routes/config_routes.py`**
-
    - **Route:** `POST /config/csl`
      _Accepts file upload, saves to `config.CSL_PATH`, and triggers a reload of all exporter instances._
 
 7. **Acceptance:**
-
    - Engineer can upload an APA or Harvard CSL via UI; all exports reflect that style.
 
 ---
@@ -1387,27 +1299,22 @@ def from_schema(weave: WeaveResult) -> str:
 > **Objective:** Expose the persisted action log next to the DocumentPanel and allow CSV export.
 
 1. **`src/persistence/log_repo.py`**
-
    - **Method:** `export_logs_csv(workspace_id: str) → str`
      _Queries `logs` table and serialises rows to a CSV string._
 
 2. **`src/web/routes/log_routes.py`**
-
    - **Route:** `GET /logs/{workspace_id}.csv`
      _Returns `export_logs_csv(...)` with `text/csv` headers._
 
 3. **`src/components/LogPanel.jsx`**
-
    - **Component:** `LogPanel`
      _Fetches `/logs/{workspace}` as JSON for inline display; shows columns: agent, timestamp, tokens, cost._
 
 4. **`src/components/DownloadCsvButton.jsx`**
-
    - **Component:** `DownloadCsvButton`
      _Triggers a download from `/logs/{workspace}.csv` when clicked._
 
 5. **Acceptance:**
-
    - Users can scroll through the log in-app and click “Download CSV” to get the raw audit data.
 
 ---
@@ -1417,7 +1324,6 @@ def from_schema(weave: WeaveResult) -> str:
 > **Objective:** Harden the SSE client with exponential back-off, heartbeat pings, and a reconnect toast.
 
 1. **`src/web/middleware/sse_client.js`**
-
    - **Function:** `connectWithBackoff(url: string, onMessage, onError)`
      _Attempts initial `EventSource`; on connection failure or `error` event, retries with back-off delays (e.g. 1s, 2s, 4s…)._
 
@@ -1425,22 +1331,18 @@ def from_schema(weave: WeaveResult) -> str:
      _Every 30 s, sends a dummy ping; if no `open` event in window, triggers `eventSource.close()` and restarts back-off._
 
 2. **`src/store/connectionStore.js`**
-
    - **Action:** `setConnectionStatus(status: "connected"|"disconnected"|"reconnecting")`
    - **State:** holds current SSE status for UI use.
 
 3. **`src/components/SSEProvider.jsx`**
-
    - **Component:** `SSEProvider`
      _Initialises `connectWithBackoff`, wires `onopen`/`onerror` to update `connectionStore`, and calls `startHeartbeat`._
 
 4. **`src/components/Toast.jsx`**
-
    - **Component:** `Toast`
      _Listens to `connectionStore`; when status transitions to `"reconnecting"`, displays a dismissible “Attempting to reconnect…” toast._
 
 5. **Acceptance:**
-
    - Network interruption triggers the toast and automatic reconnection attempts.
    - Once reconnected, a brief “Reconnected” message appears and normal SSE events resume.
 

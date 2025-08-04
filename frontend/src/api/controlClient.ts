@@ -32,9 +32,9 @@ async function request(
   body?: Record<string, unknown>,
 ): Promise<void> {
   const res = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: body ? JSON.stringify(body) : undefined,
   });

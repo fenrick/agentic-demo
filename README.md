@@ -51,13 +51,13 @@ The system comprises:
 
 1. **LangGraph StateGraph**: Manages typed `State` objects through nodes and edges. Handles checkpointing in SQLite.
 2. **Agents**:
-
    - **Curriculum Planner**: Defines learning objectives and module structure.
    - **Researcher-Web**: Executes parallel Perplexity/OpenAI searches, dedupes and ranks sources.
    - **Content Weaver**: Generates Markdown outline, speaker notes, slide bullets.
    - **Pedagogy Critic**: Verifies Bloom taxonomy coverage, activity diversity, cognitive load.
    - **Fact Checker**: Scans for hallucinations via Cleanlab/regex.
    - **Exporter**: Renders final deliverables.
+
 3. **Web UX**: React + Tailwind, SSE-driven, panels for document, log, sources, and controls.
 4. **Storage Layer**: SQLite for state, logs, citations; optional Postgres via repository abstraction.
 5. **Export Pipeline**: Pandoc-ready Markdown, python-docx, WeasyPrint PDF.
@@ -221,9 +221,9 @@ Refer to [ROADMAP.md](./docs/ROADMAP.md) for sprint plans and milestones.
 We welcome contributions! Please review:
 
 - [CONTRIBUTING.md](./docs/CONTRIBUTING.md)
-- [CODE\_OF\_CONDUCT.md](./docs/CODE_OF_CONDUCT.md)
-- [ISSUE\_TEMPLATE.md](./.github/ISSUE_TEMPLATE.md)
-- [PULL\_REQUEST\_TEMPLATE.md](./.github/PULL_REQUEST_TEMPLATE.md)
+- [CODE_OF_CONDUCT.md](./docs/CODE_OF_CONDUCT.md)
+- [ISSUE_TEMPLATE.md](./.github/ISSUE_TEMPLATE.md)
+- [PULL_REQUEST_TEMPLATE.md](./.github/PULL_REQUEST_TEMPLATE.md)
 
 ---
 
@@ -238,5 +238,5 @@ This project is licensed under the [MIT License](./LICENSE).
 - **DESIGN.md** — Detailed design decisions and component diagrams
 - **ARCHITECTURE.md** — Data model, state graph definitions, and sequence diagrams
 - **SECURITY.md** — Security posture, secrets management, and encryption options
-- **TEST\_PLAN.md** — Test cases, performance benchmarks, and QA checklist
+- **TEST_PLAN.md** — Test cases, performance benchmarks, and QA checklist
 - **GOVERNANCE.md** — SLOs, metrics dashboard configuration, and audit procedures

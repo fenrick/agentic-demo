@@ -9,7 +9,7 @@
  * - `token` is the text content of the token.
  */
 export interface DiffPatch {
-  type: 'equal' | 'insert' | 'delete';
+  type: "equal" | "insert" | "delete";
   token: string;
 }
 
@@ -56,23 +56,23 @@ export function computeDiff(oldText: string, newText: string): DiffPatch[] {
   let j = 0;
   while (i < m && j < n) {
     if (oldTokens[i] === newTokens[j]) {
-      patches.push({ type: 'equal', token: oldTokens[i] });
+      patches.push({ type: "equal", token: oldTokens[i] });
       i += 1;
       j += 1;
     } else if (dp[i + 1][j] >= dp[i][j + 1]) {
-      patches.push({ type: 'delete', token: oldTokens[i] });
+      patches.push({ type: "delete", token: oldTokens[i] });
       i += 1;
     } else {
-      patches.push({ type: 'insert', token: newTokens[j] });
+      patches.push({ type: "insert", token: newTokens[j] });
       j += 1;
     }
   }
   while (i < m) {
-    patches.push({ type: 'delete', token: oldTokens[i] });
+    patches.push({ type: "delete", token: oldTokens[i] });
     i += 1;
   }
   while (j < n) {
-    patches.push({ type: 'insert', token: newTokens[j] });
+    patches.push({ type: "insert", token: newTokens[j] });
     j += 1;
   }
   return patches;

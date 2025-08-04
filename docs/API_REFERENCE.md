@@ -6,10 +6,9 @@ This document provides a **detailed**, **explicit** reference for all backend HT
 
 ## 1. Authentication and Base Path
 
-* **Base URL**: `https://<your-domain>/api`
-* **Authentication**: All endpoints (except `/healthz` and `/metrics`) require a valid JSON Web Token (JWT).
-
-  * Send in HTTP header:
+- **Base URL**: `https://<your-domain>/api`
+- **Authentication**: All endpoints (except `/healthz` and `/metrics`) require a valid JSON Web Token (JWT).
+  - Send in HTTP header:
 
     ```http
     Authorization: Bearer <JWT_TOKEN>
@@ -21,18 +20,17 @@ This document provides a **detailed**, **explicit** reference for all backend HT
 
 ### 2.1 GET `/healthz`
 
-* **Purpose**: Liveness and readiness check.
-* **Authentication**: None
-* **Response**:
-
-  * **200 OK**: `{ "status": "ok" }`
-  * **500 Internal Server Error**: `{ "status": "error", "details": "<error message>" }`
+- **Purpose**: Liveness and readiness check.
+- **Authentication**: None
+- **Response**:
+  - **200 OK**: `{ "status": "ok" }`
+  - **500 Internal Server Error**: `{ "status": "error", "details": "<error message>" }`
 
 ### 2.2 GET `/metrics`
 
-* **Purpose**: Exposes Prometheus-formatted metrics.
-* **Authentication**: None (secured by network policy).
-* **Response**: Plaintext Prometheus metrics. Example:
+- **Purpose**: Exposes Prometheus-formatted metrics.
+- **Authentication**: None (secured by network policy).
+- **Response**: Plaintext Prometheus metrics. Example:
 
   ```plaintext
   # HELP http_request_duration_seconds ...
@@ -48,52 +46,50 @@ This document provides a **detailed**, **explicit** reference for all backend HT
 
 #### POST `/api/run`
 
-* **Purpose**: Begin a new lecture/workshop generation job.
+- **Purpose**: Begin a new lecture/workshop generation job.
 
-* **Authentication**: Required (`editor` or `admin`).
+- **Authentication**: Required (`editor` or `admin`).
 
-* **Request Body (JSON)**:
+- **Request Body (JSON)**:
 
   | Field     | Type   | Required | Description                               |
   | --------- | ------ | -------- | ----------------------------------------- |
   | `topic`   | String | Yes      | Lecture or workshop prompt string.        |
   | `options` | Object | No       | Optional settings (e.g. model overrides). |
 
-* **Response (JSON)**:
-
-  * **201 Created**
+- **Response (JSON)**:
+  - **201 Created**
 
     ```json
     { "job_id": "123e4567-e89b-12d3-a456-426614174000" }
     ```
 
-  * **400 Bad Request**: Invalid or missing `topic`.
-  * **401 Unauthorized**: Missing or invalid JWT.
+  - **400 Bad Request**: Invalid or missing `topic`.
+  - **401 Unauthorized**: Missing or invalid JWT.
 
 ### 3.2 Resume Existing Job
 
 #### GET `/api/resume/{job_id}`
 
-* **Purpose**: Resume a previously interrupted job.
+- **Purpose**: Resume a previously interrupted job.
 
-* **Authentication**: Required (`editor` or `admin`).
+- **Authentication**: Required (`editor` or `admin`).
 
-* **Path Parameter**:
+- **Path Parameter**:
 
   | Parameter | Type   | Description                |
   | --------- | ------ | -------------------------- |
   | `job_id`  | String | UUID of the job to resume. |
 
-* **Response (JSON)**:
-
-  * **200 OK**
+- **Response (JSON)**:
+  - **200 OK**
 
     ```json
     { "job_id": "<same-id>", "status": "resumed" }
     ```
 
-  * **404 Not Found**: No job with given `job_id`.
-  * **401 Unauthorized**: Invalid JWT.
+  - **404 Not Found**: No job with given `job_id`.
+  - **401 Unauthorized**: Invalid JWT.
 
 ---
 
@@ -105,17 +101,17 @@ Clients subscribe to three SSE endpoints to receive real-time updates. Each SSE 
 
 #### GET `/api/stream/state?job_id=<job_id>`
 
-* **Purpose**: Stream structured state snapshots as each agent completes.
+- **Purpose**: Stream structured state snapshots as each agent completes.
 
-* **Authentication**: Required (`viewer`, `editor`, or `admin`).
+- **Authentication**: Required (`viewer`, `editor`, or `admin`).
 
-* **Query Parameter**:
+- **Query Parameter**:
 
   | Parameter | Type   | Required | Description      |
   | --------- | ------ | -------- | ---------------- |
   | `job_id`  | String | Yes      | UUID of the job. |
 
-* **Event Format**: `event: state` followed by JSON data.
+- **Event Format**: `event: state` followed by JSON data.
 
   ```plaintext
   event: state
@@ -126,9 +122,9 @@ Clients subscribe to three SSE endpoints to receive real-time updates. Each SSE 
 
 #### GET `/api/stream/actions?job_id=<job_id>`
 
-* **Purpose**: Stream chronological action records from agents.
-* **Authentication**: Required (`viewer`, `editor`, or `admin`).
-* **Event Format**: `event: action`.
+- **Purpose**: Stream chronological action records from agents.
+- **Authentication**: Required (`viewer`, `editor`, or `admin`).
+- **Event Format**: `event: action`.
 
   ```plaintext
   event: action
@@ -139,9 +135,9 @@ Clients subscribe to three SSE endpoints to receive real-time updates. Each SSE 
 
 #### GET `/api/stream/citations?job_id=<job_id>`
 
-* **Purpose**: Stream citation objects as they are added.
-* **Authentication**: Required (`viewer`, `editor`, or `admin`).
-* **Event Format**: `event: citation`.
+- **Purpose**: Stream citation objects as they are added.
+- **Authentication**: Required (`viewer`, `editor`, or `admin`).
+- **Event Format**: `event: citation`.
 
   ```plaintext
   event: citation
@@ -156,20 +152,19 @@ Clients subscribe to three SSE endpoints to receive real-time updates. Each SSE 
 
 #### GET `/api/download/{job_id}/{format}`
 
-* **Purpose**: Download the completed lecture package.
+- **Purpose**: Download the completed lecture package.
 
-* **Authentication**: Required (`viewer`, `editor`, or `admin`).
+- **Authentication**: Required (`viewer`, `editor`, or `admin`).
 
-* **Path Parameters**:
+- **Path Parameters**:
 
   | Parameter | Type   | Description                      |
   | --------- | ------ | -------------------------------- |
   | `job_id`  | String | UUID of the completed job.       |
   | `format`  | String | One of `markdown`, `docx`, `pdf` |
 
-* **Response**:
-
-  * **200 OK**: Binary stream with appropriate `Content-Type`.
+- **Response**:
+  - **200 OK**: Binary stream with appropriate `Content-Type`.
 
     | Format     | Content-Type                                                              |
     | ---------- | ------------------------------------------------------------------------- |
@@ -177,9 +172,9 @@ Clients subscribe to three SSE endpoints to receive real-time updates. Each SSE 
     | `docx`     | `application/vnd.openxmlformats-officedocument.wordprocessingml.document` |
     | `pdf`      | `application/pdf`                                                         |
 
-  * **404 Not Found**: Job incomplete or wrong `job_id`.
+  - **404 Not Found**: Job incomplete or wrong `job_id`.
 
-  * **400 Bad Request**: Unsupported format.
+  - **400 Bad Request**: Unsupported format.
 
 ---
 
@@ -209,20 +204,25 @@ All error responses (except SSE) use JSON:
 
 ## 7. Rate Limiting and Quotas
 
-* **Per-IP Rate Limit**: 100 requests per minute for job management endpoints.
-* **Per-User Quota**: 10 concurrent jobs per user; additional requests return **429 Too Many Requests**:
+- **Per-IP Rate Limit**: 100 requests per minute for job management endpoints.
+- **Per-User Quota**: 10 concurrent jobs per user; additional requests return **429 Too Many Requests**:
 
   ```json
-  { "error": { "code": "RATE_LIMIT_EXCEEDED", "message": "Too many concurrent jobs." } }
+  {
+    "error": {
+      "code": "RATE_LIMIT_EXCEEDED",
+      "message": "Too many concurrent jobs."
+    }
+  }
   ```
 
 ---
 
 ## 8. Versioning and Deprecation
 
-* **API Version**: v1 (embedded in Base URL as `/api/v1` in future releases).
-* **Deprecation Policy**: Deprecated endpoints will return `410 Gone` with a link to migration guide.
+- **API Version**: v1 (embedded in Base URL as `/api/v1` in future releases).
+- **Deprecation Policy**: Deprecated endpoints will return `410 Gone` with a link to migration guide.
 
 ---
 
-*End of API Reference.*
+_End of API Reference._
