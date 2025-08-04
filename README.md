@@ -25,6 +25,7 @@ A local-first, multi-agent system that generates high‑quality, university‑gr
     - [Exporters](#exporters)
   - [Storage Options](#storage-options)
   - [Configuration \& Environment Variables](#configuration--environment-variables)
+  - [Logging \& Tracing](#logging--tracing)
   - [Testing \& QA](#testing--qa)
   - [Operational Governance](#operational-governance)
   - [Roadmap \& Next Steps](#roadmap--next-steps)
@@ -240,6 +241,17 @@ The command reads `alembic.ini` and writes migration scripts to
 | `MODEL_NAME`         | Model to use (`o4-mini` or `o3`)         | `o4-mini`  |
 | `DATA_DIR`           | Path for SQLite DB, cache, logs          | (required) |
 | `OFFLINE_MODE`       | Run without external network calls       | `false`    |
+
+---
+
+## Logging & Tracing
+
+- **Logging:** JSON-formatted logs are emitted via Loguru. The helper
+  `core.logging.get_logger(job_id, user_id)` binds contextual identifiers so
+  downstream systems can correlate events.
+- **Tracing:** OpenTelemetry is initialized at startup, instrumenting FastAPI
+  and outbound HTTP requests. Spans propagate through all agent nodes and can
+  be exported using any standard OpenTelemetry exporter.
 
 ---
 

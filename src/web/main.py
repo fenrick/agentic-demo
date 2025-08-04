@@ -11,6 +11,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from opentelemetry import trace
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+
 from agents.cache_backed_researcher import CacheBackedResearcher
 from agents.researcher_web import PerplexityClient, TavilyClient
 from config import Settings, load_settings
@@ -25,6 +32,7 @@ def create_app() -> FastAPI:
     settings = load_settings()
     app = FastAPI()
     app.state.settings = settings
+    _configure_tracing(app)
 
     # Bind search and fact-checking behaviour depending on offline mode.
     if settings.offline_mode:
@@ -53,6 +61,17 @@ def create_app() -> FastAPI:
     register_routes(app)
     mount_frontend(app)
     return app
+
+
+def _configure_tracing(app: FastAPI) -> None:
+    """Initialize OpenTelemetry providers and instrument FastAPI and requests."""
+
+    resource = Resource.create({"service.name": "lecture-builder-agent"})
+    provider = TracerProvider(resource=resource)
+    provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
+    trace.set_tracer_provider(provider)
+    FastAPIInstrumentor.instrument_app(app)
+    RequestsInstrumentor().instrument()
 
 
 async def setup_database(app: FastAPI) -> None:

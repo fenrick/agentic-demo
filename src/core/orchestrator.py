@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import importlib
 import json
-import logging
+from core.logging import get_logger
+from opentelemetry import trace
 import contextlib
 from datetime import datetime
 from pathlib import Path
@@ -24,7 +25,8 @@ from agents.planner import PlanResult
 from core.checkpoint import SqliteCheckpointManager
 from core.state import State
 
-logger = logging.getLogger(__name__)
+logger = get_logger()
+tracer = trace.get_tracer(__name__)
 
 try:
     _ENCODING = tiktoken.encoding_for_model(config.MODEL_NAME)
@@ -109,26 +111,27 @@ class GraphOrchestrator:
                 else contextlib.nullcontext()
             )
             with trace_ctx as run:
-                result = await node(state)
-                if self.checkpoint_manager is not None:
-                    await self.checkpoint_manager.save_checkpoint(state)
-                output_hash = compute_hash(result)
-                tokens = _token_count(input_dict) + _token_count(result)
-                workspace_id = getattr(state, "workspace_id", "default")
-                async with get_db_session() as conn:
-                    await log_action(
-                        conn,
-                        workspace_id,
-                        name,
-                        input_hash,
-                        output_hash,
-                        tokens,
-                        0.0,
-                        datetime.utcnow(),
-                    )
-                if run is not None:
-                    run.end(outputs=result)
-                return result
+                with tracer.start_as_current_span(name):
+                    result = await node(state)
+                    if self.checkpoint_manager is not None:
+                        await self.checkpoint_manager.save_checkpoint(state)
+                    output_hash = compute_hash(result)
+                    tokens = _token_count(input_dict) + _token_count(result)
+                    workspace_id = getattr(state, "workspace_id", "default")
+                    async with get_db_session() as conn:
+                        await log_action(
+                            conn,
+                            workspace_id,
+                            name,
+                            input_hash,
+                            output_hash,
+                            tokens,
+                            0.0,
+                            datetime.utcnow(),
+                        )
+                    if run is not None:
+                        run.end(outputs=result)
+                    return result
 
         return wrapped
 
