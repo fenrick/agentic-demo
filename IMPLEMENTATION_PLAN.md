@@ -972,53 +972,53 @@ def from_schema(weave: WeaveResult) -> str:
 
 #### 1. `src/web/main.py`
 
-* **`create_app()`**
+- **`create_app()`**
 
-  * Instantiate and configure the FastAPI application.
-  * Load settings from `src/config.py`.
-  * Register middleware (CORS, error handlers).
-* **`setup_database(app)`**
+  - Instantiate and configure the FastAPI application.
+  - Load settings from `src/config.py`.
+  - Register middleware (CORS, error handlers).
+- **`setup_database(app)`**
 
-  * Connect to SQLite, apply migrations (via Alembic).
-  * Attach the DB session factory to `app.state.db`.
-* **`setup_graph(app)`**
+  - Connect to SQLite, apply migrations (via Alembic).
+  - Attach the DB session factory to `app.state.db`.
+- **`setup_graph(app)`**
 
-  * Initialize the LangGraph `StateGraph` and checkpoint saver.
-  * Store graph instance on `app.state.graph` for endpoint handlers.
-* **`mount_frontend(app)`**
+  - Initialize the LangGraph `StateGraph` and checkpoint saver.
+  - Store graph instance on `app.state.graph` for endpoint handlers.
+- **`mount_frontend(app)`**
 
-  * Serve the React build directory (`/frontend/dist`) at the root path.
-* **`register_routes(app)`**
+  - Serve the React build directory (`/frontend/dist`) at the root path.
+- **`register_routes(app)`**
 
-  * Include routers from:
+  - Include routers from:
 
-    * `src/web/routes/stream.py`
-    * `src/web/routes/control.py`
-    * `src/web/routes/export.py`
-    * `src/web/routes/citation.py`
-* **`main()`**
+    - `src/web/routes/stream.py`
+    - `src/web/routes/control.py`
+    - `src/web/routes/export.py`
+    - `src/web/routes/citation.py`
+- **`main()`**
 
-  * Parse `--offline` flag (e.g. via `argparse` or Typer).
-  * Set `Settings.OFFLINE_MODE` accordingly.
-  * Launch Uvicorn server with `app = create_app()`.
+  - Parse `--offline` flag (e.g. via `argparse` or Typer).
+  - Set `Settings.OFFLINE_MODE` accordingly.
+  - Launch Uvicorn server with `app = create_app()`.
 
 #### 2. `src/config.py`
 
-* **`load_settings()`**
+- **`load_settings()`**
 
-  * Read environment variables (`OPENAI_API_KEY`, `PERPLEXITY_API_KEY`, `MODEL_NAME`, `DATA_DIR`, `OFFLINE_MODE`).
-  * Validate types/defaults via Pydantic.
-  * Expose a global `Settings` object.
+  - Read environment variables (`OPENAI_API_KEY`, `PERPLEXITY_API_KEY`, `MODEL_NAME`, `DATA_DIR`, `OFFLINE_MODE`).
+  - Validate types/defaults via Pydantic.
+  - Expose a global `Settings` object.
 
 #### 3. `src/persistence/database.py`
 
-* **`init_db()`**
+- **`init_db()`**
 
-  * Create `aiosqlite` engine pointing at `${DATA_DIR}/workspace.db`.
-  * Run Alembic migrations to create or upgrade tables.
-* **`get_db_session()`**
+  - Create `aiosqlite` engine pointing at `${DATA_DIR}/workspace.db`.
+  - Run Alembic migrations to create or upgrade tables.
+- **`get_db_session()`**
 
-  * Yield async DB sessions for request handlers.
+  - Yield async DB sessions for request handlers.
 
 ---
 
@@ -1026,31 +1026,31 @@ def from_schema(weave: WeaveResult) -> str:
 
 #### 1. `Dockerfile`
 
-* **Base Image**
+- **Base Image**
 
-  * Python 3.11 slim + OS deps for WeasyPrint (e.g. `libpango`, `libcairo`).
-* **Dependencies Installation**
+  - Python 3.11 slim + OS deps for WeasyPrint (e.g. `libpango`, `libcairo`).
+- **Dependencies Installation**
 
-  * Copy `pyproject.toml` & `poetry.lock`; run `poetry install --no-dev`.
-* **Build Frontend**
+  - Copy `pyproject.toml` & `poetry.lock`; run `poetry install --no-dev`.
+- **Build Frontend**
 
-  * Copy `frontend/`; run `npm ci` & `npm run build`.
-* **App Copy & Entry**
+  - Copy `frontend/`; run `npm ci` & `npm run build`.
+- **App Copy & Entry**
 
-  * Copy `src/` into container; set `WORKDIR`.
-  * Define default `CMD ["uvicorn", "web.main:app", "--host", "0.0.0.0", "--port", "8000"]`.
+  - Copy `src/` into container; set `WORKDIR`.
+  - Define default `CMD ["uvicorn", "web.main:app", "--host", "0.0.0.0", "--port", "8000"]`.
 
 #### 2. `docker-compose.yml`
 
-* **Service: `app`**
+- **Service: `app`**
 
-  * Build context `.` using above `Dockerfile`.
-  * Mount `./workspace:/app/data` for persistent SQLite.
-  * Environment variables from `.env`.
-  * Ports `8000:8000`.
-* **Optional Service: `db-migrations`**
+  - Build context `.` using above `Dockerfile`.
+  - Mount `./workspace:/app/data` for persistent SQLite.
+  - Environment variables from `.env`.
+  - Ports `8000:8000`.
+- **Optional Service: `db-migrations`**
 
-  * One-off container running `alembic upgrade head`.
+  - One-off container running `alembic upgrade head`.
 
 ---
 
@@ -1058,8 +1058,8 @@ def from_schema(weave: WeaveResult) -> str:
 
 #### 1. `scripts/run.sh`
 
-* **Purpose**: start the entire stack locally without Docker.
-* **Steps**:
+- **Purpose**: start the entire stack locally without Docker.
+- **Steps**:
 
   1. Source `.env`.
   2. Poetry environment: `poetry run alembic upgrade head` (migrations).
@@ -1068,8 +1068,8 @@ def from_schema(weave: WeaveResult) -> str:
 
 #### 2. `scripts/reset_db.sh`
 
-* **Purpose**: nuke and rebuild the SQLite workspace.
-* **Steps**:
+- **Purpose**: nuke and rebuild the SQLite workspace.
+- **Steps**:
 
   1. Delete `${DATA_DIR}/workspace.db`.
   2. Run `alembic downgrade base` then `alembic upgrade head`.
@@ -1077,8 +1077,8 @@ def from_schema(weave: WeaveResult) -> str:
 
 #### 3. `scripts/build_frontend.sh`
 
-* **Purpose**: compile the React/Tailwind UI.
-* **Steps**:
+- **Purpose**: compile the React/Tailwind UI.
+- **Steps**:
 
   1. `cd frontend && npm ci && npm run build`.
   2. Copy `frontend/dist` into `src/web/static`.
@@ -1089,19 +1089,19 @@ def from_schema(weave: WeaveResult) -> str:
 
 #### 1. In `create_app()` (main.py)
 
-* Read `Settings.OFFLINE_MODE` and:
+- Read `Settings.OFFLINE_MODE` and:
 
-  * For search routes: bind `ResearcherWebClient` to either real Perplexity API or `CacheBackedResearcher`.
-  * For FactChecker: disable external URL fetches and license checks if `OFFLINE_MODE=True`.
+  - For search routes: bind `ResearcherWebClient` to either real Perplexity API or `CacheBackedResearcher`.
+  - For FactChecker: disable external URL fetches and license checks if `OFFLINE_MODE=True`.
 
 #### 2. In Agents
 
-* **`CacheBackedResearcher.search()`**
+- **`CacheBackedResearcher.search()`**
 
-  * First look in `workspace/cache/{query}.json`; if missing, error fast.
-* **`FactChecker.verify_sources()`**
+  - First look in `workspace/cache/{query}.json`; if missing, error fast.
+- **`FactChecker.verify_sources()`**
 
-  * If offline, skip HTTP calls and mark “unchecked” but pass.
+  - If offline, skip HTTP calls and mark “unchecked” but pass.
 
 ---
 
@@ -1115,40 +1115,40 @@ def from_schema(weave: WeaveResult) -> str:
 
 1. **File:** `src/metrics/collector.py`
 
-   * **Class:** `MetricsCollector`
+   - **Class:** `MetricsCollector`
 
-     * **Method:** `record(metric_name: str, value: float)`
+     - **Method:** `record(metric_name: str, value: float)`
 
-       * *What:* Incrementally logs a metric (e.g. token count, cost) into an in-memory buffer or lightweight store.
-     * **Method:** `flush_to_db()`
+       - _What:_ Incrementally logs a metric (e.g. token count, cost) into an in-memory buffer or lightweight store.
+     - **Method:** `flush_to_db()`
 
-       * *What:* Persists buffered metrics into SQLite (table `metrics`).
+       - _What:_ Persists buffered metrics into SQLite (table `metrics`).
 
 2. **File:** `src/metrics/repository.py`
 
-   * **Class:** `MetricsRepository`
+   - **Class:** `MetricsRepository`
 
-     * **Method:** `save(metric: MetricRecord)`
+     - **Method:** `save(metric: MetricRecord)`
 
-       * *What:* Inserts a single metric row into the `metrics` table.
-     * **Method:** `query(time_range: TimeRange) -> List[MetricRecord]`
+       - _What:_ Inserts a single metric row into the `metrics` table.
+     - **Method:** `query(time_range: TimeRange) -> List[MetricRecord]`
 
-       * *What:* Fetches metrics for dashboards or alerts.
+       - _What:_ Fetches metrics for dashboards or alerts.
 
 3. **File:** `src/web/metrics_endpoint.py`
 
-   * **Function:** `get_metrics()`
+   - **Function:** `get_metrics()`
 
-     * *What:* FastAPI GET handler on `/metrics`; pulls recent metrics via `MetricsRepository.query()` and renders in Prometheus format.
+     - _What:_ FastAPI GET handler on `/metrics`; pulls recent metrics via `MetricsRepository.query()` and renders in Prometheus format.
 
 4. **Tests:**
 
-   * `tests/test_metrics_collector.py`
+   - `tests/test_metrics_collector.py`
 
-     * Verifies `record()` and `flush_to_db()` correctly writes to SQLite.
-   * `tests/test_metrics_endpoint.py`
+     - Verifies `record()` and `flush_to_db()` correctly writes to SQLite.
+   - `tests/test_metrics_endpoint.py`
 
-     * Mocks some metric rows and asserts the HTTP response contains valid Prometheus lines.
+     - Mocks some metric rows and asserts the HTTP response contains valid Prometheus lines.
 
 ---
 
@@ -1158,37 +1158,37 @@ def from_schema(weave: WeaveResult) -> str:
 
 1. **File:** `src/metrics/alerts.py`
 
-   * **Class:** `AlertManager`
+   - **Class:** `AlertManager`
 
-     * **Method:** `evaluate_thresholds(workspace_id: str) -> AlertSummary`
+     - **Method:** `evaluate_thresholds(workspace_id: str) -> AlertSummary`
 
-       * *What:* Aggregates metrics for the given workspace, compares against configuration (e.g. pedagogical ≥ 90 %, hallucination ≤ 2 %, cost ≤ 0.60 A\$).
-     * **Method:** `send_webhook(alert: AlertSummary)`
+       - _What:_ Aggregates metrics for the given workspace, compares against configuration (e.g. pedagogical ≥ 90 %, hallucination ≤ 2 %, cost ≤ 0.60 A\$).
+     - **Method:** `send_webhook(alert: AlertSummary)`
 
-       * *What:* POSTs alert details to a configured webhook URL (from settings).
+       - _What:_ POSTs alert details to a configured webhook URL (from settings).
 
 2. **File:** `src/config/thresholds.yaml`
 
-   * **Contents:**
+   - **Contents:**
 
-     * `pedagogical_score: 0.90`
-     * `max_hallucination_rate: 0.02`
-     * `max_cost_per_lecture: 0.60`
+     - `pedagogical_score: 0.90`
+     - `max_hallucination_rate: 0.02`
+     - `max_cost_per_lecture: 0.60`
 
 3. **File:** `src/web/alert_endpoint.py`
 
-   * **Function:** `post_alerts(workspace_id: str)`
+   - **Function:** `post_alerts(workspace_id: str)`
 
-     * *What:* FastAPI POST handler at `/alerts/{workspace}` that invokes `AlertManager.evaluate_thresholds()`, then `send_webhook()` if any breach.
+     - _What:_ FastAPI POST handler at `/alerts/{workspace}` that invokes `AlertManager.evaluate_thresholds()`, then `send_webhook()` if any breach.
 
 4. **Tests:**
 
-   * `tests/test_alert_evaluation.py`
+   - `tests/test_alert_evaluation.py`
 
-     * Supplies synthetic metric sets to `evaluate_thresholds()` and checks correct breach flags.
-   * `tests/test_alert_webhook.py`
+     - Supplies synthetic metric sets to `evaluate_thresholds()` and checks correct breach flags.
+   - `tests/test_alert_webhook.py`
 
-     * Mocks an HTTP server and asserts `send_webhook()` posts the right payload.
+     - Mocks an HTTP server and asserts `send_webhook()` posts the right payload.
 
 ---
 
@@ -1198,38 +1198,38 @@ def from_schema(weave: WeaveResult) -> str:
 
 1. **File:** `src/web/auth.py`
 
-   * **Function:** `get_current_user(token: str) -> UserContext`
+   - **Function:** `get_current_user(token: str) -> UserContext`
 
-     * *What:* Decodes JWT or API key into a `UserContext` object with `role` attribute.
-   * **Function:** `require_role(required: Literal["viewer","editor","admin"])`
+     - _What:_ Decodes JWT or API key into a `UserContext` object with `role` attribute.
+   - **Function:** `require_role(required: Literal["viewer","editor","admin"])`
 
-     * *What:* Returns a FastAPI dependency that raises 403 unless `current_user.role ≥ required`.
+     - _What:_ Returns a FastAPI dependency that raises 403 unless `current_user.role ≥ required`.
 
 2. **File:** `src/web/dependencies.py`
 
-   * **Function:** `ensure_viewer(user=Depends(get_current_user))`
+   - **Function:** `ensure_viewer(user=Depends(get_current_user))`
 
-     * *What:* Alias for `require_role("viewer")`.
-   * **Function:** `ensure_editor(user=Depends(get_current_user))`
+     - _What:_ Alias for `require_role("viewer")`.
+   - **Function:** `ensure_editor(user=Depends(get_current_user))`
 
-     * *What:* Alias for `require_role("editor")`.
-   * **Function:** `ensure_admin(user=Depends(get_current_user))`
+     - _What:_ Alias for `require_role("editor")`.
+   - **Function:** `ensure_admin(user=Depends(get_current_user))`
 
-     * *What:* Alias for `require_role("admin")`.
+     - _What:_ Alias for `require_role("admin")`.
 
 3. **File:** `src/web/routes/*.py`
 
-   * **Usage:**
+   - **Usage:**
 
-     * In `export` routes: add `dependencies=[Depends(ensure_viewer)]`.
-     * In `run/pause/retry` routes: `dependencies=[Depends(ensure_editor)]`.
-     * In governance or metrics endpoints: `dependencies=[Depends(ensure_admin)]`.
+     - In `export` routes: add `dependencies=[Depends(ensure_viewer)]`.
+     - In `run/pause/retry` routes: `dependencies=[Depends(ensure_editor)]`.
+     - In governance or metrics endpoints: `dependencies=[Depends(ensure_admin)]`.
 
 4. **Tests:**
 
-   * `tests/test_rbac.py`
+   - `tests/test_rbac.py`
 
-     * Parametrised tests that simulate tokens with different roles and assert 200 vs. 403 responses on key endpoints.
+     - Parametrised tests that simulate tokens with different roles and assert 200 vs. 403 responses on key endpoints.
 
 ---
 
@@ -1239,37 +1239,37 @@ def from_schema(weave: WeaveResult) -> str:
 
 1. **File:** `src/audit/trail.py`
 
-   * **Class:** `AuditTrailManager`
+   - **Class:** `AuditTrailManager`
 
-     * **Method:** `list_hashes(workspace_id: str) -> List[StateHashRecord]`
+     - **Method:** `list_hashes(workspace_id: str) -> List[StateHashRecord]`
 
-       * *What:* Queries the `state` table for each version’s stored SHA-256 hash and timestamp.
-     * **Method:** `compare_states(hash1: str, hash2: str) -> DiffSummary`
+       - _What:_ Queries the `state` table for each version’s stored SHA-256 hash and timestamp.
+     - **Method:** `compare_states(hash1: str, hash2: str) -> DiffSummary`
 
-       * *What:* Retrieves the two serialized state blobs and reports whether they match or not (and which fields differ).
+       - _What:_ Retrieves the two serialized state blobs and reports whether they match or not (and which fields differ).
 
 2. **File:** `src/web/audit_endpoint.py`
 
-   * **Function:** `get_audit_list(workspace_id: str)`
+   - **Function:** `get_audit_list(workspace_id: str)`
 
-     * *What:* FastAPI GET on `/audit/{workspace}`; returns the list of hashes and timestamps.
-   * **Function:** `compare_audit(workspace_id: str, h1: str, h2: str)`
+     - _What:_ FastAPI GET on `/audit/{workspace}`; returns the list of hashes and timestamps.
+   - **Function:** `compare_audit(workspace_id: str, h1: str, h2: str)`
 
-     * *What:* GET on `/audit/{workspace}/compare?h1=…&h2=…`; returns `DiffSummary`.
+     - _What:_ GET on `/audit/{workspace}/compare?h1=…&h2=…`; returns `DiffSummary`.
 
 3. **File:** `cli/audit_cli.py`
 
-   * **Command:** `python -m audit_cli list --workspace X`
+   - **Command:** `python -m audit_cli list --workspace X`
 
-     * *What:* Prints all state hashes to console in a table.
-   * **Command:** `python -m audit_cli compare --workspace X --h1 … --h2 …`
+     - _What:_ Prints all state hashes to console in a table.
+   - **Command:** `python -m audit_cli compare --workspace X --h1 … --h2 …`
 
-     * *What:* Calls `AuditTrailManager.compare_states()` and prints whether identical or shows diff summary.
+     - _What:_ Calls `AuditTrailManager.compare_states()` and prints whether identical or shows diff summary.
 
 4. **Tests:**
 
-   * `tests/test_audit_trail.py`
+   - `tests/test_audit_trail.py`
 
-     * Inserts two known state blobs, computes expected hashes, and verifies `list_hashes()` and `compare_states()` behave correctly.
+     - Inserts two known state blobs, computes expected hashes, and verifies `list_hashes()` and `compare_states()` behave correctly.
 
 ---
