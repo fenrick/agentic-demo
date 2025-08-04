@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import urllib.request
 from dataclasses import dataclass
-from typing import List
+from typing import List, Protocol
 from urllib.parse import urlparse
 
 from .offline_cache import load_cached_results, save_cached_results
@@ -63,6 +63,13 @@ class PerplexityClient:
     def fallback_search(self, query: str) -> List[RawSearchResult]:
         """Load cached results when offline."""
         return load_cached_results(query) or []
+
+
+class ResearcherWebClient(Protocol):
+    """Protocol for search clients used by the web researcher."""
+
+    def search(self, query: str) -> List[RawSearchResult]:
+        """Return search results for ``query``."""
 
 
 def score_domain_authority(domain: str) -> float:

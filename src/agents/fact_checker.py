@@ -3,7 +3,12 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from typing import List
+
+import httpx
+
+from config import Settings
 
 from core.state import State
 from models import ClaimFlag, FactCheckReport, SentenceProbability
@@ -77,4 +82,39 @@ __all__ = [
     "scan_unsupported_claims",
     "compile_fact_check_report",
     "run_fact_checker",
+    "verify_sources",
+    "SourceVerification",
 ]
+
+
+@dataclass(slots=True)
+class SourceVerification:
+    """Result of verifying an external information source."""
+
+    url: str
+    status: str
+    licence: str | None = None
+
+
+def verify_sources(urls: List[str]) -> List[SourceVerification]:
+    """Validate external URLs and capture licence metadata.
+
+    When the application runs in offline mode, network calls are skipped and
+    each source is marked as ``unchecked``.
+    """
+
+    settings = Settings()
+    results: List[SourceVerification] = []
+    for url in urls:
+        if settings.offline_mode:
+            results.append(SourceVerification(url=url, status="unchecked"))
+            continue
+        try:
+            response = httpx.head(url, timeout=5.0)
+            status = "ok" if response.status_code < 400 else "error"
+            licence = response.headers.get("License")
+        except Exception:
+            status = "error"
+            licence = None
+        results.append(SourceVerification(url=url, status=status, licence=licence))
+    return results
