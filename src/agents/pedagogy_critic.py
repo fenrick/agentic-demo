@@ -12,6 +12,7 @@ from typing import Callable, Dict, List, cast
 
 from core.state import State
 
+from agents.agent_wrapper import get_llm_params
 from agents.models import Activity
 from models import (
     ActivityDiversityReport,
@@ -83,7 +84,7 @@ def classify_bloom_level(text: str) -> str:
 
         client = OpenAI()
         response = client.responses.create(
-            model="gpt-4o-mini",
+            **get_llm_params(),
             input=[{"role": "user", "content": prompt}],
         )
         level = response.output_text.strip().lower()

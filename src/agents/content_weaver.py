@@ -17,6 +17,7 @@ from .models import (
     Citation,
     WeaveResult,
 )
+from .agent_wrapper import get_llm_params
 
 
 class RetryableError(RuntimeError):
@@ -110,7 +111,7 @@ async def call_openai_function(prompt: str, schema: dict) -> AsyncGenerator[str,
 
     async def generator() -> AsyncGenerator[str, None]:
         response = await client.responses.stream(
-            model="gpt-4o-mini",
+            **get_llm_params(),
             messages=[
                 {
                     "role": "system",

@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Awaitable, Callable, Optional, TypeVar
+import logging
 
 from langgraph.graph import END, START, StateGraph
 
+from agentic_demo import config
 from agentic_demo.config import Settings
 from core.checkpoint import SqliteCheckpointManager
 from agents.approver import run_approver
@@ -20,6 +22,22 @@ from core.policies import (
     policy_retry_on_low_confidence,
 )
 from core.state import State
+
+logger = logging.getLogger(__name__)
+
+
+def validate_model_configuration() -> None:
+    """Ensure the configured model matches the enforced default."""
+    configured = config.settings.model_name
+    if configured != config.MODEL_NAME:
+        raise ValueError(
+            f"MODEL_NAME misconfigured: expected '{config.MODEL_NAME}', got '{configured}'"
+        )
+    logger.info("Using LLM engine %s", config.MODEL_NAME)
+
+
+validate_model_configuration()
+
 
 T = TypeVar("T")
 
