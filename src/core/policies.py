@@ -11,35 +11,62 @@ from core.state import Citation, State
 from web.researcher_web import CitationResult
 
 
-def policy_retry_on_low_confidence(prev: PlanResult, threshold: float = 0.8) -> bool:
+def policy_retry_on_low_confidence(
+    prev: PlanResult,
+    state: State,
+    threshold: float = 0.8,
+    *,
+    agent_name: str = "Planner",
+) -> bool:
     """Return ``True`` when planner confidence is below ``threshold``.
+
+    The retry tracker is consulted before allowing the loop to continue. If the
+    retry limit is exceeded a :class:`RuntimeError` is raised, signalling a
+    terminal failure.
 
     Args:
         prev: Result object emitted by the planner node.
+        state: Mutable application state for tracking retries.
         threshold: Minimum acceptable confidence before progressing.
+        agent_name: Identifier passed to :func:`retry_tracker`.
 
     Returns:
         ``True`` if the planner should hand control back to the researcher,
         ``False`` otherwise.
     """
 
-    return prev.confidence < threshold
+    should_retry = prev.confidence < threshold
+    if should_retry:
+        retry_tracker(state, agent_name)
+    return should_retry
 
 
 def policy_retry_on_critic_failure(
     report: CritiqueReport | FactCheckReport,
+    state: State,
+    *,
+    agent_name: str = "Content-Weaver",
 ) -> bool:
     """Determine whether content must be regenerated after critic review.
 
+    The retry tracker ensures the content weaver is not reinvoked more than
+    three times. Exceeding this limit raises a :class:`RuntimeError` which
+    should terminate the workflow.
+
     Args:
         report: Outcome from either the pedagogy critic or fact checker.
+        state: Mutable application state for tracking retries.
+        agent_name: Identifier passed to :func:`retry_tracker`.
 
     Returns:
         ``True`` when issues were flagged and the content weaver should be
         reinvoked, ``False`` when critique passes.
     """
 
-    return bool(report.issues)
+    should_retry = bool(report.issues)
+    if should_retry:
+        retry_tracker(state, agent_name)
+    return should_retry
 
 
 def merge_research_results(results: List[CitationResult]) -> List[Citation]:
