@@ -1,5 +1,5 @@
-import React from 'react';
-import { SseEvent } from '../store/useWorkspaceStore';
+import React from "react";
+import { SseEvent } from "../store/useWorkspaceStore";
 
 interface Props {
   logs: SseEvent[];

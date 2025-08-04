@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { computeDiff, tokenize, type DiffPatch } from '../utils/diffUtils';
+import React, { useEffect, useRef, useState } from "react";
+import { computeDiff, tokenize, type DiffPatch } from "../utils/diffUtils";
 
 interface Props {
   /** Current markdown text to display. */
@@ -43,7 +43,7 @@ const DocumentPanel: React.FC<Props> = ({ text, onAcceptDiff }) => {
     let delay = 0;
     let searchIndex = 0;
     diffs.forEach((d) => {
-      if (d.type !== 'insert') return;
+      if (d.type !== "insert") return;
       const idx = newTokens.indexOf(d.token, searchIndex);
       if (idx === -1) return;
       searchIndex = idx + 1;
@@ -64,7 +64,7 @@ const DocumentPanel: React.FC<Props> = ({ text, onAcceptDiff }) => {
   return (
     <div>
       {tokens.map((t, i) => (
-        <span key={i} className={highlighted.has(i) ? 'highlight' : ''}>
+        <span key={i} className={highlighted.has(i) ? "highlight" : ""}>
           {t}
         </span>
       ))}

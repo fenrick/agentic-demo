@@ -1,6 +1,6 @@
-import React from 'react';
-import controlClient from '../api/controlClient';
-import { useWorkspaceStore } from '../store/useWorkspaceStore';
+import React from "react";
+import controlClient from "../api/controlClient";
+import { useWorkspaceStore } from "../store/useWorkspaceStore";
 
 interface Props {
   workspaceId: string;
@@ -12,22 +12,22 @@ const ControlsPanel: React.FC<Props> = ({ workspaceId }) => {
 
   const onRunClick = async () => {
     await controlClient.run(workspaceId);
-    setStatus('running');
+    setStatus("running");
   };
 
   const onPauseClick = async () => {
     await controlClient.pause(workspaceId);
-    setStatus('paused');
+    setStatus("paused");
   };
 
   const onRetryClick = async () => {
     await controlClient.retry(workspaceId);
-    setStatus('running');
+    setStatus("running");
   };
 
   const onResumeClick = async () => {
     await controlClient.resume(workspaceId);
-    setStatus('running');
+    setStatus("running");
   };
 
   const onModelChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -38,10 +38,18 @@ const ControlsPanel: React.FC<Props> = ({ workspaceId }) => {
 
   return (
     <div>
-      <button onClick={onRunClick} disabled={status === 'running'}>Run</button>
-      <button onClick={onPauseClick} disabled={status !== 'running'}>Pause</button>
-      <button onClick={onRetryClick} disabled={status === 'running'}>Retry</button>
-      <button onClick={onResumeClick} disabled={status !== 'paused'}>Resume</button>
+      <button onClick={onRunClick} disabled={status === "running"}>
+        Run
+      </button>
+      <button onClick={onPauseClick} disabled={status !== "running"}>
+        Pause
+      </button>
+      <button onClick={onRetryClick} disabled={status === "running"}>
+        Retry
+      </button>
+      <button onClick={onResumeClick} disabled={status !== "paused"}>
+        Resume
+      </button>
       <select value={model} onChange={onModelChange}>
         <option value="o4-mini">o4-mini</option>
         <option value="o3">o3</option>
