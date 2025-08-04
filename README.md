@@ -207,6 +207,24 @@ cp .env.example .env
 - **SQLite** (default): single `workspace.db` file in `DATA_DIR`.
 - **Postgres**: set `DATABASE_URL` and install `psycopg2`; update config.
 
+### Database Migrations
+
+Schema changes are managed with Alembic. After pulling new code, apply
+migrations to your workspace database:
+
+```bash
+alembic upgrade head
+```
+
+To create a new migration after modifying models:
+
+```bash
+alembic revision --autogenerate -m "add new table"
+```
+
+The command reads `alembic.ini` and writes migration scripts to
+`migrations/versions/`.
+
 ---
 
 ## Configuration & Environment Variables
