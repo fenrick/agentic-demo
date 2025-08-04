@@ -2,32 +2,25 @@
 
 from __future__ import annotations
 
+from uuid import uuid4
+
 from fastapi import APIRouter, Body
 
-router = APIRouter(prefix="/control")
+router = APIRouter()
 
 
-@router.post("/{workspace_id}/run")
-async def run_workspace(workspace_id: str) -> dict[str, str]:
-    """Start processing for a workspace.
+@router.post("/run", status_code=201)
+async def run(topic: str = Body(..., embed=True)) -> dict[str, str]:
+    """Start a new lecture generation job.
 
-    This is a stub implementation used for testing the HTTP interface.
+    This endpoint is a stub used for testing the HTTP interface.
     """
 
-    return {"workspace": workspace_id, "status": "running"}
+    return {"job_id": str(uuid4())}
 
 
-@router.post("/{workspace_id}/pause")
-async def pause_workspace(workspace_id: str) -> dict[str, str]:
-    """Pause processing for a workspace."""
+@router.post("/resume/{job_id}")
+async def resume(job_id: str) -> dict[str, str]:
+    """Resume processing for a previously started job."""
 
-    return {"workspace": workspace_id, "status": "paused"}
-
-
-@router.post("/{workspace_id}/model")
-async def select_model(
-    workspace_id: str, model: str = Body(..., embed=True)
-) -> dict[str, str]:
-    """Select the active model for a workspace."""
-
-    return {"workspace": workspace_id, "model": model}
+    return {"job_id": job_id, "status": "resumed"}

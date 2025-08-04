@@ -907,16 +907,15 @@ def from_schema(weave: WeaveResult) -> str:
 ### H5. Controls & Model Selector
 
 1. **`frontend/src/api/controlClient.ts`**
-   - `run(workspaceId: string)`, `pause(workspaceId: string)`, `retry(workspaceId: string)`, `resume(workspaceId: string)`, `selectModel(workspaceId: string, model: string)`
-   - **Why**: wrappers for all control endpoints.
+   - `run(topic: string)`, `resume(jobId: string)`
+   - **Why**: wrappers for the control endpoints.
 
 1. **`frontend/src/components/ControlsPanel.tsx`**
-   - **Buttons**: Run, Pause, Retry, Resume
-   - **Dropdown**: Model (o4-mini/o3)
+   - **Buttons**: Run, Resume
    - **Handlers**:
-     - `onRunClick()`, `onPauseClick()`, etc., invoking respective `controlClient` methods and updating store.
+     - `onRunClick()`, `onResumeClick()`, invoking respective `controlClient` methods and updating store.
 
-   - **Why**: let users drive the graph and switch models.
+   - **Why**: let users start and resume lecture generation jobs.
 
 1. **`tests/frontend/components/ControlsPanel.test.tsx`**
    - Simulate clicks, verify correct API calls and disabled states.

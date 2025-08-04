@@ -69,7 +69,7 @@ This document provides a **detailed**, **explicit** reference for all backend HT
 
 ### 3.2 Resume Existing Job
 
-#### GET `/api/resume/{job_id}`
+#### POST `/api/resume/{job_id}`
 
 - **Purpose**: Resume a previously interrupted job.
 

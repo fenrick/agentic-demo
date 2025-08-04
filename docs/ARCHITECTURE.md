@@ -35,15 +35,15 @@ This document provides a **comprehensive** and **explicit** description of the L
 
 1. **API Layer (FastAPI)**
    - **Endpoints**:
-     - `POST /run` — start new lecture build job
-     - `GET /resume/{job_id}` — resume after crash
+    - `POST /run` — start new lecture build job
+    - `POST /resume/{job_id}` — resume after crash
      - `SSE /stream/state` — state snapshots
      - `SSE /stream/actions` — action log
      - `SSE /stream/citations` — new citations
      - `GET /download/{job_id}/{format}` — retrieve final artifact
 
 2. **LangGraph Orchestrator**
-   - **Graph Definition**: `backend/graph.py`
+   - **Graph Definition**: `src/core/orchestrator.py`
    - **Nodes**: Planner, Researcher-Web, Content Weaver, Pedagogy Critic, Fact Checker, Exporter
    - **Checkpoint Saver**: `SqliteCheckpointSaver` or `PostgresCheckpointSaver`
    - **Edge Policies**: confidence thresholds, retry loops
@@ -109,7 +109,7 @@ This document provides a **comprehensive** and **explicit** description of the L
 
 ### 3.2 Resume After Crash
 
-1. **User calls** `GET /resume/{job_id}`.
+1. **User calls** `POST /resume/{job_id}`.
 2. **FastAPI** reloads latest checkpoint (`SqliteCheckpointSaver`) and re-invokes remaining agents.
 3. **SSE** streams catch up from last `state_version`.
 
