@@ -1,6 +1,6 @@
 # Lecture Builder Agent
 
-A local-first, multi-agent system that generates high‑quality, university‑grade lecture and workshop outlines (with supporting materials) from a single topic prompt. Orchestrated by LangGraph and implemented in Python, the system integrates OpenAI o4‑mini/o3 models, Perplexity Sonar via LangChain, and a React‑based UX. Full state, citations, logs, and intermediates persist in SQLite (with optional Postgres fallback). Exports include Markdown, DOCX, and PDF.
+A local-first, multi-agent system that generates high‑quality, university‑grade lecture and workshop outlines (with supporting materials) from a single topic prompt. Orchestrated by LangGraph and implemented in Python, the system integrates OpenAI o4‑mini/o3 models, pluggable web search (Perplexity Sonar or Tavily) via LangChain, and a React‑based UX. Full state, citations, logs, and intermediates persist in SQLite (with optional Postgres fallback). Exports include Markdown, DOCX, and PDF.
 
 ---
 
@@ -38,7 +38,7 @@ A local-first, multi-agent system that generates high‑quality, university‑gr
 
 - **Multi-Agent Workflow**: Planner, Researcher, Synthesiser, Pedagogy Critic, Fact Checker, Human-in-Loop, and Exporter nodes working in a LangGraph state graph.
 - **Streaming UI**: Token-level draft streaming with diff highlights; action/reasoning log streaming via SSE.
-- **Robust Citations**: Perplexity Sonar integration, citation metadata stored in SQLite, Creative Commons and university domain filtering.
+- **Robust Citations**: Pluggable Perplexity or Tavily search, citation metadata stored in SQLite, Creative Commons and university domain filtering.
 - **Local-First**: Operates offline using cached corpora and fallback to local dense retrieval.
 - **Flexible Exports**: Markdown (canonical), DOCX (python-docx), PDF (WeasyPrint), with cover page, TOC, and bibliography.
 - **Audit & Governance**: Immutable action logs, SHA‑256 state hashes, role‑based access, optional database encryption.
@@ -82,7 +82,7 @@ subscribe to:
 - Node.js 18+ (for frontend)
 - `poetry` (recommended) or `pipenv`
 - OpenAI API key
-- Perplexity API key
+- Perplexity or Tavily API key
 
 ### Installation
 
@@ -115,6 +115,8 @@ cp .env.example .env
 # Edit .env:
 # OPENAI_API_KEY=sk-...
 # PERPLEXITY_API_KEY=...
+# TAVILY_API_KEY=...
+# SEARCH_PROVIDER=perplexity  # or 'tavily'
 # MODEL_NAME=o4-mini
 # DATA_DIR=./workspace
 # LANGCHAIN_API_KEY=...
@@ -150,7 +152,7 @@ cp .env.example .env
 
 ### Retrieval & Citation
 
-- **ChatPerplexity** in `src/agents/researcher_web.py`
+- **SearchClient** abstraction in `src/agents/researcher_web.py` supporting Perplexity and Tavily
 - Citation objects stored in `state.citations` table.
 - Filtering by domain allowlist and SPDX license checks.
 
@@ -198,7 +200,9 @@ cp .env.example .env
 | Variable             | Description                              | Default    |
 | -------------------- | ---------------------------------------- | ---------- |
 | `OPENAI_API_KEY`     | API key for OpenAI                       | (required) |
-| `PERPLEXITY_API_KEY` | API key for Perplexity Sonar            | (required) |
+| `PERPLEXITY_API_KEY` | API key for Perplexity Sonar            | Required if `SEARCH_PROVIDER=perplexity` |
+| `TAVILY_API_KEY`     | API key for Tavily search               | Required if `SEARCH_PROVIDER=tavily` |
+| `SEARCH_PROVIDER`    | `perplexity` or `tavily`                 | `perplexity` |
 | `MODEL_NAME`         | Model to use (`o4-mini` or `o3`)         | `o4-mini`  |
 | `DATA_DIR`           | Path for SQLite DB, cache, logs          | (required) |
 | `DATABASE_URL`       | Postgres connection string (optional)    |            |

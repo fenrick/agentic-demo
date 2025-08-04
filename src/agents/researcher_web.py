@@ -13,7 +13,7 @@ from .streaming import stream_debug, stream_messages
 
 @dataclass(slots=True)
 class RawSearchResult:
-    """Minimal search result returned by Perplexity."""
+    """Minimal search result returned by a search provider."""
 
     url: str
     snippet: str
@@ -29,7 +29,14 @@ class CitationDraft:
     title: str
 
 
-class PerplexityClient:
+class SearchClient(Protocol):
+    """Protocol for search clients used by the web researcher."""
+
+    def search(self, query: str) -> List[RawSearchResult]:
+        """Return search results for ``query``."""
+
+
+class PerplexityClient(SearchClient):
     """Wrapper around the Perplexity Sonar model via LangChain."""
 
     def __init__(self, api_key: str, llm: Optional[Any] = None) -> None:
@@ -67,11 +74,38 @@ class PerplexityClient:
         return results
 
 
-class ResearcherWebClient(Protocol):
-    """Protocol for search clients used by the web researcher."""
+class TavilyClient(SearchClient):
+    """Client using Tavily web search via ``langchain_community``."""
+
+    def __init__(self, api_key: str, wrapper: Optional[Any] = None) -> None:
+        if wrapper is None:
+            try:  # pragma: no cover - optional dependency
+                from langchain_community.utilities.tavily_search import (
+                    TavilySearchAPIWrapper,
+                )
+            except Exception as exc:  # pragma: no cover - dependency missing
+                raise RuntimeError("Tavily search unavailable") from exc
+            self.wrapper = TavilySearchAPIWrapper(tavily_api_key=api_key)
+        else:
+            self.wrapper = wrapper
 
     def search(self, query: str) -> List[RawSearchResult]:
-        """Return search results for ``query``."""
+        """Call the Tavily API and cache search results."""
+
+        stream_debug(f"tavily search: {query}")
+        items = self.wrapper.results(query)
+        results = [
+            RawSearchResult(
+                url=item.get("url", ""),
+                snippet=item.get("content", ""),
+                title=item.get("title", ""),
+            )
+            for item in items
+        ]
+        for res in results:
+            stream_messages(res.snippet)
+        save_cached_results(query, results)
+        return results
 
 
 def score_domain_authority(domain: str) -> float:

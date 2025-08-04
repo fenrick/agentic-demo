@@ -6,7 +6,7 @@ Exposes configuration via a :class:`pydantic_settings.BaseSettings` subclass.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List
+from typing import List, Literal
 
 from dotenv import load_dotenv
 from pydantic import Field
@@ -45,6 +45,14 @@ class Settings(BaseSettings):
     )
     perplexity_api_key: str = Field(
         ..., alias="PERPLEXITY_API_KEY", description="API key for Perplexity services."
+    )
+    tavily_api_key: str | None = Field(
+        None, alias="TAVILY_API_KEY", description="API key for Tavily search."
+    )
+    search_provider: Literal["perplexity", "tavily"] = Field(
+        "perplexity",
+        alias="SEARCH_PROVIDER",
+        description="Web search provider to use.",
     )
     model_name: str = Field(
         MODEL_NAME,
