@@ -1,4 +1,4 @@
-import create from 'zustand';
+import { create } from 'zustand';
 import { connectToWorkspaceStream } from '../api/sseClient';
 
 export interface SseEvent {
@@ -12,8 +12,12 @@ interface WorkspaceStore {
   logs: SseEvent[];
   sources: unknown[];
   exportStatus: string;
+  status: 'idle' | 'running' | 'paused';
+  model: string;
   connect: (workspaceId: string) => void;
   updateState: (event: SseEvent) => void;
+  setStatus: (status: 'idle' | 'running' | 'paused') => void;
+  setModel: (model: string) => void;
 }
 
 // Global workspace state accessed throughout the UI.
@@ -22,6 +26,8 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   logs: [],
   sources: [],
   exportStatus: 'idle',
+  status: 'idle',
+  model: 'o4-mini',
   connect: (workspaceId: string) => {
     const es = connectToWorkspaceStream(workspaceId);
     es.onmessage = (e: MessageEvent) => {
@@ -51,6 +57,8 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
         break;
     }
   },
+  setStatus: (status) => set({ status }),
+  setModel: (model) => set({ model }),
 }));
 
 // Selectors provide convenient accessors to slices of the workspace state.
@@ -58,3 +66,5 @@ export const documentState = () => useWorkspaceStore.getState().document;
 export const logEvents = () => useWorkspaceStore.getState().logs;
 export const sources = () => useWorkspaceStore.getState().sources;
 export const exportStatus = () => useWorkspaceStore.getState().exportStatus;
+export const runStatus = () => useWorkspaceStore.getState().status;
+export const selectedModel = () => useWorkspaceStore.getState().model;

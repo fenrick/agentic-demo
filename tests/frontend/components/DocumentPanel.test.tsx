@@ -13,6 +13,7 @@ describe('DocumentPanel', () => {
     );
 
     const el = await screen.findByText('brave');
+    await new Promise((r) => setTimeout(r, 60));
     expect(el.classList.contains('highlight')).toBe(true);
   });
 });
