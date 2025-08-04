@@ -20,6 +20,7 @@ from .models import (
     SlideBullet,
     WeaveResult,
 )
+from .streaming import stream_debug, stream_messages
 
 
 class RetryableError(RuntimeError):
@@ -28,28 +29,6 @@ class RetryableError(RuntimeError):
 
 class SchemaError(RetryableError):
     """Raised when LLM output fails schema validation."""
-
-
-def stream_messages(token: str) -> None:
-    """Forward ``token`` over the LangGraph "messages" channel."""
-
-    try:
-        from langgraph_sdk import stream  # type: ignore
-
-        stream("messages", token)
-    except Exception:  # pragma: no cover - optional dependency
-        print(token, end="", flush=True)
-
-
-def stream_debug(message: str) -> None:
-    """Forward ``message`` over the LangGraph "debug" channel."""
-
-    try:
-        from langgraph_sdk import stream  # type: ignore
-
-        stream("debug", message)
-    except Exception:  # pragma: no cover - optional dependency
-        print(message, flush=True)
 
 
 _schema_cache: dict | None = None
@@ -123,7 +102,10 @@ async def call_openai_function(prompt: str, schema: dict) -> AsyncGenerator[str,
             SystemMessage(content=get_prompt("content_weaver_system")),
             HumanMessage(content=prompt),
         ]
-        async for chunk in model.astream(messages):  # pragma: no cover - streaming
+        stream = model.astream(messages)
+        if hasattr(stream, "__await__"):
+            stream = await stream
+        async for chunk in stream:  # pragma: no cover - streaming
             if chunk.content:
                 yield chunk.content
 

@@ -62,6 +62,16 @@ The system comprises:
 4. **Storage Layer**: SQLite for state, logs, citations; optional Postgres via repository abstraction.
 5. **Export Pipeline**: Pandoc-ready Markdown, python-docx, WeasyPrint PDF.
 
+### Stream Channels
+
+Agents emit events over several LangGraph channels that the frontend can
+subscribe to:
+
+- `messages` – token-level content such as LLM outputs.
+- `debug` – diagnostic information and warnings.
+- `values` – structured state snapshots.
+- `updates` – citation and progress updates.
+
 ---
 
 ## Getting Started

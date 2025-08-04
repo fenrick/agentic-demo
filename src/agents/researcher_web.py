@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 
 from .agent_wrapper import init_chat_model
 from .offline_cache import load_cached_results, save_cached_results
+from .streaming import stream_debug, stream_messages
 
 
 @dataclass(slots=True)
@@ -39,6 +40,8 @@ class PerplexityClient:
 
     def search(self, query: str) -> List[RawSearchResult]:
         """Call the Sonar model and cache its cited search results."""
+
+        stream_debug(f"perplexity search: {query}")
         response = self.llm.invoke(query)
         items = response.additional_kwargs.get("search_results", [])
         results = [
@@ -49,12 +52,19 @@ class PerplexityClient:
             )
             for item in items
         ]
+        for res in results:
+            stream_messages(res.snippet)
         save_cached_results(query, results)
         return results
 
     def fallback_search(self, query: str) -> List[RawSearchResult]:
         """Load cached results when offline."""
-        return load_cached_results(query) or []
+
+        stream_debug(f"offline search: {query}")
+        results = load_cached_results(query) or []
+        for res in results:
+            stream_messages(res.snippet)
+        return results
 
 
 class ResearcherWebClient(Protocol):
