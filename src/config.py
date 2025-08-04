@@ -15,6 +15,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # Load environment variables from a `.env` file if present.
 load_dotenv()
 
+# Default OpenAI model enforced across the application.
+MODEL_NAME: str = "o4-mini"
+
 
 class Settings(BaseSettings):
     """Strongly-typed application configuration.
@@ -44,7 +47,9 @@ class Settings(BaseSettings):
         ..., alias="PERPLEXITY_API_KEY", description="API key for Perplexity services."
     )
     model_name: str = Field(
-        ..., alias="MODEL_NAME", description="Default model identifier to use."
+        MODEL_NAME,
+        alias="MODEL_NAME",
+        description="Default model identifier to use.",
     )
     data_dir: Path = Field(
         ..., alias="DATA_DIR", description="Directory for application data."
@@ -96,4 +101,4 @@ def load_settings() -> Settings:
 # Eagerly instantiate settings for modules that import it directly.
 settings = load_settings()
 
-__all__ = ["Settings", "load_settings", "load_env", "settings"]
+__all__ = ["Settings", "load_settings", "load_env", "settings", "MODEL_NAME"]
