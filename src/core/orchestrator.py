@@ -14,6 +14,7 @@ import tiktoken
 from agentic_demo import config
 from agentic_demo.config import Settings
 from langgraph.graph import END, START, StateGraph
+from langgraph.graph.state import CompiledStateGraph
 from persistence import get_db_session
 from persistence.logs import compute_hash, log_action
 
@@ -78,7 +79,8 @@ class GraphOrchestrator:
         checkpoint_manager: SqliteCheckpointManager | None = None,
         spec_path: Path | None = None,
     ) -> None:
-        self.graph: Optional[StateGraph[State]] = None
+        self._graph: Optional[StateGraph[State]] = None
+        self.graph: Optional[CompiledStateGraph[State]] = None
         self.checkpoint_manager = checkpoint_manager
         self.spec_path = (
             spec_path or Path(__file__).resolve().parents[1] / "langgraph.json"
@@ -124,25 +126,26 @@ class GraphOrchestrator:
                 name=node["name"],
                 streams=node.get("streams"),
             )
-        self.graph = graph
+        self._graph = graph
 
     def register_edges(self) -> None:
         """Wire node-to-node transitions from the JSON spec."""
-        if self.graph is None:
+        if self._graph is None:
             raise RuntimeError("Graph must be initialized before registering edges")
         for edge in self._edge_spec:
             if "condition" in edge:
                 func = _import_callable(edge["condition"])
-                self.graph.add_conditional_edges(
+                self._graph.add_conditional_edges(
                     _resolve_endpoint(edge["source"]),
                     func,
                     {k: _resolve_endpoint(v) for k, v in edge["mapping"].items()},
                 )
             else:
-                self.graph.add_edge(
+                self._graph.add_edge(
                     _resolve_endpoint(edge["source"]),
                     _resolve_endpoint(edge["target"]),
                 )
+        self.graph = self._graph.compile()
 
     async def start(self, initial_prompt: str) -> PlanResult:
         """Create initial state and invoke the planner."""

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import List
 
-from langgraph.graph import StateGraph
+from langgraph.graph.state import CompiledStateGraph
 
 from core.state import State
 from models.critique_report import CritiqueReport
@@ -44,7 +44,7 @@ def has_exceeded_max_retries(state: State, section_id: SectionIdentifier) -> boo
 
 
 def apply_regeneration(
-    graph: StateGraph, state: State, sections: List[SectionIdentifier]
+    graph: CompiledStateGraph[State], state: State, sections: List[SectionIdentifier]
 ) -> None:
     """Invoke the Content Weaver node for the specified sections."""
     for section_id in sections:
@@ -58,7 +58,7 @@ def apply_regeneration(
 def orchestrate_regeneration(
     state: State,
     report: CritiqueReport | FactCheckReport,
-    graph: StateGraph | None = None,
+    graph: CompiledStateGraph[State] | None = None,
 ) -> State:
     """Select sections for rewriting and trigger regeneration.
 

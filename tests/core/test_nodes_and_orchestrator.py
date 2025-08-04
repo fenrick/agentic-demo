@@ -55,9 +55,10 @@ def test_orchestrator_wires_graph() -> None:
     orchestrator = GraphOrchestrator()
     orchestrator.initialize_graph()
     orchestrator.register_edges()
-    graph = orchestrator.graph
-    assert graph is not None
-    nodes = set(graph.nodes.keys())
+    compiled = orchestrator.graph
+    assert compiled is not None
+    underlying = compiled.get_graph()
+    nodes = set(underlying.nodes.keys())
     assert {
         "Planner",
         "Researcher-Web",
@@ -67,12 +68,13 @@ def test_orchestrator_wires_graph() -> None:
         "Human-In-Loop",
         "Exporter",
     }.issubset(nodes)
-    assert (START, "Planner") in graph.edges
-    assert ("Planner", "Researcher-Web") in graph.edges
-    assert ("Planner", "Content-Weaver") in graph.edges
-    assert ("Researcher-Web", "Planner") in graph.edges
-    assert ("Human-In-Loop", "Exporter") in graph.edges
-    assert ("Exporter", END) in graph.edges
+    edges = {(e.source, e.target) for e in underlying.edges}
+    assert (START, "Planner") in edges
+    assert ("Planner", "Researcher-Web") in edges
+    assert ("Planner", "Content-Weaver") in edges
+    assert ("Researcher-Web", "Planner") in edges
+    assert ("Human-In-Loop", "Exporter") in edges
+    assert ("Exporter", END) in edges
 
 
 @pytest.mark.asyncio
