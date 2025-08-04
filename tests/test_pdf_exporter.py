@@ -1,5 +1,3 @@
-"""Tests for :mod:`export.pdf_exporter`."""
-
 from __future__ import annotations
 
 import json
@@ -14,39 +12,48 @@ def _setup_db(path: Path) -> Path:
     db_path = path / "test.db"
     conn = sqlite3.connect(db_path)
     conn.execute(
-        "CREATE TABLE outlines (workspace_id TEXT, outline_json TEXT, created_at TEXT)"
-    )
-    conn.execute(
-        "CREATE TABLE metadata (workspace_id TEXT, topic TEXT, model TEXT, commit_sha TEXT, created_at TEXT)"
+        "CREATE TABLE lectures (workspace_id TEXT, lecture_json TEXT, created_at TEXT)"
     )
     conn.execute(
         "CREATE TABLE citations (workspace_id TEXT, url TEXT, title TEXT, retrieved_at TEXT, licence TEXT)"
     )
-    outline = {
+    lecture = {
         "title": "Intro to AI",
-        "objectives": ["Understand basics"],
-        "activities": ["Lecture"],
-        "notes": ["Remember"],
-        "children": [
+        "author": "Alice",
+        "date": "2024-01-01",
+        "version": "1.0",
+        "summary": "Basics of AI",
+        "tags": ["ai", "intro"],
+        "prerequisites": ["Python"],
+        "duration_min": 60,
+        "learning_objectives": ["Understand basics"],
+        "activities": [
             {
-                "title": "History",
-                "objectives": ["History objective"],
-                "activities": [],
-                "notes": [],
+                "type": "Lecture",
+                "description": "Overview",
+                "duration_min": 30,
+                "learning_objectives": ["Understand basics"],
+            }
+        ],
+        "slide_bullets": [{"slide_number": 1, "bullets": ["What is AI?", "History"]}],
+        "speaker_notes": "Engage audience",
+        "assessment": [{"type": "Quiz", "description": "Check", "max_score": 10}],
+        "references": [
+            {
+                "url": "http://example.com",
+                "title": "Example",
+                "retrieved_at": "2024-01-01",
+                "licence": "CC",
             }
         ],
     }
     conn.execute(
-        "INSERT INTO outlines VALUES (?,?,?)",
-        ("ws1", json.dumps(outline), "2024-01-01"),
-    )
-    conn.execute(
-        "INSERT INTO metadata VALUES (?,?,?,?,?)",
-        ("ws1", "AI", "gpt-4", "abc123", "2024-01-01"),
+        "INSERT INTO lectures VALUES (?,?,?)",
+        ("ws1", json.dumps(lecture), "2024-01-01"),
     )
     conn.execute(
         "INSERT INTO citations VALUES (?,?,?,?,?)",
-        ("ws1", "http://example.com", "Example", "2024-01-01", None),
+        ("ws1", "http://example.com", "Example", "2024-01-01", "CC"),
     )
     conn.commit()
     conn.close()
@@ -57,7 +64,7 @@ def test_html_generation_from_markdown(tmp_path: Path) -> None:
     db = _setup_db(tmp_path)
     md = MarkdownExporter(str(db)).export("ws1")
     html = PdfExporter(str(db)).convert_markdown_to_html(md)
-    assert "<h2>Intro to AI</h2>" in html
+    assert "<h2>Summary</h2>" in html
 
 
 def test_css_injection(tmp_path: Path) -> None:

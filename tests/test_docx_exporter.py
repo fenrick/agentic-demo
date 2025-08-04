@@ -1,7 +1,3 @@
-"""Tests for :mod:`export.docx_exporter`."""
-
-from __future__ import annotations
-
 import json
 import sqlite3
 from io import BytesIO
@@ -16,39 +12,48 @@ def _setup_db(path: Path) -> Path:
     db_path = path / "test.db"
     conn = sqlite3.connect(db_path)
     conn.execute(
-        "CREATE TABLE outlines (workspace_id TEXT, outline_json TEXT, created_at TEXT)"
-    )
-    conn.execute(
-        "CREATE TABLE metadata (workspace_id TEXT, topic TEXT, model TEXT, commit_sha TEXT, created_at TEXT)"
+        "CREATE TABLE lectures (workspace_id TEXT, lecture_json TEXT, created_at TEXT)"
     )
     conn.execute(
         "CREATE TABLE citations (workspace_id TEXT, url TEXT, title TEXT, retrieved_at TEXT, licence TEXT)"
     )
-    outline = {
+    lecture = {
         "title": "Intro to AI",
-        "objectives": ["Understand basics"],
-        "activities": ["Lecture"],
-        "notes": ["Remember"],
-        "children": [
+        "author": "Alice",
+        "date": "2024-01-01",
+        "version": "1.0",
+        "summary": "Basics of AI",
+        "tags": ["ai", "intro"],
+        "prerequisites": ["Python"],
+        "duration_min": 60,
+        "learning_objectives": ["Understand basics"],
+        "activities": [
             {
-                "title": "History",
-                "objectives": ["History objective"],
-                "activities": [],
-                "notes": [],
+                "type": "Lecture",
+                "description": "Overview",
+                "duration_min": 30,
+                "learning_objectives": ["Understand basics"],
+            }
+        ],
+        "slide_bullets": [{"slide_number": 1, "bullets": ["What is AI?", "History"]}],
+        "speaker_notes": "Engage audience",
+        "assessment": [{"type": "Quiz", "description": "Check", "max_score": 10}],
+        "references": [
+            {
+                "url": "http://example.com",
+                "title": "Example",
+                "retrieved_at": "2024-01-01",
+                "licence": "CC",
             }
         ],
     }
     conn.execute(
-        "INSERT INTO outlines VALUES (?,?,?)",
-        ("ws1", json.dumps(outline), "2024-01-01"),
-    )
-    conn.execute(
-        "INSERT INTO metadata VALUES (?,?,?,?,?)",
-        ("ws1", "AI", "gpt-4", "abc123", "2024-01-01"),
+        "INSERT INTO lectures VALUES (?,?,?)",
+        ("ws1", json.dumps(lecture), "2024-01-01"),
     )
     conn.execute(
         "INSERT INTO citations VALUES (?,?,?,?,?)",
-        ("ws1", "http://example.com", "Example", "2024-01-01", None),
+        ("ws1", "http://example.com", "Example", "2024-01-01", "CC"),
     )
     conn.commit()
     conn.close()
@@ -64,7 +69,6 @@ def test_export_returns_valid_docx_bytes(tmp_path: Path) -> None:
     exporter = DocxExporter(str(db))
     data = exporter.export("ws1")
     assert data[:2] == b"PK"
-    # Ensure document can be parsed
     _doc_from_bytes(data)
 
 
@@ -73,24 +77,29 @@ def test_cover_page_contents_present(tmp_path: Path) -> None:
     data = DocxExporter(str(db)).export("ws1")
     doc = _doc_from_bytes(data)
     texts = [p.text for p in doc.paragraphs]
-    assert any("AI" in t for t in texts)
-    assert any("2024-01-01" in t for t in texts)
+    assert any("Author: Alice" in t for t in texts)
+    assert any("Version: 1.0" in t for t in texts)
+    assert any("Tags: ai, intro" in t for t in texts)
 
 
-def test_toc_is_inserted(tmp_path: Path) -> None:
+def test_sections_render_all_lecture_data(tmp_path: Path) -> None:
     db = _setup_db(tmp_path)
     data = DocxExporter(str(db)).export("ws1")
     doc = _doc_from_bytes(data)
     texts = [p.text for p in doc.paragraphs]
-    assert any("Table of Contents" in t for t in texts)
+    assert any("Summary" in t for t in texts)
+    assert any("Prerequisites" in t for t in texts)
+    assert any("Slide 1" in t for t in texts)
+    assert any("Speaker Notes" in t for t in texts)
+    assert any("Assessment" in t for t in texts)
 
 
-def test_bibliography_section_populated(tmp_path: Path) -> None:
+def test_references_section_populated(tmp_path: Path) -> None:
     db = _setup_db(tmp_path)
     data = DocxExporter(str(db)).export("ws1")
     doc = _doc_from_bytes(data)
     texts = [p.text for p in doc.paragraphs]
-    assert any("Bibliography" in t for t in texts)
+    assert any("References" in t for t in texts)
     assert any(
-        "Example - http://example.com (retrieved 2024-01-01)" in t for t in texts
+        "Example - http://example.com (retrieved 2024-01-01) — CC" in t for t in texts
     )

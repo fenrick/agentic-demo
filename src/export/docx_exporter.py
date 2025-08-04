@@ -1,47 +1,22 @@
-"""Utilities for exporting stored workspace data to Microsoft Word (.docx)."""
+"""Utilities for exporting stored lecture data to Microsoft Word (.docx)."""
 
 from __future__ import annotations
 
 import io
 import json
 import sqlite3
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import List
 
 from docx import Document as DocumentFactory
 from docx.document import Document
 
-
-@dataclass(slots=True)
-class Outline:
-    """Simple hierarchical outline used for DOCX export."""
-
-    title: str
-    objectives: List[str] = field(default_factory=list)
-    activities: List[str] = field(default_factory=list)
-    notes: List[str] = field(default_factory=list)
-    children: List["Outline"] = field(default_factory=list)
-
-    @classmethod
-    def from_dict(cls, data: Dict) -> "Outline":
-        children = [cls.from_dict(child) for child in data.get("children", [])]
-        return cls(
-            title=data.get("title", ""),
-            objectives=list(data.get("objectives", [])),
-            activities=list(data.get("activities", [])),
-            notes=list(data.get("notes", [])),
-            children=children,
-        )
-
-
-@dataclass(slots=True)
-class Citation:
-    """Reference to an external information source."""
-
-    url: str
-    title: str
-    retrieved_at: str
-    licence: Optional[str] = None
+from agents.models import (
+    Activity,
+    AssessmentItem,
+    Citation,
+    SlideBullet,
+    WeaveResult,
+)
 
 
 class DocxExporter:
@@ -54,63 +29,62 @@ class DocxExporter:
         """Return a DOCX document for ``workspace_id`` as bytes."""
 
         with sqlite3.connect(self._db_path) as conn:
-            outline = self._load_outline(conn, workspace_id)
-            metadata = self._load_metadata(conn, workspace_id)
-            citations = self._load_citations(conn, workspace_id)
+            lecture = self._load_lecture(conn, workspace_id)
 
         doc = DocumentFactory()
-        self.generate_cover_page(doc, metadata)
+        self.generate_cover_page(doc, lecture)
         self.add_table_of_contents(doc)
-        self.populate_sections(doc, outline)
-        self.append_bibliography(doc, citations)
+        self.populate_sections(doc, lecture)
+        self.append_references(doc, lecture.references or [])
         buf = io.BytesIO()
         doc.save(buf)
         return buf.getvalue()
 
     @staticmethod
-    def _load_outline(conn: sqlite3.Connection, workspace_id: str) -> Outline:
+    def _load_lecture(conn: sqlite3.Connection, workspace_id: str) -> WeaveResult:
         cur = conn.execute(
-            "SELECT outline_json FROM outlines WHERE workspace_id = ? ORDER BY created_at DESC LIMIT 1",
+            "SELECT lecture_json FROM lectures WHERE workspace_id = ? ORDER BY created_at DESC LIMIT 1",
             (workspace_id,),
         )
         row = cur.fetchone()
         cur.close()
         if row is None:
-            raise ValueError("outline not found")
-        return Outline.from_dict(json.loads(row[0]))
-
-    @staticmethod
-    def _load_metadata(conn: sqlite3.Connection, workspace_id: str) -> Dict[str, str]:
-        cur = conn.execute(
-            "SELECT topic, model, commit_sha, created_at FROM metadata WHERE workspace_id = ? ORDER BY created_at DESC LIMIT 1",
-            (workspace_id,),
+            raise ValueError("lecture not found")
+        data = json.loads(row[0])
+        activities = [Activity(**a) for a in data.get("activities", [])]
+        slide_bullets = [SlideBullet(**s) for s in data.get("slide_bullets", [])]
+        assessment = [AssessmentItem(**a) for a in data.get("assessment", [])]
+        references = [Citation(**c) for c in data.get("references", [])]
+        return WeaveResult(
+            title=data["title"],
+            learning_objectives=data.get("learning_objectives", []),
+            activities=activities,
+            duration_min=data.get("duration_min", 0),
+            author=data.get("author"),
+            date=data.get("date"),
+            version=data.get("version"),
+            summary=data.get("summary"),
+            tags=data.get("tags"),
+            prerequisites=data.get("prerequisites"),
+            slide_bullets=slide_bullets or None,
+            speaker_notes=data.get("speaker_notes"),
+            assessment=assessment or None,
+            references=references or None,
         )
-        row = cur.fetchone()
-        cur.close()
-        if row is None:
-            raise ValueError("metadata not found")
-        return {"topic": row[0], "model": row[1], "commit": row[2], "date": row[3]}
 
     @staticmethod
-    def _load_citations(conn: sqlite3.Connection, workspace_id: str) -> List[Citation]:
-        cur = conn.execute(
-            "SELECT url, title, retrieved_at, licence FROM citations WHERE workspace_id = ? ORDER BY rowid",
-            (workspace_id,),
-        )
-        rows = cur.fetchall()
-        cur.close()
-        return [
-            Citation(url=r[0], title=r[1], retrieved_at=r[2], licence=r[3])
-            for r in rows
-        ]
+    def generate_cover_page(doc: Document, lecture: WeaveResult) -> None:
+        """Insert a simple title page based on ``lecture``."""
 
-    @staticmethod
-    def generate_cover_page(doc: Document, metadata: Dict[str, str]) -> None:
-        """Insert a simple title page based on ``metadata``."""
-
-        doc.add_heading(metadata.get("topic", ""), level=0)
-        doc.add_paragraph(f"Model: {metadata.get('model', '')}")
-        doc.add_paragraph(f"Date: {metadata.get('date', '')}")
+        doc.add_heading(lecture.title, level=0)
+        if lecture.author:
+            doc.add_paragraph(f"Author: {lecture.author}")
+        if lecture.date:
+            doc.add_paragraph(f"Date: {lecture.date}")
+        if lecture.version:
+            doc.add_paragraph(f"Version: {lecture.version}")
+        if lecture.tags:
+            doc.add_paragraph("Tags: " + ", ".join(lecture.tags))
 
     @staticmethod
     def add_table_of_contents(doc: Document) -> None:
@@ -120,37 +94,52 @@ class DocxExporter:
         doc.add_paragraph("TOC")
 
     @staticmethod
-    def populate_sections(doc: Document, outline: Outline) -> None:
-        """Populate ``doc`` with headings and bullet lists from ``outline``."""
+    def populate_sections(doc: Document, lecture: WeaveResult) -> None:
+        """Populate ``doc`` with headings and bullet lists from ``lecture``."""
 
-        def walk(node: Outline, level: int) -> None:
-            doc.add_heading(node.title, level=level)
-            if node.objectives:
-                doc.add_heading("Objectives", level=level + 1)
-                for obj in node.objectives:
-                    doc.add_paragraph(obj, style="List Bullet")
-            if node.activities:
-                doc.add_heading("Activities", level=level + 1)
-                for act in node.activities:
-                    doc.add_paragraph(act, style="List Bullet")
-            if node.notes:
-                doc.add_heading("Notes", level=level + 1)
-                for note in node.notes:
-                    doc.add_paragraph(note, style="List Bullet")
-            for child in node.children:
-                walk(child, level + 1)
-
-        walk(outline, 2)
+        if lecture.summary:
+            doc.add_heading("Summary", level=1)
+            doc.add_paragraph(lecture.summary)
+        if lecture.learning_objectives:
+            doc.add_heading("Learning Objectives", level=1)
+            for obj in lecture.learning_objectives:
+                doc.add_paragraph(obj, style="List Bullet")
+        if lecture.prerequisites:
+            doc.add_heading("Prerequisites", level=1)
+            for item in lecture.prerequisites:
+                doc.add_paragraph(item, style="List Bullet")
+        if lecture.activities:
+            doc.add_heading("Activities", level=1)
+            for act in lecture.activities:
+                desc = f"{act.type} ({act.duration_min} min): {act.description}"
+                if act.learning_objectives:
+                    desc += f" — objectives: {', '.join(act.learning_objectives)}"
+                doc.add_paragraph(desc, style="List Bullet")
+        if lecture.slide_bullets:
+            for slide in lecture.slide_bullets:
+                doc.add_heading(f"Slide {slide.slide_number}", level=1)
+                for bullet in slide.bullets:
+                    doc.add_paragraph(bullet, style="List Bullet")
+        if lecture.speaker_notes:
+            doc.add_heading("Speaker Notes", level=1)
+            doc.add_paragraph(lecture.speaker_notes)
+        if lecture.assessment:
+            doc.add_heading("Assessment", level=1)
+            for item in lecture.assessment:
+                desc = f"{item.type}: {item.description}"
+                if item.max_score is not None:
+                    desc += f" (max {item.max_score})"
+                doc.add_paragraph(desc, style="List Bullet")
 
     @staticmethod
-    def append_bibliography(doc: Document, citations: List[Citation]) -> None:
-        """Append a bibliography section for ``citations``."""
+    def append_references(doc: Document, references: List[Citation]) -> None:
+        """Append a references section for ``references``."""
 
-        if not citations:
+        if not references:
             return
-        doc.add_heading("Bibliography", level=1)
-        for cite in citations:
-            entry = f"{cite.title} - {cite.url} (retrieved {cite.retrieved_at})"
-            if cite.licence:
-                entry += f" — {cite.licence}"
+        doc.add_heading("References", level=1)
+        for ref in references:
+            entry = f"{ref.title} - {ref.url} (retrieved {ref.retrieved_at})"
+            if ref.licence:
+                entry += f" — {ref.licence}"
             doc.add_paragraph(entry, style="List Number")
