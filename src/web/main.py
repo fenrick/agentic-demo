@@ -66,7 +66,7 @@ async def setup_database(app: FastAPI) -> None:
 
 
 def setup_graph(app: FastAPI) -> None:
-    """Initialize the LangGraph ``StateGraph`` and checkpoint saver."""
+    """Initialize the LangGraph graph and checkpoint saver."""
 
     settings: Settings = app.state.settings
     checkpoint_path = settings.data_dir / "checkpoint.db"
