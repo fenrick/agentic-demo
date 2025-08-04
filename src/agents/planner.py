@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from core.state import Outline, State
 from prompts import get_prompt
 
-from .agent_wrapper import get_llm_params
+from .agent_wrapper import init_chat_model
 
 
 @dataclass(slots=True)
@@ -31,12 +31,13 @@ async def call_planner_llm(topic: str) -> str:
     """
 
     try:  # pragma: no cover - exercised via monkeypatch in tests
-        from langchain_openai import ChatOpenAI  # type: ignore
         from langchain_core.messages import HumanMessage, SystemMessage
     except Exception:  # dependency missing
         return ""
 
-    model = ChatOpenAI(**get_llm_params())
+    model = init_chat_model()
+    if model is None:
+        return ""
     messages = [
         SystemMessage(content=get_prompt("planner_system")),
         HumanMessage(content=topic),
