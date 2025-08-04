@@ -87,12 +87,7 @@
       "description": "List of external sources cited in the lecture."
     }
   },
-  "required": [
-    "title",
-    "learning_objectives",
-    "activities",
-    "duration_min"
-  ],
+  "required": ["title", "learning_objectives", "activities", "duration_min"],
   "additionalProperties": false,
   "$defs": {
     "Activity": {
@@ -100,7 +95,14 @@
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["Lecture", "Discussion", "Quiz", "Exercise", "Case Study", "Group Work"],
+          "enum": [
+            "Lecture",
+            "Discussion",
+            "Quiz",
+            "Exercise",
+            "Case Study",
+            "Group Work"
+          ],
           "description": "The category of activity."
         },
         "description": {
@@ -191,4 +193,3 @@
     }
   }
 }
-
