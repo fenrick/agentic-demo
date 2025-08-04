@@ -64,12 +64,16 @@ def compile_fact_check_report(
 
 
 async def run_fact_checker(state: State) -> FactCheckReport:
-    """Orchestrate fact-checking on the state's outline markdown."""
+    """Orchestrate fact-checking on the state's outline steps.
+
+    The outline represents content as an ordered list of textual steps.
+    This function joins the steps into a single string for analysis.
+    """
 
     outline = getattr(state, "outline", None)
-    if outline is None or not hasattr(outline, "markdown"):
-        raise ValueError("state.outline.markdown is required for fact checking")
-    text = outline.markdown
+    if outline is None or not getattr(outline, "steps", None):
+        raise ValueError("state.outline.steps is required for fact checking")
+    text = "\n".join(outline.steps)
     hallucinations = assess_hallucination_probabilities(text)
     flags = scan_unsupported_claims(text)
     return compile_fact_check_report(hallucinations, flags)
