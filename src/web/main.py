@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from agents.cache_backed_researcher import CacheBackedResearcher
-from agents.researcher_web import PerplexityClient
+from agents.researcher_web import PerplexityClient, TavilyClient
 from config import Settings, load_settings
 from core.checkpoint import SqliteCheckpointManager
 from core.orchestrator import GraphOrchestrator
@@ -31,7 +31,10 @@ def create_app() -> FastAPI:
         app.state.research_client = CacheBackedResearcher()
         app.state.fact_check_offline = True
     else:
-        app.state.research_client = PerplexityClient(settings.perplexity_api_key)
+        if settings.search_provider == "tavily":
+            app.state.research_client = TavilyClient(settings.tavily_api_key or "")
+        else:
+            app.state.research_client = PerplexityClient(settings.perplexity_api_key)
         app.state.fact_check_offline = False
 
     app.add_middleware(

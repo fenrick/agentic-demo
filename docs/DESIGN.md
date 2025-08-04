@@ -107,9 +107,9 @@ Further ER diagrams in ARCHITECTURE.md.
 
 ## 6. Retrieval & Citation
 
-### 6.1 Perplexity Sonar Integration
+### 6.1 Web Search Providers
 
-- **Client**: `ChatPerplexity` from `langchain_perplexity` wraps Sonar chat calls.
+- **Clients**: `ChatPerplexity` from `langchain_perplexity` or `TavilySearchAPIWrapper` from `langchain_community`, exposed via the `SearchClient` abstraction.
 - **Query templates**: Include objective keywords, `--QDF=3` for recency boost.
 - **Rate limiting**: Token bucket, configurable via env var.
 
@@ -255,7 +255,9 @@ Further ER diagrams in ARCHITECTURE.md.
 | Name                 | Purpose                                    | Required?              |
 | -------------------- | ------------------------------------------ | ---------------------- |
 | `OPENAI_API_KEY`     | OpenAI authentication                      | Yes                    |
-| `PERPLEXITY_API_KEY` | Perplexity Sonar authentication           | No                     |
+| `PERPLEXITY_API_KEY` | Perplexity Sonar authentication           | No (if using Tavily)   |
+| `TAVILY_API_KEY`     | Tavily search authentication              | No (if using Perplexity) |
+| `SEARCH_PROVIDER`    | `perplexity` or `tavily`                   | No (default `perplexity`) |
 | `MODEL_NAME`         | `o4-mini` or `o3`                          | No (default `o4-mini`) |
 | `DATA_DIR`           | Path for SQLite DB, cache, workspace files | No (default `./data`)  |
 | `DATABASE_URL`       | Postgres connection string (optional)      | No                     |
