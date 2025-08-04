@@ -15,16 +15,20 @@ class SqliteCheckpointManager:
 
     The manager uses :mod:`aiosqlite` and opens a fresh connection for each
     operation to avoid cross-task sharing.
+
+    Args:
+        db_path: Location of the SQLite file used for persistence.
+        max_checkpoints: Optional retention limit. When set, only the most
+            recent ``max_checkpoints`` rows are kept in the database.
     """
 
-    # TODO: Implement retention policy to prune old checkpoints.
-
-    def __init__(self, db_path: str) -> None:
-        """Store the path to the backing database file."""
+    def __init__(self, db_path: str, max_checkpoints: int | None = None) -> None:
+        """Store the path to the backing database file and retention limit."""
         self._path = Path(db_path)
+        self._max_checkpoints = max_checkpoints
 
     async def save_checkpoint(self, state: State) -> None:
-        """Serialize ``state`` into the checkpoint table."""
+        """Serialize ``state`` into the checkpoint table and enforce retention."""
         increment_version(state)
         payload = json.dumps(state.to_dict())
         async with aiosqlite.connect(self._path) as db:
@@ -32,6 +36,11 @@ class SqliteCheckpointManager:
                 "CREATE TABLE IF NOT EXISTS checkpoints (id INTEGER PRIMARY KEY AUTOINCREMENT, state TEXT NOT NULL)"
             )
             await db.execute("INSERT INTO checkpoints (state) VALUES (?)", (payload,))
+            if self._max_checkpoints is not None:
+                await db.execute(
+                    "DELETE FROM checkpoints WHERE id NOT IN (SELECT id FROM checkpoints ORDER BY id DESC LIMIT ?)",
+                    (self._max_checkpoints,),
+                )
             await db.commit()
 
     async def load_checkpoint(self) -> State:
