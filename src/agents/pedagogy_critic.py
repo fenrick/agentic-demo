@@ -9,6 +9,7 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import dataclass
 from typing import Callable, Dict, List, cast
+import logging
 
 from agents.agent_wrapper import init_chat_model
 from agents.models import Activity
@@ -83,7 +84,7 @@ def classify_bloom_level(text: str) -> str:
             if level in BLOOM_LEVELS:
                 return level
     except Exception:
-        pass
+        logging.exception("Bloom level classification failed")
     return _keyword_classify(text)
 
 

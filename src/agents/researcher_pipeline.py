@@ -7,6 +7,7 @@ from typing import List
 
 import asyncio
 import httpx
+import logging
 
 from core.state import State
 from persistence import Citation, CitationRepo, get_db_session
@@ -24,6 +25,7 @@ async def _lookup_licence(url: str) -> str:
             response = await client.head(url, timeout=5.0)
             return response.headers.get("License", "")
     except Exception:
+        logging.exception("Failed to look up licence")
         return ""
 
 

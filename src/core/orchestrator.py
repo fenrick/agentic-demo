@@ -37,7 +37,7 @@ except KeyError:
 try:
     langsmith_client: Client | None = Client()
 except Exception:  # pragma: no cover - optional client
-    logger.info("LangSmith client disabled")
+    logger.exception("LangSmith client disabled")
     langsmith_client = None
 
 
