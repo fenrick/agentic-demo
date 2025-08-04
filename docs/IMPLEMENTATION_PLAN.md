@@ -231,9 +231,9 @@ Each node module defines a single `async` handler function and its input/output 
 
 **File:** `src/core/policies.py`
 
-- **Function `policy_retry_on_low_confidence(prev: PlanResult) → bool`**
+- **Function `policy_retry_on_low_confidence(prev: PlanResult) → Literal["loop", "continue"]`**
 
-- Returns `true` if Planner’s confidence \< threshold, to loop back into Researcher.
+- Returns ``"loop"`` if Planner’s confidence \< threshold and retries remain; otherwise ``"continue"`` to proceed to the Content Weaver.
 
 - **Function `policy_retry_on_critic_failure(report: CritiqueReport|FactCheckReport) → bool`**
 

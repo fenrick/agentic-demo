@@ -66,19 +66,20 @@ def test_policy_retry_on_low_confidence() -> None:
     """Planner with low confidence should trigger a retry."""
 
     state = State()
-    assert policy_retry_on_low_confidence(PlanResult(confidence=0.5), state)
-    assert not policy_retry_on_low_confidence(PlanResult(confidence=0.9), state)
+    assert policy_retry_on_low_confidence(PlanResult(confidence=0.5), state) == "loop"
+    assert (
+        policy_retry_on_low_confidence(PlanResult(confidence=0.9), state) == "continue"
+    )
 
 
 def test_policy_retry_on_low_confidence_limit() -> None:
-    """A fourth planner retry should raise an error."""
+    """A fourth planner attempt should fall through without retry."""
 
     state = State()
     result = PlanResult(confidence=0.1)
     for _ in range(3):
-        assert policy_retry_on_low_confidence(result, state)
-    with pytest.raises(RuntimeError):
-        policy_retry_on_low_confidence(result, state)
+        assert policy_retry_on_low_confidence(result, state) == "loop"
+    assert policy_retry_on_low_confidence(result, state) == "continue"
 
 
 def test_policy_retry_on_critic_failure() -> None:
