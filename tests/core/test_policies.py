@@ -6,12 +6,9 @@ import pytest
 
 from agents.critics import CritiqueReport
 from agents.planner import PlanResult
-from core.policies import (
-    merge_research_results,
-    policy_retry_on_critic_failure,
-    policy_retry_on_low_confidence,
-    retry_tracker,
-)
+from core.policies import (merge_research_results,
+                           policy_retry_on_critic_failure,
+                           policy_retry_on_low_confidence, retry_tracker)
 from core.state import State
 from web.researcher_web import CitationResult
 

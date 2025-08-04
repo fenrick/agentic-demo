@@ -1,7 +1,7 @@
 import asyncio
+import importlib
 import time
 import urllib.request
-import importlib
 
 import pytest
 

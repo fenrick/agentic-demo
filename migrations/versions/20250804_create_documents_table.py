@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from alembic import op  # type: ignore[import]
 import sqlalchemy as sa  # type: ignore[import]
+from alembic import op  # type: ignore[import]
 
 revision = "20250804_create_documents_table"
 down_revision = "20250804_create_state_table"

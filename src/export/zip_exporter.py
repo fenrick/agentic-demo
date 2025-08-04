@@ -8,8 +8,8 @@ from typing import Dict
 
 from .docx_exporter import DocxExporter
 from .markdown_exporter import MarkdownExporter
-from .pdf_exporter import PdfExporter
 from .metadata_exporter import export_citations_json
+from .pdf_exporter import PdfExporter
 
 
 class ZipExporter:

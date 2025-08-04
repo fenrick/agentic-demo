@@ -1,10 +1,5 @@
-from agents.models import (
-    Activity,
-    AssessmentItem,
-    Citation,
-    SlideBullet,
-    WeaveResult,
-)
+from agents.models import (Activity, AssessmentItem, Citation, SlideBullet,
+                           WeaveResult)
 from export import markdown
 
 

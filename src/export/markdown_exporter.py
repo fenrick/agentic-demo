@@ -5,7 +5,8 @@ from __future__ import annotations
 import json
 import sqlite3
 
-from agents.models import Activity, AssessmentItem, Citation, SlideBullet, WeaveResult
+from agents.models import (Activity, AssessmentItem, Citation, SlideBullet,
+                           WeaveResult)
 
 from .markdown import from_weave_result
 

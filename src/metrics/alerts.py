@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict
 
 import httpx
 import yaml  # type: ignore[import-untyped]
-
-import os
 
 from .repository import MetricsRepository
 

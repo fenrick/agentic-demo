@@ -2,16 +2,12 @@
 
 import asyncio
 
-from core.state import State
-
 from agents.models import Activity
-from agents.pedagogy_critic import (
-    Outline,
-    analyze_bloom_coverage,
-    assess_cognitive_load,
-    evaluate_activity_diversity,
-    run_pedagogy_critic,
-)
+from agents.pedagogy_critic import (Outline, analyze_bloom_coverage,
+                                    assess_cognitive_load,
+                                    evaluate_activity_diversity,
+                                    run_pedagogy_critic)
+from core.state import State
 
 
 def build_outline():

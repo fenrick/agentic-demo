@@ -10,14 +10,10 @@ from typing import AsyncGenerator, List
 from jsonschema import Draft202012Validator
 
 from core.state import State
-from .models import (
-    Activity,
-    SlideBullet,
-    AssessmentItem,
-    Citation,
-    WeaveResult,
-)
+
 from .agent_wrapper import get_llm_params
+from .models import (Activity, AssessmentItem, Citation, SlideBullet,
+                     WeaveResult)
 
 
 class RetryableError(RuntimeError):

@@ -108,8 +108,8 @@ def test_citations_route_returns_valid_json(tmp_path: Path) -> None:
 
 
 def test_all_route_returns_zip_with_files(tmp_path: Path) -> None:
-    from zipfile import ZipFile
     import io
+    from zipfile import ZipFile
 
     db = _setup_db(tmp_path)
     client = _create_client(str(db))

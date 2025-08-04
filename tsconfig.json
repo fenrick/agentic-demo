@@ -1,16 +1,14 @@
 {
-  "compilerOptions": {
-    "target": "es2019",
-    "module": "esnext",
-    "moduleResolution": "node",
-    "jsx": "react-jsx",
-    "esModuleInterop": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["frontend/src/*"]
-    }
-  },
-  "include": ["frontend/src", "tests/frontend"]
+    "compilerOptions": {
+        "target": "es2019",
+        "module": "esnext",
+        "moduleResolution": "node",
+        "jsx": "react-jsx",
+        "esModuleInterop": true,
+        "strict": true,
+        "skipLibCheck": true,
+        "baseUrl": ".",
+        "paths": {"@/*": ["frontend/src/*"]},
+    },
+    "include": ["frontend/src", "tests/frontend"],
 }

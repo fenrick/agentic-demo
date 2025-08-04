@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from alembic import op  # type: ignore[import]
 import sqlalchemy as sa  # type: ignore[import]
+from alembic import op  # type: ignore[import]
 
 revision = "0001"
 down_revision = None

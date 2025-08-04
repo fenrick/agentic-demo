@@ -9,10 +9,8 @@ from typing import List
 import httpx
 
 from config import Settings
-
 from core.state import State
 from models import ClaimFlag, FactCheckReport, SentenceProbability
-
 
 _DEF_LOW_CONF_WORDS = ["maybe", "probably", "i think", "uncertain"]
 

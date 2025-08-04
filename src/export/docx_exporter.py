@@ -10,13 +10,8 @@ from typing import List
 from docx import Document as DocumentFactory
 from docx.document import Document
 
-from agents.models import (
-    Activity,
-    AssessmentItem,
-    Citation,
-    SlideBullet,
-    WeaveResult,
-)
+from agents.models import (Activity, AssessmentItem, Citation, SlideBullet,
+                           WeaveResult)
 
 
 class DocxExporter:

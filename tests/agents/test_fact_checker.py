@@ -3,13 +3,10 @@
 import asyncio
 from dataclasses import dataclass
 
+from agents.fact_checker import (assess_hallucination_probabilities,
+                                 run_fact_checker, scan_unsupported_claims,
+                                 verify_sources)
 from core.state import State
-from agents.fact_checker import (
-    assess_hallucination_probabilities,
-    scan_unsupported_claims,
-    run_fact_checker,
-    verify_sources,
-)
 
 
 @dataclass(slots=True)

@@ -7,15 +7,14 @@ from __future__ import annotations
 import importlib
 from pathlib import Path
 
-# ruff: noqa
-# pragma: no cover
-
-import importlib
-from pathlib import Path
-
 import pytest
 from agentic_demo import config
 from agentic_demo.config import load_env
+
+# ruff: noqa
+# pragma: no cover
+
+
 
 # TODO: Flesh out configuration tests once environment loader is implemented
 pytestmark = pytest.mark.skip("Configuration tests pending implementation")

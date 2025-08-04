@@ -10,16 +10,11 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import Callable, Dict, List, cast
 
-from core.state import State
-
 from agents.agent_wrapper import get_llm_params
 from agents.models import Activity
-from models import (
-    ActivityDiversityReport,
-    BloomCoverageReport,
-    CognitiveLoadReport,
-    CritiqueReport,
-)
+from core.state import State
+from models import (ActivityDiversityReport, BloomCoverageReport,
+                    CognitiveLoadReport, CritiqueReport)
 
 # Bloom's taxonomy levels used for coverage analysis
 BLOOM_LEVELS: List[str] = [

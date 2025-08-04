@@ -4,8 +4,8 @@ import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
-from web.routes import register_sse_routes
 import web.sse as sse_module
+from web.routes import register_sse_routes
 
 
 @pytest.mark.asyncio

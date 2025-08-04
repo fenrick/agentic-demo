@@ -1,15 +1,12 @@
 """Tests for selective content regeneration logic."""
 
-from core.state import State
-from models.critique_report import (
-    ActivityDiversityReport,
-    BloomCoverageReport,
-    CognitiveLoadReport,
-    CritiqueReport,
-)
-from models.fact_check_report import ClaimFlag, FactCheckReport, SentenceProbability
-
 import core.regenerator as regen
+from core.state import State
+from models.critique_report import (ActivityDiversityReport,
+                                    BloomCoverageReport, CognitiveLoadReport,
+                                    CritiqueReport)
+from models.fact_check_report import (ClaimFlag, FactCheckReport,
+                                      SentenceProbability)
 
 
 def build_critique_report() -> CritiqueReport:

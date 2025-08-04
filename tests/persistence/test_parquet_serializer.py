@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from persistence.parquet_serializer import ParquetSerializer
 from core.state import Outline
+from persistence.parquet_serializer import ParquetSerializer
 
 
 def test_round_trip_simple_outline() -> None:

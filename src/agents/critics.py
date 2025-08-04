@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from models import CritiqueReport, FactCheckReport
-from .pedagogy_critic import run_pedagogy_critic
-from .fact_checker import run_fact_checker
 
+from .fact_checker import run_fact_checker
+from .pedagogy_critic import run_pedagogy_critic
 
 __all__ = [
     "run_pedagogy_critic",

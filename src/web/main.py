@@ -6,18 +6,17 @@ import argparse
 import os
 from pathlib import Path
 
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-import uvicorn
-
-from config import load_settings, Settings
-from core.checkpoint import SqliteCheckpointManager
-from core.orchestrator import GraphOrchestrator
-from persistence.database import init_db, get_db_session
 
 from agents.cache_backed_researcher import CacheBackedResearcher
 from agents.researcher_web import PerplexityClient
+from config import Settings, load_settings
+from core.checkpoint import SqliteCheckpointManager
+from core.orchestrator import GraphOrchestrator
+from persistence.database import get_db_session, init_db
 
 
 def create_app() -> FastAPI:
@@ -89,7 +88,7 @@ def mount_frontend(app: FastAPI) -> None:
 def register_routes(app: FastAPI) -> None:
     """Include API routers."""
 
-    from .routes import stream, control, export, citation
+    from .routes import citation, control, export, stream
 
     app.include_router(stream.router)
     app.include_router(control.router)

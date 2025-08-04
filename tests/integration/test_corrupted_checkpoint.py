@@ -1,7 +1,8 @@
+from pathlib import Path
+
 import aiosqlite
 import pyarrow as pa
 import pytest
-from pathlib import Path
 
 from core.state import Outline, State
 from persistence.manager import PersistenceManager

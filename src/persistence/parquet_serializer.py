@@ -9,6 +9,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from core.state import Outline
+
 from .parquet_schema import OUTLINE_SCHEMA
 
 

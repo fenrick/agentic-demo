@@ -8,7 +8,6 @@ import pytest
 
 from persistence import Citation, CitationRepo, get_db_session
 
-
 CREATE_TABLE_SQL = """
 CREATE TABLE citations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

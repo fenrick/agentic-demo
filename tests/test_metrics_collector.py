@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from metrics.collector import MetricsCollector
-from metrics.repository import MetricsRepository
 from metrics.models import TimeRange
+from metrics.repository import MetricsRepository
 
 
 def test_record_and_flush_persists_metrics(tmp_path: Path) -> None:

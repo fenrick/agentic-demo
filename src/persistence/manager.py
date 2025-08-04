@@ -9,6 +9,7 @@ import aiosqlite
 
 from config import Settings
 from core.state import Outline, State
+
 from .parquet_serializer import ParquetSerializer
 from .repos.document_repo import DocumentRepo
 from .repos.state_repo import StateRepo
