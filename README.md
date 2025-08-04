@@ -107,6 +107,8 @@ cp .env.example .env
 # PERPLEXITY_API_KEY=...
 # MODEL_NAME=o4-mini
 # DATA_DIR=./workspace
+# LANGCHAIN_API_KEY=...
+# LANGCHAIN_ENDPOINT=https://api.smith.langchain.com
 ```
 
 ### Running Locally
@@ -190,6 +192,8 @@ cp .env.example .env
 | `MODEL_NAME`         | Model to use (`o4-mini` or `o3`)         | `o4-mini`  |
 | `DATA_DIR`           | Path for SQLite DB, cache, logs          | (required) |
 | `DATABASE_URL`       | Postgres connection string (optional)    |            |
+| `LANGCHAIN_API_KEY`  | API key for LangSmith tracing            |            |
+| `LANGCHAIN_ENDPOINT` | LangSmith API endpoint                   | `https://api.smith.langchain.com` |
 
 ---
 
