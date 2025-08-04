@@ -129,11 +129,11 @@ project-root/
   - **Invokes**: `poetry run pre-commit run --all-files` then `poetry run pytest`.
 
 - **File**: `scripts/reset_workspace.sh`
-  - **Deletes**: `workspace/*.db` and `workspace/cache/*` to start fresh.
+  - **Deletes**: `${DATA_DIR}/*.db` and `${DATA_DIR}/cache/*` to start fresh.
 
 ---
 
-## B. Orchestration Core (LangGraph StateGraph)
+## B. Orchestration Core (LangGraph JSON Graph)
 
 ---
 
@@ -214,7 +214,7 @@ Each node module defines a single `async` handler function and its input/output 
 - **Class `GraphOrchestrator`**
 
 - **Method `initialize_graph()`**
-  - Instantiate a `StateGraph<State>` and register all nodes with their stream channels (`values`, `updates`, `messages`, `debug`).
+  - Load `langgraph.json` and register all nodes with their stream channels (`values`, `updates`, `messages`, `debug`).
 
 - **Method `register_edges()`**
   - Wire node-to-node transitions, referencing policies (see B.3).
@@ -275,14 +275,14 @@ Each node module defines a single `async` handler function and its input/output 
 
 ---
 
-### C.1 Perplexity API Client & Offline Fallback
+### C.1 Perplexity Sonar Client & Offline Fallback
 
 #### 1. `src/agents/researcher_web.py`
 
 - **Class `PerplexityClient`**
 
 - **`search(self, query: str) → List[RawSearchResult]`**
-  Calls the Perplexity API, returns raw snippets + URLs.
+  Uses LangChain's `ChatPerplexity` with the Sonar model to return cited snippets + URLs.
 - **`fallback_search(self, query: str) → List[RawSearchResult]`**
   Invoked when `OFFLINE_MODE` is true; loads from cache instead of HTTP.
 
@@ -293,7 +293,7 @@ Each node module defines a single `async` handler function and its input/output 
 #### 2. `src/agents/offline_cache.py`
 
 - **`load_cached_results(query: str) → Optional[List[RawSearchResult]]`**
-  Reads `workspace/cache/{sanitized_query}.json` if present.
+  Reads `${DATA_DIR}/cache/{sanitized_query}.json` if present.
 - **`save_cached_results(query: str, results: List[RawSearchResult])`**
   Persists fresh API responses for offline reuse.
 
@@ -907,16 +907,15 @@ def from_schema(weave: WeaveResult) -> str:
 ### H5. Controls & Model Selector
 
 1. **`frontend/src/api/controlClient.ts`**
-   - `run(workspaceId: string)`, `pause(workspaceId: string)`, `retry(workspaceId: string)`, `resume(workspaceId: string)`, `selectModel(workspaceId: string, model: string)`
-   - **Why**: wrappers for all control endpoints.
+   - `run(topic: string)`, `resume(jobId: string)`
+   - **Why**: wrappers for the control endpoints.
 
 1. **`frontend/src/components/ControlsPanel.tsx`**
-   - **Buttons**: Run, Pause, Retry, Resume
-   - **Dropdown**: Model (o4-mini/o3)
+   - **Buttons**: Run, Resume
    - **Handlers**:
-     - `onRunClick()`, `onPauseClick()`, etc., invoking respective `controlClient` methods and updating store.
+     - `onRunClick()`, `onResumeClick()`, invoking respective `controlClient` methods and updating store.
 
-   - **Why**: let users drive the graph and switch models.
+   - **Why**: let users start and resume lecture generation jobs.
 
 1. **`tests/frontend/components/ControlsPanel.test.tsx`**
    - Simulate clicks, verify correct API calls and disabled states.
@@ -1043,7 +1042,7 @@ def from_schema(weave: WeaveResult) -> str:
 - **Steps**:
   1. Delete `${DATA_DIR}/workspace.db`.
   2. Run `alembic downgrade base` then `alembic upgrade head`.
-  3. Optionally clear `workspace/cache/*`.
+  3. Optionally clear `${DATA_DIR}/cache/*`.
 
 #### 3. `scripts/build_frontend.sh`
 
@@ -1059,13 +1058,13 @@ def from_schema(weave: WeaveResult) -> str:
 #### 1. In `create_app()` (main.py)
 
 - Read `Settings.OFFLINE_MODE` and:
-  - For search routes: bind `ResearcherWebClient` to either real Perplexity API or `CacheBackedResearcher`.
+  - For search routes: bind `ResearcherWebClient` to either `ChatPerplexity` or `CacheBackedResearcher`.
   - For FactChecker: disable external URL fetches and license checks if `OFFLINE_MODE=True`.
 
 #### 2. In Agents
 
 - **`CacheBackedResearcher.search()`**
-  - First look in `workspace/cache/{query}.json`; if missing, error fast.
+  - First look in `${DATA_DIR}/cache/{query}.json`; if missing, error fast.
 
 - **`FactChecker.verify_sources()`**
   - If offline, skip HTTP calls and mark “unchecked” but pass.

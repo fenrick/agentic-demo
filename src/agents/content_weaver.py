@@ -10,10 +10,16 @@ from typing import AsyncGenerator, List
 from jsonschema import Draft202012Validator
 
 from core.state import State
+from prompts import get_prompt
 
 from .agent_wrapper import get_llm_params
-from .models import (Activity, AssessmentItem, Citation, SlideBullet,
-                     WeaveResult)
+from .models import (
+    Activity,
+    AssessmentItem,
+    Citation,
+    SlideBullet,
+    WeaveResult,
+)
 
 
 class RetryableError(RuntimeError):
@@ -91,10 +97,11 @@ def parse_function_response(tokens: List[str]) -> dict:
 
 
 async def call_openai_function(prompt: str, schema: dict) -> AsyncGenerator[str, None]:
-    """Invoke OpenAI with ``schema`` and yield streamed tokens."""
+    """Invoke an LLM via LangChain and yield streamed tokens."""
 
     try:
-        from openai import AsyncOpenAI  # type: ignore
+        from langchain_openai import ChatOpenAI  # type: ignore
+        from langchain_core.messages import HumanMessage, SystemMessage
     except Exception:  # pragma: no cover - dependency not installed
 
         async def empty() -> AsyncGenerator[str, None]:
@@ -103,28 +110,16 @@ async def call_openai_function(prompt: str, schema: dict) -> AsyncGenerator[str,
 
         return empty()
 
-    client = AsyncOpenAI()
+    model = ChatOpenAI(**get_llm_params(), streaming=True)
 
     async def generator() -> AsyncGenerator[str, None]:
-        response = await client.responses.stream(
-            **get_llm_params(),
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are an academic content weaver producing lectures.",
-                },
-                {"role": "user", "content": prompt},
-            ],
-            tools=[
-                {
-                    "type": "function",
-                    "function": {"name": "weave", "parameters": schema},
-                }
-            ],
-        )
-        async for event in response:  # pragma: no cover - streaming is side effect
-            if event.type == "response.output_text.delta":
-                yield event.delta
+        messages = [
+            SystemMessage(content=get_prompt("content_weaver_system")),
+            HumanMessage(content=prompt),
+        ]
+        async for chunk in model.astream(messages):  # pragma: no cover - streaming
+            if chunk.content:
+                yield chunk.content
 
     return generator()
 

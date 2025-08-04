@@ -8,7 +8,7 @@ from agentic_demo import config
 
 
 def get_llm_params(**overrides: Any) -> Dict[str, Any]:
-    """Return default parameters for OpenAI calls.
+    """Return default parameters for LangChain LLM calls.
 
     Reads the configured model name and merges any ``overrides`` provided,
     ensuring every request specifies the enforced model.

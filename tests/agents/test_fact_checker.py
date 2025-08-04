@@ -1,17 +1,15 @@
 """Tests for the fact checker agent."""
 
 import asyncio
-from dataclasses import dataclass
+import pytest
 
-from agents.fact_checker import (assess_hallucination_probabilities,
-                                 run_fact_checker, scan_unsupported_claims,
-                                 verify_sources)
-from core.state import State
-
-
-@dataclass(slots=True)
-class Outline:
-    markdown: str
+from agents.fact_checker import (
+    assess_hallucination_probabilities,
+    run_fact_checker,
+    scan_unsupported_claims,
+    verify_sources,
+)
+from core.state import Outline, State
 
 
 def test_assess_hallucination_probabilities_flags_low_confidence():
@@ -29,13 +27,19 @@ def test_scan_unsupported_claims_detects_phrases():
 
 
 def test_run_fact_checker_compiles_report():
-    text = "Studies show coffee is great.\nMaybe unicorns exist."
-    outline = Outline(markdown=text)
-    state = State()
-    state.outline = outline
+    outline = Outline(
+        steps=["Studies show coffee is great.", "Maybe unicorns exist."],
+    )
+    state = State(outline=outline)
     report = asyncio.run(run_fact_checker(state))
     assert report.hallucination_count == 1
     assert report.unsupported_claims_count == 1
+
+
+def test_run_fact_checker_requires_steps():
+    state = State(outline=Outline(steps=[]))
+    with pytest.raises(ValueError):
+        asyncio.run(run_fact_checker(state))
 
 
 def test_verify_sources_marks_unchecked_when_offline(monkeypatch):

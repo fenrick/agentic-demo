@@ -1,6 +1,6 @@
 # Lecture Builder Agent
 
-A local-first, multi-agent system that generates high‑quality, university‑grade lecture and workshop outlines (with supporting materials) from a single topic prompt. Orchestrated by LangGraph and implemented in Python, the system integrates OpenAI o4‑mini/o3 models, Perplexity Search, and a React‑based UX. Full state, citations, logs, and intermediates persist in SQLite (with optional Postgres fallback). Exports include Markdown, DOCX, and PDF.
+A local-first, multi-agent system that generates high‑quality, university‑grade lecture and workshop outlines (with supporting materials) from a single topic prompt. Orchestrated by LangGraph and implemented in Python, the system integrates OpenAI o4‑mini/o3 models, Perplexity Sonar via LangChain, and a React‑based UX. Full state, citations, logs, and intermediates persist in SQLite (with optional Postgres fallback). Exports include Markdown, DOCX, and PDF.
 
 ---
 
@@ -38,7 +38,7 @@ A local-first, multi-agent system that generates high‑quality, university‑gr
 
 - **Multi-Agent Workflow**: Planner, Researcher, Synthesiser, Pedagogy Critic, Fact Checker, Human-in-Loop, and Exporter nodes working in a LangGraph state graph.
 - **Streaming UI**: Token-level draft streaming with diff highlights; action/reasoning log streaming via SSE.
-- **Robust Citations**: Perplexity Search integration, citation metadata stored in SQLite, Creative Commons and university domain filtering.
+- **Robust Citations**: Perplexity Sonar integration, citation metadata stored in SQLite, Creative Commons and university domain filtering.
 - **Local-First**: Operates offline using cached corpora and fallback to local dense retrieval.
 - **Flexible Exports**: Markdown (canonical), DOCX (python-docx), PDF (WeasyPrint), with cover page, TOC, and bibliography.
 - **Audit & Governance**: Immutable action logs, SHA‑256 state hashes, role‑based access, optional database encryption.
@@ -52,7 +52,7 @@ The system comprises:
 1. **LangGraph StateGraph**: Manages typed `State` objects through nodes and edges. Handles checkpointing in SQLite.
 2. **Agents**:
    - **Curriculum Planner**: Defines learning objectives and module structure.
-   - **Researcher-Web**: Executes parallel Perplexity/OpenAI searches, dedupes and ranks sources.
+   - **Researcher-Web**: Executes parallel Perplexity Sonar/OpenAI searches, dedupes and ranks sources.
    - **Content Weaver**: Generates Markdown outline, speaker notes, slide bullets.
    - **Pedagogy Critic**: Verifies Bloom taxonomy coverage, activity diversity, cognitive load.
    - **Fact Checker**: Scans for hallucinations via Cleanlab/regex.
@@ -72,7 +72,7 @@ The system comprises:
 - Node.js 18+ (for frontend)
 - `poetry` (recommended) or `pipenv`
 - OpenAI API key
-- Perplexity API key (optional for enhanced search)
+- Perplexity API key
 
 ### Installation
 
@@ -92,7 +92,7 @@ The system comprises:
 3. Frontend dependencies:
 
    ```bash
-   cd web
+   cd frontend
    npm install
    ```
 
@@ -114,13 +114,13 @@ cp .env.example .env
 1. **Start the backend** (FastAPI + LangGraph):
 
    ```bash
-   poetry run uvicorn backend.main:app --reload
+   poetry run uvicorn web.main:create_app --reload
    ```
 
 2. **Start the frontend**:
 
    ```bash
-   cd web
+   cd frontend
    npm run dev
    ```
 
@@ -132,13 +132,13 @@ cp .env.example .env
 
 ### Orchestration (LangGraph)
 
-- **StateGraph definition** in `backend/graph.py`.
+- **StateGraph setup** in `src/core/orchestrator.py`.
 - **Checkpointing** via `AsyncSqliteSaver`.
 - **Edge policies** enforce confidence thresholds and retry loops.
 
 ### Retrieval & Citation
 
-- **PerplexitySearchClient** in `backend/retrieval/`
+- **ChatPerplexity** in `src/agents/researcher_web.py`
 - Citation objects stored in `state.citations` table.
 - Filtering by domain allowlist and SPDX license checks.
 
@@ -156,21 +156,21 @@ cp .env.example .env
 
 ### Persistence & Versioning
 
-- SQLite schema in `backend/storage/schema.sql`.
+- SQLite schema managed in `src/persistence/`.
 - Parquet blobs for document versions.
 - Optional Postgres: swap `storage/sqlite.py` with `storage/postgres.py`.
 
 ### Frontend UX
 
-- React app (`web/src/`): Panels for Document, Log, Sources.
-- SSE client in `web/src/services/stream.ts`.
+- React app (`frontend/src/`): Panels for Document, Log, Sources.
+- SSE client in `frontend/src/services/stream.ts`.
 - Diff highlighting via `diff-match-patch`.
 
 ### Exporters
 
 - Markdown: direct from outline JSON → Markdown converter.
-- DOCX: templates in `backend/export/docx_templates/`.
-- PDF: headless WeasyPrint configured in `backend/export/pdf.py`.
+- DOCX: generated via `src/export/docx_exporter.py`.
+- PDF: headless WeasyPrint configured in `src/export/pdf_exporter.py`.
 
 ---
 
@@ -186,9 +186,9 @@ cp .env.example .env
 | Variable             | Description                              | Default    |
 | -------------------- | ---------------------------------------- | ---------- |
 | `OPENAI_API_KEY`     | API key for OpenAI                       | (required) |
-| `PERPLEXITY_API_KEY` | API key for Perplexity Search (optional) |            |
+| `PERPLEXITY_API_KEY` | API key for Perplexity Sonar            | (required) |
 | `MODEL_NAME`         | Model to use (`o4-mini` or `o3`)         | `o4-mini`  |
-| `DATA_DIR`           | Path for SQLite DB, cache, logs          | `./data`   |
+| `DATA_DIR`           | Path for SQLite DB, cache, logs          | (required) |
 | `DATABASE_URL`       | Postgres connection string (optional)    |            |
 
 ---
@@ -204,9 +204,9 @@ cp .env.example .env
 
 ## Operational Governance
 
-- Metrics emitted via Prometheus client in `backend/metrics.py`.
+- Metrics emitted via Prometheus client in `src/metrics/`.
 - Alerts: configurable thresholds for latency, error rates, unsupported-claim rate.
-- Audit: use `backend/cli/audit.py` to verify hash chain integrity.
+- Audit: verify hash chain integrity using CLI tools.
 
 ---
 

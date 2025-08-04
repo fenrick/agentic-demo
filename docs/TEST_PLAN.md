@@ -67,7 +67,7 @@ This document defines a **comprehensive**, **explicit** Test Plan for the Lectur
 ### 4.2 Test Data
 
 - **Prompt Samples**: Variety of topics, lengths, edge cases (empty, special characters).
-- **Citation Fixtures**: Mock Perplexity responses with valid/invalid licenses.
+- **Citation Fixtures**: Mock Perplexity Sonar responses with valid/invalid licenses.
 - **State Snapshots**: Pre-generated snapshots for resume tests.
 - **User Roles**: Token sets for `viewer`, `editor`, `admin` to test RBAC.
 
@@ -172,7 +172,7 @@ All test data stored in `tests/fixtures/` with version control.
 
 - **LangGraph Nodes**: Unit test each node and mock downstream calls.
 - **DB Integration**: Use ephemeral Postgres for SQL queries, checkpoint writes and reads.
-- **External APIs**: Mock Perplexity and OpenAI via local stub server in tests.
+- **External APIs**: Mock ChatPerplexity and OpenAI via local stub server in tests.
 
 ---
 

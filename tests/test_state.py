@@ -5,8 +5,14 @@ from dataclasses import is_dataclass
 import pytest
 from pydantic import TypeAdapter
 
-from core.state import (ActionLog, Citation, Outline, State, increment_version,
-                        validate_state)
+from core.state import (
+    ActionLog,
+    Citation,
+    Outline,
+    State,
+    increment_version,
+    validate_state,
+)
 
 
 @pytest.fixture()
@@ -88,3 +94,10 @@ def test_validate_state_errors(state: State, message: str) -> None:
     with pytest.raises(ValueError) as exc_info:
         validate_state(state)
     assert message in str(exc_info.value)
+
+
+def test_outline_steps_concatenate_to_text() -> None:
+    """Outline steps should join into newline-separated text for consumers."""
+    outline = Outline(steps=["intro", "body"])
+    state = State(prompt="p", outline=outline)
+    assert "\n".join(state.outline.steps) == "intro\nbody"

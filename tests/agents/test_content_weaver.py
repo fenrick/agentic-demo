@@ -1,31 +1,27 @@
 import asyncio
 import json
-import sys
-import types
 
 from agents import content_weaver as cw
 from core.state import State
 
 
 def test_call_openai_function_streams_tokens(monkeypatch):
-    class FakeEvent:
-        def __init__(self, delta: str):
-            self.type = "response.output_text.delta"
-            self.delta = delta
+    class FakeChunk:
+        def __init__(self, content: str):
+            self.content = content
 
-    class FakeAsyncOpenAI:
-        def __init__(self):
-            self.responses = self
+    class FakeChatOpenAI:
+        def __init__(self, **_kwargs: object) -> None:
+            pass
 
-        async def stream(self, *args, **kwargs):
+        async def astream(self, *args, **kwargs):
             async def gen():
-                yield FakeEvent("foo")
-                yield FakeEvent("bar")
+                yield FakeChunk("foo")
+                yield FakeChunk("bar")
 
             return gen()
 
-    fake_module = types.SimpleNamespace(AsyncOpenAI=FakeAsyncOpenAI)
-    monkeypatch.setitem(sys.modules, "openai", fake_module)
+    monkeypatch.setattr(cw, "ChatOpenAI", FakeChatOpenAI)
 
     async def run_test():
         gen = await cw.call_openai_function("prompt", {})

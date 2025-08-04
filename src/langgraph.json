@@ -1,0 +1,22 @@
+{
+  "nodes": [
+    {"name": "Planner", "callable": "agents.planner.run_planner", "streams": "values"},
+    {"name": "Researcher-Web", "callable": "agents.researcher_web_node.run_researcher_web", "streams": "updates"},
+    {"name": "Content-Weaver", "callable": "agents.content_weaver.run_content_weaver", "streams": "messages"},
+    {"name": "Pedagogy-Critic", "callable": "agents.pedagogy_critic.run_pedagogy_critic", "streams": "debug"},
+    {"name": "Fact-Checker", "callable": "agents.fact_checker.run_fact_checker", "streams": "debug"},
+    {"name": "Human-In-Loop", "callable": "agents.approver.run_approver", "streams": "values"},
+    {"name": "Exporter", "callable": "agents.exporter.run_exporter"}
+  ],
+  "edges": [
+    {"source": "__start__", "target": "Planner"},
+    {"source": "Planner", "condition": "core.policies.policy_retry_on_low_confidence", "mapping": {"True": "Researcher-Web", "False": "Content-Weaver"}},
+    {"source": "Researcher-Web", "target": "Planner"},
+    {"source": "Content-Weaver", "target": "Pedagogy-Critic"},
+    {"source": "Content-Weaver", "target": "Fact-Checker"},
+    {"source": "Pedagogy-Critic", "condition": "core.policies.policy_retry_on_critic_failure", "mapping": {"True": "Content-Weaver", "False": "Human-In-Loop"}},
+    {"source": "Fact-Checker", "condition": "core.policies.policy_retry_on_critic_failure", "mapping": {"True": "Content-Weaver", "False": "Human-In-Loop"}},
+    {"source": "Human-In-Loop", "target": "Exporter"},
+    {"source": "Exporter", "target": "__end__"}
+  ]
+}

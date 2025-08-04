@@ -45,27 +45,19 @@ def test_run_web_search_offline(monkeypatch):
     _set_env(monkeypatch, offline=True)
 
     state = State(prompt="dogs")
-    called = {"search": False, "fallback": False}
+    called = {"search": False}
     results = [RawSearchResult(url="u2", snippet="s2", title="t2")]
 
     def fake_search(self, query):
         called["search"] = True
-        return []
-
-    def fake_fallback(self, query):
-        called["fallback"] = True
         return results
 
     monkeypatch.setattr(
-        "agents.researcher_web.PerplexityClient.search", fake_search, raising=False
-    )
-    monkeypatch.setattr(
-        "agents.researcher_web.PerplexityClient.fallback_search",
-        fake_fallback,
+        "agents.cache_backed_researcher.CacheBackedResearcher.search",
+        fake_search,
         raising=False,
     )
 
     citations = run_web_search(state)
-    assert called["search"] is False
-    assert called["fallback"] is True
+    assert called["search"] is True
     assert citations == [CitationDraft(url="u2", snippet="s2", title="t2")]
