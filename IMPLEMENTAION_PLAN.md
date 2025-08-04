@@ -14,7 +14,7 @@
   - **Quickstart**: CLI commands to install and run.
   - **Architecture overview**: high-level bullet points.
 
-2. **`.gitignore`**
+1. **`.gitignore`**
 
 - **Purpose**: Exclude Python build artefacts, virtual environments, workspace data.
 - **Entries**:
@@ -23,7 +23,7 @@
   - `workspace/*`
   - `*.pyc`, `poetry.lock`, `.venv/`
 
-3. **`pyproject.toml`**
+1. **`pyproject.toml`**
 
 - **Purpose**: Define project metadata, Python version, and dependencies stub.
 - **Sections**:
@@ -31,7 +31,7 @@
   - `[tool.poetry.dependencies]`: placeholder entries for `python>=3.11`, `langgraph`, `openai`, etc.
   - `[tool.poetry.dev-dependencies]`: `pytest`, `black`, `flake8`, `isort`, `pre-commit`.
 
-4. **`.pre-commit-config.yaml`**
+1. **`.pre-commit-config.yaml`**
 
 - **Purpose**: Enforce code style on each commit.
 - **Hooks**:
@@ -39,13 +39,13 @@
   - `isort` (imports),
   - `flake8` (linting).
 
-5. **Initial Commit**
+1. **Initial Commit**
 
 - Run `git init` and commit:
-  1.  `README.md`
-  2.  `.gitignore`
-  3.  `pyproject.toml` (empty dependencies)
-  4.  `.pre-commit-config.yaml`
+  1. `README.md`
+  2. `.gitignore`
+  3. `pyproject.toml` (empty dependencies)
+  4. `.pre-commit-config.yaml`
 
 ---
 
@@ -61,7 +61,7 @@
   - `DATA_DIR` (default: `./workspace`)
   - `OFFLINE_MODE` (default: `false`)
 
-2. **`src/config.py`**
+1. **`src/config.py`**
 
 - **Class**: `Settings`
   - **Method**: `load_from_env()`
@@ -73,7 +73,7 @@
   - Checks required keys present, valid directory path for `data_dir`.
   - Raises on missing/invalid values.
 
-3. **`tests/test_config.py`**
+1. **`tests/test_config.py`**
 
 - **Test function**: `test_settings_defaults()`
   - Clears env vars, calls `Settings.load_from_env()`, asserts default values.
@@ -110,20 +110,20 @@ project-root/
 └── .pre-commit-config.yaml
 ```
 
-2. **`ci.yml` (GitHub Actions)**
+1. **`ci.yml` (GitHub Actions)**
 
 - **Job**: `build-and-test`
   - **Runs-on**: `ubuntu-latest`
   - **Steps**:
-  1.  **Checkout code** (`actions/checkout@v3`)
-  2.  **Setup Python** (`actions/setup-python@v4`) with version `3.11`
-  3.  **Install Poetry**
-  4.  **Cache** Poetry cache & `.venv`
-  5.  **Install dependencies** (`poetry install --no-interaction --no-ansi`)
-  6.  **Run linters** (`poetry run pre-commit run --all-files`)
-  7.  **Run tests** (`poetry run pytest --maxfail=1 --disable-warnings -q`)
+  1. **Checkout code** (`actions/checkout@v3`)
+  2. **Setup Python** (`actions/setup-python@v4`) with version `3.11`
+  3. **Install Poetry**
+  4. **Cache** Poetry cache & `.venv`
+  5. **Install dependencies** (`poetry install --no-interaction --no-ansi`)
+  6. **Run linters** (`poetry run pre-commit run --all-files`)
+  7. **Run tests** (`poetry run pytest --maxfail=1 --disable-warnings -q`)
 
-3. **Local Test & Lint Scripts**
+1. **Local Test & Lint Scripts**
 
 - **File**: `scripts/run_checks.sh`
   - **Invokes**: `poetry run pre-commit run --all-files` then `poetry run pytest`.
@@ -302,8 +302,8 @@ Each node module defines a single `async` handler function and its input/output 
 - **`run_web_search(state: State) → List[CitationDraft]`**
   Coordinates:
 
-1.  Calls `PerplexityClient.search` or `.fallback_search`
-2.  Wraps each `RawSearchResult` in a preliminary `CitationDraft` (url + snippet + title)
+1. Calls `PerplexityClient.search` or `.fallback_search`
+1. Wraps each `RawSearchResult` in a preliminary `CitationDraft` (url + snippet + title)
 
 ---
 
@@ -374,17 +374,17 @@ Each node module defines a single `async` handler function and its input/output 
 
 - **`researcher_pipeline(query: str, state: State) → List[Citation]`**
 
-1.  Call `PerplexityClient.search` (or fallback).
-2.  Wrap into `CitationDraft`.
-3.  Apply `rank_by_authority`.
-4.  Apply `filter_allowlist`.
-5.  For each remaining draft:
+1. Call `PerplexityClient.search` (or fallback).
+1. Wrap into `CitationDraft`.
+1. Apply `rank_by_authority`.
+1. Apply `filter_allowlist`.
+1. For each remaining draft:
 
 - Enrich with `retrieved_at = now()`, lookup `licence` via simple HTTP HEAD if needed.
 - Instantiate a `Citation` model.
 - Persist via `CitationRepo.insert`.
 
-6.  Return the final `List[Citation]` for the orchestrator to merge into state.
+1. Return the final `List[Citation]` for the orchestrator to merge into state.
 
 ---
 
@@ -415,7 +415,7 @@ Once `researcher_pipeline` returns `List[Citation]`, your LangGraph node will:
 
 1.2. Hook up `jsonschema` validator in `src/agents/content_weaver.py`.
 
-2. **Content Weaver Agent**
+1. **Content Weaver Agent**
    2.1. Implement `async def content_weaver(state: State) -> WeaveResult:` that:
 
 - Calls OpenAI via function-calling API, passing system + user prompts and schema.
@@ -423,7 +423,7 @@ Once `researcher_pipeline` returns `List[Citation]`, your LangGraph node will:
   2.2. On completion, parse function output into Python model and validate against schema.
   2.3. Write unit tests mocking OpenAI responses (correct and schema-violating).
 
-3. **Markdown Renderer**
+1. **Markdown Renderer**
    3.1. In `src/export/markdown.py`, write a converter:
 
 ```python
@@ -520,9 +520,9 @@ def from_schema(weave: WeaveResult) -> str:
 
 - `tests/core/test_regeneration.py` should simulate critic reports with varying numbers of failures and verify that:
 
-1.  Only the flagged sections are re-sent to the weaver
-2.  Retry counts increment properly
-3.  The loop halts after three attempts
+1. Only the flagged sections are re-sent to the weaver
+1. Retry counts increment properly
+1. The loop halts after three attempts
 
 ---
 
@@ -561,7 +561,7 @@ def from_schema(weave: WeaveResult) -> str:
 - **File:** `alembic.ini`
   _Points Alembic at your SQLite file (`DATA_DIR/checkpoint.db`)._
 
-2. **Create State Table Migration**
+1. **Create State Table Migration**
 
 - **File:** `migrations/versions/20250804_create_state_table.py`
   - Defines a `state` table with columns:
@@ -571,7 +571,7 @@ def from_schema(weave: WeaveResult) -> str:
   - `version` (INTEGER)
   - `updated_at` (TIMESTAMP)
 
-3. **Create Documents Table Migration**
+1. **Create Documents Table Migration**
 
 - **File:** `migrations/versions/20250804_create_documents_table.py`
   - Defines a `documents` table with columns:
@@ -581,7 +581,7 @@ def from_schema(weave: WeaveResult) -> str:
   - `parquet_blob` (BLOB)
   - `created_at` (TIMESTAMP)
 
-4. **Alembic Revision Commands**
+1. **Alembic Revision Commands**
 
 - Run `alembic revision --autogenerate -m "create state & documents tables"`
 - Then `alembic upgrade head` to apply.
@@ -601,7 +601,7 @@ def from_schema(weave: WeaveResult) -> str:
   - `get_state_by_version(version: int) -> State`
     _Loads a specific version for audit or rollback._
 
-2. **DocumentRepo**
+1. **DocumentRepo**
 
 - **File:** `src/persistence/repos/document_repo.py`
 - **Class:** `DocumentRepo`
@@ -612,7 +612,7 @@ def from_schema(weave: WeaveResult) -> str:
   - `load_latest_document(state_id: int) -> bytes`
     _Fetches the most recent Parquet blob for rendering or diffing._
 
-3. **PersistenceManager**
+1. **PersistenceManager**
 
 - **File:** `src/persistence/manager.py`
 - **Class:** `PersistenceManager`
@@ -634,12 +634,12 @@ def from_schema(weave: WeaveResult) -> str:
   - `deserialize_outline(blob: bytes) -> Outline`
     _Reads Parquet bytes back into the `Outline` data structure._
 
-2. **Schema Validation**
+1. **Schema Validation**
 
 - **File:** `src/persistence/parquet_schema.py`
   _Defines the Arrow schema used for every version, ensuring compatibility across reads/writes._
 
-3. **Unit Tests**
+1. **Unit Tests**
 
 - **File:** `tests/persistence/test_parquet_serializer.py`
   - Verify that `serialize_outline()` + `deserialize_outline()` yields an object equal to the original.
@@ -653,24 +653,24 @@ def from_schema(weave: WeaveResult) -> str:
 
 - **File:** `tests/integration/test_resume_from_checkpoint.py`
 - **Scenario:**
-  1.  Kick off a graph run up through the Content Weaver node.
-  2.  Simulate process crash (kill graph or clear in-memory state).
-  3.  Invoke `graph.invoke(resume=True)`.
-  4.  Assert that:
+  1. Kick off a graph run up through the Content Weaver node.
+  2. Simulate process crash (kill graph or clear in-memory state).
+  3. Invoke `graph.invoke(resume=True)`.
+  4. Assert that:
   - `PersistenceManager.restore()` returns the same `State` and `Outline`.
   - The Exporter can still generate valid Markdown from the restored outline.
 
-2. **CLI Smoke Script**
+1. **CLI Smoke Script**
 
 - **File:** `scripts/test_resume.sh`
 - **Steps:**
-  1.  Start FastAPI + LangGraph with a sample prompt.
-  2.  Wait for “outline ready” event in logs.
-  3.  Kill the process.
-  4.  Restart with `--resume`.
-  5.  Poll `/export/…/md` endpoint and verify it returns non-empty Markdown.
+  1. Start FastAPI + LangGraph with a sample prompt.
+  2. Wait for “outline ready” event in logs.
+  3. Kill the process.
+  4. Restart with `--resume`.
+  5. Poll `/export/…/md` endpoint and verify it returns non-empty Markdown.
 
-3. **Error Injection**
+1. **Error Injection**
 
 - **File:** `tests/integration/test_corrupted_checkpoint.py`
 - **Goal:** Ensure graceful error when the SQLite blob or Parquet is malformed.
@@ -801,34 +801,166 @@ def from_schema(weave: WeaveResult) -> str:
 
 ## H. Browser-Based UX
 
-1. **SSE Backend**
-   1.1. Create `/stream/{workspace}` SSE endpoint in FastAPI, hooking into `graph.astream()`.
-   1.2. Serialise each event with fields `{type, payload, timestamp}`.
-   1.3. Write unit tests using `httpx` to open SSE and assert sequence of events.
+---
 
-2. **React App Scaffolding**
-   2.1. `npx create-react-app` (or Vite) with TypeScript.
-   2.2. Install `tailwindcss`, set up `tailwind.config.js`.
-   2.3. Stub components: `DocumentPanel`, `LogPanel`, `SourcesPanel`, `Controls`, `Downloads`.
+### H1. SSE Backend
 
-3. **Diff Highlighting & Typewriter**
-   3.1. In `DocumentPanel`, on each SSE “values” or “messages”, compute diff from prior text (use `diff-match-patch`).
-   3.2. Animate insertions token-by-token; highlight changed words for 2 seconds.
-   3.3. Unit-test diff algorithm against sample before/after strings.
+1. **`src/web/sse.py`**
 
-4. **Citation Popover**
-   4.1. Render footnote markers; on click, fetch full citation metadata via `GET /citations/{id}`.
-   4.2. Show modal with `url`, `title`, `retrieved_at`, `licence`.
-   4.3. Integration-test with React Testing Library.
+   - `stream_workspace_events(workspace_id: str) -> AsyncGenerator[SseEvent]`
+     • **What**: connect to your LangGraph `graph.astream()` for the given workspace, wrap each update in an `SseEvent` namedtuple/dict (`type`, `payload`, `timestamp`).
+     • **Why**: centralises SSE logic so routes stay thin.
 
-5. **Controls & Model Selector**
-   5.1. “Run” button hits `POST /run/{workspace}`, disabling while running.
-   5.2. “Pause” sends `POST /pause`; “Retry” calls `POST /retry`.
-   5.3. Dropdown to choose `o4-mini` or `o3`, bound to `Settings.MODEL_NAME`.
+1. **`src/web/schemas/sse.py`**
 
-6. **Downloads Panel**
-   6.1. Poll `GET /export/{workspace}/status` until ready, then display links for Markdown, DOCX, PDF, ZIP.
-   6.2. Show progress bar for each format.
+   - `class SseEvent(BaseModel)` with fields `type: str`, `payload: dict`, `timestamp: datetime`
+     • **What**: JSON schema for all SSE messages.
+     • **Why**: ensures consistent typing for clients.
+
+1. **`src/web/routes.py`**
+
+   - `register_sse_routes(app: FastAPI)`
+     • **Registers**:
+
+     ```python
+     @app.get("/stream/{workspace}", response_model=None)
+     async def stream_events(workspace: str):
+         return EventSourceResponse(stream_workspace_events(workspace))
+     ```
+
+     • **Why**: binds SSE generator to HTTP endpoint.
+
+1. **`tests/web/test_sse.py`**
+
+   - Test `test_sse_sequence()`
+     • **What**: spin up test FastAPI app, connect via `httpx.AsyncClient` to `/stream/foo`, assert a known sequence of event types.
+     • **Why**: validates end-to-end event streaming.
+
+---
+
+### H2. React App Scaffolding
+
+1. **`frontend/src/index.tsx`**
+
+   - **What**: bootstraps React, renders `<App />` into root.
+   - **Why**: entrypoint for your SPA.
+
+1. **`frontend/src/App.tsx`**
+
+   - **What**: top-level layout; imports panels and initialises workspace store.
+   - **Why**: glues together UI panels and global state.
+
+1. **`frontend/src/store/useWorkspaceStore.ts`**
+
+   - **Methods**:
+
+     - `connect(workspaceId: string)` → opens SSE and subscribes
+     - `updateState(event: SseEvent)` → dispatches to slices
+     - Selectors: `documentState()`, `logEvents()`, `sources()`, `exportStatus()`
+   - **Why**: single source of truth; panels subscribe here.
+
+1. **`frontend/src/api/sseClient.ts`**
+
+   - `connectToWorkspaceStream(workspaceId: string): EventSource`
+   - **Why**: encapsulates browser SSE setup (reconnect logic, backoff).
+
+1. **Directory `frontend/src/components/`**
+
+   - Create stub files for each panel (see H3–H6).
+   - Each exports a default React component accepting props tied to the store.
+
+---
+
+### H3. Diff Highlighting & Typewriter (DocumentPanel)
+
+1. **`frontend/src/utils/diffUtils.ts`**
+
+   - `computeDiff(oldText: string, newText: string): DiffPatch[]`
+   - `tokenize(text: string): string[]`
+   - **Why**: reusable helpers to turn raw markdown into change sets.
+
+1. **`frontend/src/components/DocumentPanel.tsx`**
+
+   - **Props**: `text: string` (current markdown), `onAcceptDiff: (diffs)→void`
+   - **Methods inside**:
+
+     - `handleIncomingText(newText)` calls `computeDiff` + `animateDiff`
+     - `animateDiff(diffs: DiffPatch[])` highlights insertions token-by-token
+   - **Why**: shows live outline with diff highlighting and typewriter effect.
+
+1. **`tests/frontend/utils/testDiffUtils.ts`**
+
+   - Validate `computeDiff` output on sample before/after strings.
+
+1. **`tests/frontend/components/DocumentPanel.test.tsx`**
+
+   - Simulate prop changes, assert that newly inserted text is rendered with `.highlight` class for a brief period.
+
+---
+
+### H4. Citation Popover
+
+1. **`frontend/src/api/citationClient.ts`**
+
+   - `getCitation(workspaceId: string, citationId: string): Promise<Citation>`
+   - **Why**: centralises fetch logic for metadata popover.
+
+1. **`frontend/src/components/CitationPopover.tsx`**
+
+   - **Props**: `citationId: string`
+   - **State/Methods**:
+
+     - `loadMetadata()` calls `getCitation` on mount
+     - Renders `url`, `title`, `retrieved_at`, `licence` in a modal/popup
+   - **Why**: provides inline “click-to-see” citation details.
+
+1. **`tests/frontend/components/CitationPopover.test.tsx`**
+
+   - Mock `citationClient.getCitation`, render popover, verify fields.
+
+---
+
+### H5. Controls & Model Selector
+
+1. **`frontend/src/api/controlClient.ts`**
+
+   - `run(workspaceId: string)`, `pause(workspaceId: string)`, `retry(workspaceId: string)`, `resume(workspaceId: string)`, `selectModel(workspaceId: string, model: string)`
+   - **Why**: wrappers for all control endpoints.
+
+1. **`frontend/src/components/ControlsPanel.tsx`**
+
+   - **Buttons**: Run, Pause, Retry, Resume
+   - **Dropdown**: Model (o4-mini/o3)
+   - **Handlers**:
+
+     - `onRunClick()`, `onPauseClick()`, etc., invoking respective `controlClient` methods and updating store.
+   - **Why**: let users drive the graph and switch models.
+
+1. **`tests/frontend/components/ControlsPanel.test.tsx`**
+
+   - Simulate clicks, verify correct API calls and disabled states.
+
+---
+
+### H6. Downloads Panel
+
+1. **`frontend/src/api/exportClient.ts`**
+
+   - `getStatus(workspaceId: string): Promise<ExportStatus>`
+   - `getUrls(workspaceId: string): Promise<Record<"md"|"docx"|"pdf"|"zip", string>>`
+   - **Why**: hides REST details for polling and link retrieval.
+
+1. **`frontend/src/components/DownloadsPanel.tsx`**
+
+   - **State/Methods**:
+
+     - `startPolling()` on mount: calls `exportClient.getStatus` every 2s until `ready===true`
+     - `renderLinks(urls)` once ready
+   - **Why**: shows progress and final download buttons.
+
+1. **`tests/frontend/components/DownloadsPanel.test.tsx`**
+
+   - Mock status transitions (`pending` → `ready`), assert polling stops and links render.
 
 ---
 
@@ -838,11 +970,11 @@ def from_schema(weave: WeaveResult) -> str:
    1.1. Create `main.py` initialising Config, DB, Graph, and mounting React build under `/`.
    1.2. Add CLI flag `--offline` to toggle search and fact-check behaviour.
 
-2. **Dockerfile & Compose**
+1. **Dockerfile & Compose**
    2.1. Write `Dockerfile` installing system dependenciess for WeasyPrint, copying app, running `uvicorn main:app`.
    2.2. Draft `docker-compose.yml` mounting `./workspace` and passing env vars.
 
-3. **Local Dev Script**
+1. **Local Dev Script**
    3.1. `scripts/run.sh` to spin up Docker or local Uvicorn with `poetry run`.
    3.2. `scripts/reset_db.sh` to drop and re-create SQLite schema.
 
@@ -859,15 +991,15 @@ metrics.record("tokens", count); metrics.record("cost", cost)
 
 1.2. Expose `/metrics` endpoint in Prometheus format.
 
-2. **Threshold Alerts**
+1. **Threshold Alerts**
    2.1. After each lecture completes, evaluate metrics against targets ≥90% pedagogical, ≤2% hallucination.
    2.2. If breached, `POST` to a configurable webhook URL.
 
-3. **RBAC Middleware**
+1. **RBAC Middleware**
    3.1. Implement FastAPI dependency checking JWT claims for `role` ∈ {viewer, editor, admin}.
    3.2. Protect routes accordingly (`export` open to viewer+, `run` to editor+, admin for governance endpoints).
 
-4. **Audit Trail Verification**
+1. **Audit Trail Verification**
    4.1. Create endpoint `/audit/{workspace}` that lists SHA-256 hashes of each saved state.
    4.2. Offer a “compare” utility in CLI to diff two states by hash.
 
