@@ -186,9 +186,9 @@ cp .env.example .env
 | Variable             | Description                              | Default    |
 | -------------------- | ---------------------------------------- | ---------- |
 | `OPENAI_API_KEY`     | API key for OpenAI                       | (required) |
-| `PERPLEXITY_API_KEY` | API key for Perplexity Search (optional) |            |
+| `PERPLEXITY_API_KEY` | API key for Perplexity Search            | (required) |
 | `MODEL_NAME`         | Model to use (`o4-mini` or `o3`)         | `o4-mini`  |
-| `DATA_DIR`           | Path for SQLite DB, cache, logs          | `./data`   |
+| `DATA_DIR`           | Path for SQLite DB, cache, logs          | (required) |
 | `DATABASE_URL`       | Postgres connection string (optional)    |            |
 
 ---

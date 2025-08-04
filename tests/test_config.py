@@ -1,154 +1,57 @@
-"""Tests for the :mod:`agentic_demo.config` module."""
-
-# ruff: noqa
+"""Validation tests for the application configuration."""
 
 from __future__ import annotations
 
-import importlib
+import os
 from pathlib import Path
 
 import pytest
-from agentic_demo import config
-from agentic_demo.config import load_env
+from pydantic import ValidationError
 
-# ruff: noqa
-# pragma: no cover
+# Provide default values so ``agentic_demo.config`` can import successfully.
+os.environ.setdefault("OPENAI_API_KEY", "placeholder-openai")
+os.environ.setdefault("PERPLEXITY_API_KEY", "placeholder-perplexity")
+os.environ.setdefault("DATA_DIR", "/tmp")
 
+import config
 
-
-# TODO: Flesh out configuration tests once environment loader is implemented
-pytestmark = pytest.mark.skip("Configuration tests pending implementation")
-pytestmark = pytest.mark.skip("Config tests pending implementation")
-
-
-def _write_env(tmp_path: Path) -> Path:
-    """Create a `.env` file with all required keys."""
-    content = (
-        "OPENAI_API_KEY=sk-123\n"
-        "PERPLEXITY_API_KEY=pp-456\n"
-        "MODEL_NAME=gpt-4o\n"
-        "DATA_DIR=/data\n"
-    )
-    file = tmp_path / ".env"
-    file.write_text(content)
-    return file
-
-    content = (
-        "OPENAI_API_KEY=sk-123\n"
-        "PERPLEXITY_API_KEY=pp-456\n"
-        "MODEL_NAME=gpt-4o\n"
-        "DATA_DIR=/data\n"
-    )
-    file = tmp_path / ".env"
-    file.write_text(content)
-    return file
-
-
-ENV_KEYS = ("OPENAI_API_KEY", "PERPLEXITY_API_KEY", "MODEL_NAME", "DATA_DIR")
+# Required configuration values for the application.
+REQUIRED_ENV = {
+    "OPENAI_API_KEY": "sk-123",
+    "PERPLEXITY_API_KEY": "pp-456",
+    "DATA_DIR": "/data",
+}
 
 
 @pytest.fixture(autouse=True)
 def clear_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """Remove configuration keys from the environment before each test."""
 
-    for key in ENV_KEYS:
+    for key in REQUIRED_ENV:
         monkeypatch.delenv(key, raising=False)
+    monkeypatch.delenv("MODEL_NAME", raising=False)
 
 
-@pytest.fixture
-def env_file(tmp_path: Path) -> Path:
-    """Create a temporary `.env` file with valid keys."""
+def test_settings_loads_with_required_vars(monkeypatch: pytest.MonkeyPatch) -> None:
+    """``Settings`` initializes when all required keys are present."""
 
-    content = (
-        "OPENAI_API_KEY=sk-123\n"
-        "PERPLEXITY_API_KEY=pp-456\n"
-        "MODEL_NAME=gpt-4o\n"
-        "DATA_DIR=/data\n"
-    )
-    file = tmp_path / ".env"
-    file.write_text(content)
-    return file
+    for key, value in REQUIRED_ENV.items():
+        monkeypatch.setenv(key, value)
 
-
-def _clear_env(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Remove configuration variables from the environment."""
-
-    for key in [
-        "OPENAI_API_KEY",
-        "PERPLEXITY_API_KEY",
-        "MODEL_NAME",
-        "DATA_DIR",
-        "OFFLINE_MODE",
-    ]:
-        monkeypatch.delenv(key, raising=False)
-
-
-def test_settings_loads_from_env(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """``Settings`` loads variables from a `.env` file automatically."""
-
-    _write_env(tmp_path)
-    _clear_env(monkeypatch)
-    monkeypatch.chdir(tmp_path)
-    importlib.reload(config)
     settings = config.Settings()
-    assert settings.openai_api_key == "sk-123"
-    assert settings.perplexity_api_key == "pp-456"
-    assert settings.model_name == "gpt-4o"
-    assert settings.data_dir == Path("/data")
-    assert settings.offline_mode is False
+    assert settings.perplexity_api_key == REQUIRED_ENV["PERPLEXITY_API_KEY"]
+    assert settings.data_dir == Path(REQUIRED_ENV["DATA_DIR"])
 
 
-def test_missing_key_raises(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Validation fails when a required key is absent."""
-
-
-def test_defaults_apply_when_env_vars_missing(env_file: Path) -> None:
-    """Values from the `.env` file are used when env vars are absent."""
-
-    config = load_env(env_file)  # noqa: F821
-    assert config.openai_api_key == "sk-123"
-    assert config.perplexity_api_key == "pp-456"
-    assert config.model_name == "gpt-4o"
-    assert config.data_dir == Path("/data")
-
-
-def test_load_env_missing_key_raises(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize("missing_key", REQUIRED_ENV.keys())
+def test_missing_required_key_raises(
+    monkeypatch: pytest.MonkeyPatch, missing_key: str
 ) -> None:
-    """``load_env`` validates required keys."""
+    """Validation fails if any required key is absent."""
 
-    file = tmp_path / ".env"
-    file.write_text("OPENAI_API_KEY=sk-123\n")
-    _clear_env(monkeypatch)  # noqa: F821
-    monkeypatch.chdir(tmp_path)
-    importlib.reload(config)
+    for key, value in REQUIRED_ENV.items():
+        if key != missing_key:
+            monkeypatch.setenv(key, value)
+
     with pytest.raises(ValidationError):
         config.Settings()
-
-
-def test_environment_overrides_file(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Environment variables override values from `.env`."""
-
-    _write_env(tmp_path)
-    _clear_env(monkeypatch)
-    monkeypatch.chdir(tmp_path)
-    importlib.reload(config)
-    monkeypatch.setenv("MODEL_NAME", "override-model")
-    settings = config.Settings()
-    assert settings.model_name == "override-model"
-
-
-def test_env_vars_override_env_file(
-    env_file: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Environment variables take precedence over `.env` values."""
-
-    monkeypatch.setenv("MODEL_NAME", "override-model")
-    monkeypatch.setenv("OPENAI_API_KEY", "override-openai")
-    config = load_env(env_file)  # noqa: F821
-    assert config.model_name == "override-model"
-    assert config.openai_api_key == "override-openai"
