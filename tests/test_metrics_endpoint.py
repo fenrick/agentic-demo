@@ -13,8 +13,10 @@ def _setup_db(path: Path) -> Path:
     db = path / "metrics.db"
     repo = MetricsRepository(str(db))
     now = datetime.utcnow()
-    repo.save(MetricRecord(name="tokens", value=10.0, timestamp=now))
-    repo.save(MetricRecord(name="cost", value=0.5, timestamp=now))
+    repo.save(
+        MetricRecord(workspace_id="ws1", name="tokens", value=10.0, timestamp=now)
+    )
+    repo.save(MetricRecord(workspace_id="ws1", name="cost", value=0.5, timestamp=now))
     return db
 
 

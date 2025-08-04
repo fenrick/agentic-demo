@@ -59,6 +59,11 @@ class Settings(BaseSettings):
         alias="ALLOWLIST_DOMAINS",
         description="Domain patterns permitted for citation use.",
     )
+    alert_webhook_url: str | None = Field(
+        None,
+        alias="ALERT_WEBHOOK_URL",
+        description="Webhook endpoint for threshold breach alerts.",
+    )
 
     model_config = SettingsConfigDict(
         env_prefix="", case_sensitive=True, populate_by_name=True

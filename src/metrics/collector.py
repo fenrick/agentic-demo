@@ -16,11 +16,14 @@ class MetricsCollector:
         self._repo = repository
         self._buffer: List[MetricRecord] = []
 
-    def record(self, metric_name: str, value: float) -> None:
-        """Append ``metric_name`` with ``value`` to the buffer."""
+    def record(self, workspace_id: str, metric_name: str, value: float) -> None:
+        """Append ``metric_name`` with ``value`` for ``workspace_id`` to the buffer."""
 
         record = MetricRecord(
-            name=metric_name, value=value, timestamp=datetime.utcnow()
+            workspace_id=workspace_id,
+            name=metric_name,
+            value=value,
+            timestamp=datetime.utcnow(),
         )
         self._buffer.append(record)
 

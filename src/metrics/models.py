@@ -8,8 +8,21 @@ from datetime import datetime
 
 @dataclass
 class MetricRecord:
-    """Single metric data point."""
+    """Single metric data point.
 
+    Attributes
+    ----------
+    workspace_id:
+        Identifier for the workspace the metric belongs to.
+    name:
+        Metric identifier such as ``tokens`` or ``cost``.
+    value:
+        Numeric value for the metric.
+    timestamp:
+        When the metric was recorded.
+    """
+
+    workspace_id: str
     name: str
     value: float
     timestamp: datetime
