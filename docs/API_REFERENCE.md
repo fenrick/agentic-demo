@@ -66,6 +66,7 @@ This document provides a **detailed**, **explicit** reference for all backend HT
     ```json
     { "job_id": "123e4567-e89b-12d3-a456-426614174000" }
     ```
+
   * **400 Bad Request**: Invalid or missing `topic`.
   * **401 Unauthorized**: Missing or invalid JWT.
 
@@ -90,6 +91,7 @@ This document provides a **detailed**, **explicit** reference for all backend HT
     ```json
     { "job_id": "<same-id>", "status": "resumed" }
     ```
+
   * **404 Not Found**: No job with given `job_id`.
   * **401 Unauthorized**: Invalid JWT.
 

@@ -36,12 +36,12 @@ A local-first, multi-agent system that generates high‑quality, university‑gr
 
 ## Key Features
 
-* **Multi-Agent Workflow**: Planner, Researcher, Synthesiser, Pedagogy Critic, Fact Checker, Human-in-Loop, and Exporter nodes working in a LangGraph state graph.
-* **Streaming UI**: Token-level draft streaming with diff highlights; action/reasoning log streaming via SSE.
-* **Robust Citations**: Perplexity Search integration, citation metadata stored in SQLite, Creative Commons and university domain filtering.
-* **Local-First**: Operates offline using cached corpora and fallback to local dense retrieval.
-* **Flexible Exports**: Markdown (canonical), DOCX (python-docx), PDF (WeasyPrint), with cover page, TOC, and bibliography.
-* **Audit & Governance**: Immutable action logs, SHA‑256 state hashes, role‑based access, optional database encryption.
+- **Multi-Agent Workflow**: Planner, Researcher, Synthesiser, Pedagogy Critic, Fact Checker, Human-in-Loop, and Exporter nodes working in a LangGraph state graph.
+- **Streaming UI**: Token-level draft streaming with diff highlights; action/reasoning log streaming via SSE.
+- **Robust Citations**: Perplexity Search integration, citation metadata stored in SQLite, Creative Commons and university domain filtering.
+- **Local-First**: Operates offline using cached corpora and fallback to local dense retrieval.
+- **Flexible Exports**: Markdown (canonical), DOCX (python-docx), PDF (WeasyPrint), with cover page, TOC, and bibliography.
+- **Audit & Governance**: Immutable action logs, SHA‑256 state hashes, role‑based access, optional database encryption.
 
 ---
 
@@ -52,12 +52,12 @@ The system comprises:
 1. **LangGraph StateGraph**: Manages typed `State` objects through nodes and edges. Handles checkpointing in SQLite.
 2. **Agents**:
 
-   * **Curriculum Planner**: Defines learning objectives and module structure.
-   * **Researcher-Web**: Executes parallel Perplexity/OpenAI searches, dedupes and ranks sources.
-   * **Content Weaver**: Generates Markdown outline, speaker notes, slide bullets.
-   * **Pedagogy Critic**: Verifies Bloom taxonomy coverage, activity diversity, cognitive load.
-   * **Fact Checker**: Scans for hallucinations via Cleanlab/regex.
-   * **Exporter**: Renders final deliverables.
+   - **Curriculum Planner**: Defines learning objectives and module structure.
+   - **Researcher-Web**: Executes parallel Perplexity/OpenAI searches, dedupes and ranks sources.
+   - **Content Weaver**: Generates Markdown outline, speaker notes, slide bullets.
+   - **Pedagogy Critic**: Verifies Bloom taxonomy coverage, activity diversity, cognitive load.
+   - **Fact Checker**: Scans for hallucinations via Cleanlab/regex.
+   - **Exporter**: Renders final deliverables.
 3. **Web UX**: React + Tailwind, SSE-driven, panels for document, log, sources, and controls.
 4. **Storage Layer**: SQLite for state, logs, citations; optional Postgres via repository abstraction.
 5. **Export Pipeline**: Pandoc-ready Markdown, python-docx, WeasyPrint PDF.
@@ -68,11 +68,11 @@ The system comprises:
 
 ### Prerequisites
 
-* Python 3.11 or later
-* Node.js 18+ (for frontend)
-* `poetry` (recommended) or `pipenv`
-* OpenAI API key
-* Perplexity API key (optional for enhanced search)
+- Python 3.11 or later
+- Node.js 18+ (for frontend)
+- `poetry` (recommended) or `pipenv`
+- OpenAI API key
+- Perplexity API key (optional for enhanced search)
 
 ### Installation
 
@@ -82,11 +82,13 @@ The system comprises:
    git clone https://github.com/your-org/lecture-builder-agent.git
    cd lecture-builder-agent
    ```
+
 2. Backend dependencies:
 
    ```bash
    poetry install
    ```
+
 3. Frontend dependencies:
 
    ```bash
@@ -114,12 +116,14 @@ cp .env.example .env
    ```bash
    poetry run uvicorn backend.main:app --reload
    ```
+
 2. **Start the frontend**:
 
    ```bash
    cd web
    npm run dev
    ```
+
 3. Open your browser at `http://localhost:3000` and enter a topic to begin.
 
 ---
@@ -128,52 +132,52 @@ cp .env.example .env
 
 ### Orchestration (LangGraph)
 
-* **StateGraph definition** in `backend/graph.py`.
-* **Checkpointing** via `AsyncSqliteSaver`.
-* **Edge policies** enforce confidence thresholds and retry loops.
+- **StateGraph definition** in `backend/graph.py`.
+- **Checkpointing** via `AsyncSqliteSaver`.
+- **Edge policies** enforce confidence thresholds and retry loops.
 
 ### Retrieval & Citation
 
-* **PerplexitySearchClient** in `backend/retrieval/`
-* Citation objects stored in `state.citations` table.
-* Filtering by domain allowlist and SPDX license checks.
+- **PerplexitySearchClient** in `backend/retrieval/`
+- Citation objects stored in `state.citations` table.
+- Filtering by domain allowlist and SPDX license checks.
 
 ### Content Synthesis
 
-* **OpenAIFunctionCaller** utilizes function-call pattern for outline JSON.
-* Schema enforcement in `schemas/outline.json`.
-* Token streaming via LangGraph `stream(messages)`.
+- **OpenAIFunctionCaller** utilizes function-call pattern for outline JSON.
+- Schema enforcement in `schemas/outline.json`.
+- Token streaming via LangGraph `stream(messages)`.
 
 ### Quality Control
 
-* **PedagogyCritic** outputs a `CritiqueReport` object with Bloom coverage.
-* **FactChecker** flags lines using Cleanlab probabilities and regex rules.
-* Integration tests in `tests/quality/`.
+- **PedagogyCritic** outputs a `CritiqueReport` object with Bloom coverage.
+- **FactChecker** flags lines using Cleanlab probabilities and regex rules.
+- Integration tests in `tests/quality/`.
 
 ### Persistence & Versioning
 
-* SQLite schema in `backend/storage/schema.sql`.
-* Parquet blobs for document versions.
-* Optional Postgres: swap `storage/sqlite.py` with `storage/postgres.py`.
+- SQLite schema in `backend/storage/schema.sql`.
+- Parquet blobs for document versions.
+- Optional Postgres: swap `storage/sqlite.py` with `storage/postgres.py`.
 
 ### Frontend UX
 
-* React app (`web/src/`): Panels for Document, Log, Sources.
-* SSE client in `web/src/services/stream.ts`.
-* Diff highlighting via `diff-match-patch`.
+- React app (`web/src/`): Panels for Document, Log, Sources.
+- SSE client in `web/src/services/stream.ts`.
+- Diff highlighting via `diff-match-patch`.
 
 ### Exporters
 
-* Markdown: direct from outline JSON → Markdown converter.
-* DOCX: templates in `backend/export/docx_templates/`.
-* PDF: headless WeasyPrint configured in `backend/export/pdf.py`.
+- Markdown: direct from outline JSON → Markdown converter.
+- DOCX: templates in `backend/export/docx_templates/`.
+- PDF: headless WeasyPrint configured in `backend/export/pdf.py`.
 
 ---
 
 ## Storage Options
 
-* **SQLite** (default): single `workspace.db` file in `DATA_DIR`.
-* **Postgres**: set `DATABASE_URL` and install `psycopg2`; update config.
+- **SQLite** (default): single `workspace.db` file in `DATA_DIR`.
+- **Postgres**: set `DATABASE_URL` and install `psycopg2`; update config.
 
 ---
 
@@ -191,24 +195,24 @@ cp .env.example .env
 
 ## Testing & QA
 
-* **Unit tests**: `pytest` in `tests/`
-* **Integration tests**: mock LangGraph runs in CI.
-* **Performance tests**: `k6` scripts in `performance/`
-* **Accessibility**: Lighthouse audit configured in CI pipeline.
+- **Unit tests**: `pytest` in `tests/`
+- **Integration tests**: mock LangGraph runs in CI.
+- **Performance tests**: `k6` scripts in `performance/`
+- **Accessibility**: Lighthouse audit configured in CI pipeline.
 
 ---
 
 ## Operational Governance
 
-* Metrics emitted via Prometheus client in `backend/metrics.py`.
-* Alerts: configurable thresholds for latency, error rates, unsupported-claim rate.
-* Audit: use `backend/cli/audit.py` to verify hash chain integrity.
+- Metrics emitted via Prometheus client in `backend/metrics.py`.
+- Alerts: configurable thresholds for latency, error rates, unsupported-claim rate.
+- Audit: use `backend/cli/audit.py` to verify hash chain integrity.
 
 ---
 
 ## Roadmap & Next Steps
 
-Refer to [ROADMAP.md](./ROADMAP.md) for sprint plans and milestones.
+Refer to [ROADMAP.md](./docs/ROADMAP.md) for sprint plans and milestones.
 
 ---
 
@@ -216,10 +220,10 @@ Refer to [ROADMAP.md](./ROADMAP.md) for sprint plans and milestones.
 
 We welcome contributions! Please review:
 
-* [CONTRIBUTING.md](./CONTRIBUTING.md)
-* [CODE\_OF\_CONDUCT.md](./CODE_OF_CONDUCT.md)
-* [ISSUE\_TEMPLATE.md](./.github/ISSUE_TEMPLATE.md)
-* [PULL\_REQUEST\_TEMPLATE.md](./.github/PULL_REQUEST_TEMPLATE.md)
+- [CONTRIBUTING.md](./docs/CONTRIBUTING.md)
+- [CODE\_OF\_CONDUCT.md](./docs/CODE_OF_CONDUCT.md)
+- [ISSUE\_TEMPLATE.md](./.github/ISSUE_TEMPLATE.md)
+- [PULL\_REQUEST\_TEMPLATE.md](./.github/PULL_REQUEST_TEMPLATE.md)
 
 ---
 
@@ -231,8 +235,8 @@ This project is licensed under the [MIT License](./LICENSE).
 
 ## Additional Documentation
 
-* **DESIGN.md** — Detailed design decisions and component diagrams
-* **ARCHITECTURE.md** — Data model, state graph definitions, and sequence diagrams
-* **SECURITY.md** — Security posture, secrets management, and encryption options
-* **TEST\_PLAN.md** — Test cases, performance benchmarks, and QA checklist
-* **GOVERNANCE.md** — SLOs, metrics dashboard configuration, and audit procedures
+- **DESIGN.md** — Detailed design decisions and component diagrams
+- **ARCHITECTURE.md** — Data model, state graph definitions, and sequence diagrams
+- **SECURITY.md** — Security posture, secrets management, and encryption options
+- **TEST\_PLAN.md** — Test cases, performance benchmarks, and QA checklist
+- **GOVERNANCE.md** — SLOs, metrics dashboard configuration, and audit procedures
