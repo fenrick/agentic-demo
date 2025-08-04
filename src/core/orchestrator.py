@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib
 import json
 import logging
+import contextlib
 from datetime import datetime
 from pathlib import Path
 from typing import Awaitable, Callable, Optional, TypeVar
@@ -15,6 +16,7 @@ from agentic_demo import config
 from agentic_demo.config import Settings
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
+from langsmith import Client
 from persistence import get_db_session
 from persistence.logs import compute_hash, log_action
 
@@ -28,6 +30,13 @@ try:
     _ENCODING = tiktoken.encoding_for_model(config.MODEL_NAME)
 except KeyError:
     _ENCODING = tiktoken.get_encoding("cl100k_base")
+
+
+try:
+    langsmith_client: Client | None = Client()
+except Exception:  # pragma: no cover - optional client
+    logger.info("LangSmith client disabled")
+    langsmith_client = None
 
 
 def _token_count(payload: object) -> int:
@@ -78,10 +87,12 @@ class GraphOrchestrator:
         self,
         checkpoint_manager: SqliteCheckpointManager | None = None,
         spec_path: Path | None = None,
+        langsmith_client: Client | None = langsmith_client,
     ) -> None:
         self._graph: Optional[StateGraph[State]] = None
         self.graph: Optional[CompiledStateGraph[State]] = None
         self.checkpoint_manager = checkpoint_manager
+        self.langsmith_client = langsmith_client
         self.spec_path = (
             spec_path or Path(__file__).resolve().parents[1] / "langgraph.json"
         )
@@ -92,24 +103,32 @@ class GraphOrchestrator:
         async def wrapped(state: State) -> T:
             input_dict = state.to_dict()
             input_hash = compute_hash(input_dict)
-            result = await node(state)
-            if self.checkpoint_manager is not None:
-                await self.checkpoint_manager.save_checkpoint(state)
-            output_hash = compute_hash(result)
-            tokens = _token_count(input_dict) + _token_count(result)
-            workspace_id = getattr(state, "workspace_id", "default")
-            async with get_db_session() as conn:
-                await log_action(
-                    conn,
-                    workspace_id,
-                    name,
-                    input_hash,
-                    output_hash,
-                    tokens,
-                    0.0,
-                    datetime.utcnow(),
-                )
-            return result
+            trace_ctx = (
+                self.langsmith_client.trace(name, inputs=input_dict)
+                if self.langsmith_client is not None
+                else contextlib.nullcontext()
+            )
+            with trace_ctx as run:
+                result = await node(state)
+                if self.checkpoint_manager is not None:
+                    await self.checkpoint_manager.save_checkpoint(state)
+                output_hash = compute_hash(result)
+                tokens = _token_count(input_dict) + _token_count(result)
+                workspace_id = getattr(state, "workspace_id", "default")
+                async with get_db_session() as conn:
+                    await log_action(
+                        conn,
+                        workspace_id,
+                        name,
+                        input_hash,
+                        output_hash,
+                        tokens,
+                        0.0,
+                        datetime.utcnow(),
+                    )
+                if run is not None:
+                    run.end(outputs=result)
+                return result
 
         return wrapped
 
@@ -177,10 +196,18 @@ def _create_checkpoint_manager(data_dir: Path | None = None) -> SqliteCheckpoint
 
 checkpoint_manager = _create_checkpoint_manager()
 
-graph_orchestrator = GraphOrchestrator(checkpoint_manager)
+graph_orchestrator = GraphOrchestrator(
+    checkpoint_manager, langsmith_client=langsmith_client
+)
 graph_orchestrator.initialize_graph()
 graph_orchestrator.register_edges()
 
 graph = graph_orchestrator.graph
 
-__all__ = ["GraphOrchestrator", "PlanResult", "graph", "checkpoint_manager"]
+__all__ = [
+    "GraphOrchestrator",
+    "PlanResult",
+    "graph",
+    "checkpoint_manager",
+    "langsmith_client",
+]
