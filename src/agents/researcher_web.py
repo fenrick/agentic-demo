@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import asyncio
+from dataclasses import asdict, dataclass
 from typing import Any, List, Optional, Protocol
 from urllib.parse import urlparse
 
+from persistence import get_db_session
+from persistence.repositories.retrieval_cache_repo import RetrievalCacheRepo
+
 from .agent_wrapper import init_chat_model
+from .dense_retriever import DenseRetriever
 from .offline_cache import load_cached_results, save_cached_results
 from .streaming import stream_debug, stream_messages
 
@@ -106,6 +111,47 @@ class TavilyClient(SearchClient):
             stream_messages(res.snippet)
         save_cached_results(query, results)
         return results
+
+
+async def _cached_search_async(
+    query: str,
+    client: SearchClient,
+    dense: Optional[DenseRetriever] = None,
+) -> List[RawSearchResult]:
+    """Search ``query`` using ``client`` with caching and dense fallback."""
+
+    async with get_db_session() as conn:
+        repo = RetrievalCacheRepo(conn)
+        cached = await repo.get(query)
+        if cached is not None:
+            stream_debug(f"cache hit: {query}")
+            return [RawSearchResult(**item) for item in cached]
+
+    try:
+        results = client.search(query)
+    except Exception:
+        if dense is None:
+            raise
+        stream_debug(f"dense retrieval fallback: {query}")
+        results = dense.search(query)
+
+    if not results and dense is not None:
+        stream_debug(f"dense retrieval fallback: {query}")
+        results = dense.search(query)
+
+    async with get_db_session() as conn:
+        repo = RetrievalCacheRepo(conn)
+        await repo.set(query, [asdict(r) for r in results])
+
+    return results
+
+
+def cached_search(
+    query: str, client: SearchClient, dense: Optional[DenseRetriever] = None
+) -> List[RawSearchResult]:
+    """Synchronous wrapper around :func:`_cached_search_async`."""
+
+    return asyncio.run(_cached_search_async(query, client, dense))
 
 
 def score_domain_authority(domain: str) -> float:
