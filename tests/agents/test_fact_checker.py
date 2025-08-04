@@ -8,6 +8,7 @@ from agents.fact_checker import (
     assess_hallucination_probabilities,
     scan_unsupported_claims,
     run_fact_checker,
+    verify_sources,
 )
 
 
@@ -38,3 +39,12 @@ def test_run_fact_checker_compiles_report():
     report = asyncio.run(run_fact_checker(state))
     assert report.hallucination_count == 1
     assert report.unsupported_claims_count == 1
+
+
+def test_verify_sources_marks_unchecked_when_offline(monkeypatch):
+    monkeypatch.setenv("OFFLINE_MODE", "1")
+    import config
+
+    config._settings = None  # reset cached settings
+    results = verify_sources(["https://example.com"])
+    assert results[0].status == "unchecked"

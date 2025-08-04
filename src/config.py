@@ -59,6 +59,11 @@ class Settings(BaseSettings):
         alias="ALLOWLIST_DOMAINS",
         description="Domain patterns permitted for citation use.",
     )
+    alert_webhook_url: str | None = Field(
+        None,
+        alias="ALERT_WEBHOOK_URL",
+        description="Webhook endpoint for threshold breach alerts.",
+    )
 
     model_config = SettingsConfigDict(
         env_prefix="", case_sensitive=True, populate_by_name=True
@@ -70,3 +75,25 @@ def load_env(env_file: Path) -> Settings:
 
     load_dotenv(env_file)
     return Settings(_env_file=env_file)  # type: ignore[call-arg]
+
+
+_settings: Settings | None = None
+
+
+def load_settings() -> Settings:
+    """Return a singleton :class:`Settings` instance.
+
+    The configuration values are pulled from environment variables and validated
+    by :class:`Settings`. Subsequent calls return the cached instance.
+    """
+
+    global _settings
+    if _settings is None:
+        _settings = Settings()  # type: ignore[call-arg]
+    return _settings
+
+
+# Eagerly instantiate settings for modules that import it directly.
+settings = load_settings()
+
+__all__ = ["Settings", "load_settings", "load_env", "settings"]
