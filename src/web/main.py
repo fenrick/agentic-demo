@@ -16,6 +16,9 @@ from core.checkpoint import SqliteCheckpointManager
 from core.orchestrator import GraphOrchestrator
 from persistence.database import init_db, get_db_session
 
+from agents.cache_backed_researcher import CacheBackedResearcher
+from agents.researcher_web import PerplexityClient
+
 
 def create_app() -> FastAPI:
     """Instantiate and configure the FastAPI application."""
@@ -23,6 +26,14 @@ def create_app() -> FastAPI:
     settings = load_settings()
     app = FastAPI()
     app.state.settings = settings
+
+    # Bind search and fact-checking behaviour depending on offline mode.
+    if settings.offline_mode:
+        app.state.research_client = CacheBackedResearcher()
+        app.state.fact_check_offline = True
+    else:
+        app.state.research_client = PerplexityClient(settings.perplexity_api_key)
+        app.state.fact_check_offline = False
 
     app.add_middleware(
         CORSMiddleware,
