@@ -2,6 +2,7 @@ import asyncio
 from contextlib import asynccontextmanager
 
 import aiosqlite
+import httpx
 
 from agents.researcher_pipeline import researcher_pipeline
 from agents.researcher_web import CitationDraft
@@ -58,9 +59,14 @@ def test_researcher_pipeline_persists(monkeypatch, tmp_path):
         class DummyResponse:
             headers = {"License": "CC0"}
 
+        async def fake_head(self, url, timeout=5.0):  # noqa: ARG001
+            return DummyResponse()
+
         monkeypatch.setattr(
-            "agents.researcher_pipeline.httpx.head",
-            lambda url, timeout=5.0: DummyResponse(),
+            httpx.AsyncClient,
+            "head",
+            fake_head,
+            raising=False,
         )
 
         state = State(prompt="")

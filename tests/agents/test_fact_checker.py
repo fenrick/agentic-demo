@@ -1,6 +1,7 @@
 """Tests for the fact checker agent."""
 
 import asyncio
+import httpx
 import pytest
 
 from agents.fact_checker import (
@@ -47,5 +48,29 @@ def test_verify_sources_marks_unchecked_when_offline(monkeypatch):
     import config
 
     config._settings = None  # reset cached settings
-    results = verify_sources(["https://example.com"])
+    results = asyncio.run(verify_sources(["https://example.com"]))
     assert results[0].status == "unchecked"
+
+
+def test_verify_sources_fetches_metadata(monkeypatch, tmp_path):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk")
+    monkeypatch.setenv("PERPLEXITY_API_KEY", "pk")
+    monkeypatch.setenv("MODEL_NAME", "gpt")
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("OFFLINE_MODE", "0")
+
+    import config
+
+    config._settings = None  # reset cached settings
+
+    class DummyResponse:
+        status_code = 200
+        headers = {"License": "MIT"}
+
+    async def fake_head(self, url, timeout=5.0):  # noqa: ARG001
+        return DummyResponse()
+
+    monkeypatch.setattr(httpx.AsyncClient, "head", fake_head, raising=False)
+    results = asyncio.run(verify_sources(["https://example.com"]))
+    assert results[0].status == "ok"
+    assert results[0].licence == "MIT"

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import re
 from dataclasses import dataclass
 from typing import List
@@ -98,7 +99,7 @@ class SourceVerification:
     licence: str | None = None
 
 
-def verify_sources(urls: List[str]) -> List[SourceVerification]:
+async def verify_sources(urls: List[str]) -> List[SourceVerification]:
     """Validate external URLs and capture licence metadata.
 
     When the application runs in offline mode, network calls are skipped and
@@ -106,17 +107,19 @@ def verify_sources(urls: List[str]) -> List[SourceVerification]:
     """
 
     settings = Settings()
-    results: List[SourceVerification] = []
-    for url in urls:
-        if settings.offline_mode:
-            results.append(SourceVerification(url=url, status="unchecked"))
-            continue
+    if settings.offline_mode:
+        return [SourceVerification(url=url, status="unchecked") for url in urls]
+
+    async def _verify(client: httpx.AsyncClient, url: str) -> SourceVerification:
         try:
-            response = httpx.head(url, timeout=5.0)
+            response = await client.head(url, timeout=5.0)
             status = "ok" if response.status_code < 400 else "error"
             licence = response.headers.get("License")
         except Exception:
             status = "error"
             licence = None
-        results.append(SourceVerification(url=url, status=status, licence=licence))
-    return results
+        return SourceVerification(url=url, status=status, licence=licence)
+
+    async with httpx.AsyncClient() as client:
+        tasks = [_verify(client, url) for url in urls]
+        return await asyncio.gather(*tasks)
