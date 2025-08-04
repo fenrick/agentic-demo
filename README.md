@@ -203,11 +203,11 @@ cp .env.example .env
 | `PERPLEXITY_API_KEY` | API key for Perplexity Sonar            | Required if `SEARCH_PROVIDER=perplexity` |
 | `TAVILY_API_KEY`     | API key for Tavily search               | Required if `SEARCH_PROVIDER=tavily` |
 | `SEARCH_PROVIDER`    | `perplexity` or `tavily`                 | `perplexity` |
-| `MODEL_NAME`         | Model to use (`o4-mini` or `o3`)         | `o4-mini`  |
-| `DATA_DIR`           | Path for SQLite DB, cache, logs          | (required) |
-| `DATABASE_URL`       | Postgres connection string (optional)    |            |
 | `LANGCHAIN_API_KEY`  | API key for LangSmith tracing            |            |
 | `LANGCHAIN_ENDPOINT` | LangSmith API endpoint                   | `https://api.smith.langchain.com` |
+| `MODEL_NAME`         | Model to use (`o4-mini` or `o3`)         | `o4-mini`  |
+| `DATA_DIR`           | Path for SQLite DB, cache, logs          | (required) |
+| `OFFLINE_MODE`       | Run without external network calls       | `false`    |
 
 ---
 
