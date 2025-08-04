@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import urllib.request
 from dataclasses import dataclass
 from typing import Awaitable, Callable, Iterable, List
 from urllib.parse import urlparse
-import urllib.request
 
 
 @dataclass(slots=True)

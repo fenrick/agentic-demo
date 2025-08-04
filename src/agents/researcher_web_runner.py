@@ -7,6 +7,7 @@ from typing import List
 from config import Settings
 from core.state import State
 
+from .cache_backed_researcher import CacheBackedResearcher
 from .researcher_web import CitationDraft, PerplexityClient, RawSearchResult
 
 
@@ -17,9 +18,9 @@ def _to_draft(result: RawSearchResult) -> CitationDraft:
 def run_web_search(state: State) -> List[CitationDraft]:
     """Run a Perplexity search using the state's prompt as query."""
     settings = Settings()
-    client = PerplexityClient(settings.perplexity_api_key)
     if settings.offline_mode:
-        results = client.fallback_search(state.prompt)
+        client = CacheBackedResearcher()
     else:
-        results = client.search(state.prompt)
+        client = PerplexityClient(settings.perplexity_api_key)
+    results = client.search(state.prompt)
     return [_to_draft(r) for r in results]

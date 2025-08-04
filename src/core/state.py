@@ -53,6 +53,7 @@ class State:
         outline: Draft structure for the eventual output.
         log: List of actions performed so far.
         retries: Mapping of node name to how many times it has retried.
+        retry_counts: Mapping of outline section identifiers to regeneration attempts.
         version: Monotonic revision number for persistence.
     """
 
@@ -66,6 +67,8 @@ class State:
     log: List[ActionLog] = dc_field(default_factory=list)
     # TODO: Track retry counts for individual nodes.
     retries: Dict[str, int] = dc_field(default_factory=dict)
+    # TODO: Track retry counts for outline regeneration.
+    retry_counts: Dict[str, int] = dc_field(default_factory=dict)
     # TODO: Revisit versioning strategy for future schema evolution.
     version: int = 1
 
@@ -82,6 +85,7 @@ class State:
             "outline": self.outline.model_dump() if self.outline else None,
             "log": [entry.model_dump() for entry in self.log],
             "retries": self.retries,
+            "retry_counts": self.retry_counts,
             "version": self.version,
         }
 
@@ -101,8 +105,9 @@ class State:
             outline=Outline(**raw["outline"]) if raw.get("outline") else None,
             log=[ActionLog(**entry_data) for entry_data in raw.get("log", [])],
             retries=raw.get("retries", {}),
+            retry_counts=raw.get("retry_counts", {}),
             version=raw.get("version", 1),
-        )
+        )  # type: ignore[call-arg]
 
 
 def increment_version(state: State) -> int:

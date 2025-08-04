@@ -1,7 +1,6 @@
 """Tests for the :mod:`agentic_demo.greeting` module."""
 
 import pytest
-
 from agentic_demo.greeting import Greeter
 
 

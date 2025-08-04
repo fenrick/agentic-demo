@@ -1,5 +1,5 @@
-from agents.researcher_web import CitationDraft, rank_by_authority
 from agents.copyright_filter import filter_allowlist
+from agents.researcher_web import CitationDraft, rank_by_authority
 
 
 def _set_env(monkeypatch, tmp_path):

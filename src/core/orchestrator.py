@@ -2,24 +2,40 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Awaitable, Callable, Optional, TypeVar
 
+from agentic_demo import config
+from agentic_demo.config import Settings
 from langgraph.graph import END, START, StateGraph
 
-from agentic_demo.config import Settings
-from core.checkpoint import SqliteCheckpointManager
 from agents.approver import run_approver
 from agents.content_weaver import run_content_weaver
 from agents.critics import run_fact_checker, run_pedagogy_critic
 from agents.exporter import run_exporter
 from agents.planner import PlanResult, run_planner
 from agents.researcher_web_node import run_researcher_web
-from core.policies import (
-    policy_retry_on_critic_failure,
-    policy_retry_on_low_confidence,
-)
+from core.checkpoint import SqliteCheckpointManager
+from core.policies import (policy_retry_on_critic_failure,
+                           policy_retry_on_low_confidence)
 from core.state import State
+
+logger = logging.getLogger(__name__)
+
+
+def validate_model_configuration() -> None:
+    """Ensure the configured model matches the enforced default."""
+    configured = config.settings.model_name
+    if configured != config.MODEL_NAME:
+        raise ValueError(
+            f"MODEL_NAME misconfigured: expected '{config.MODEL_NAME}', got '{configured}'"
+        )
+    logger.info("Using LLM engine %s", config.MODEL_NAME)
+
+
+validate_model_configuration()
+
 
 T = TypeVar("T")
 

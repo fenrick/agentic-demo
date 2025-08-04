@@ -5,14 +5,8 @@ from dataclasses import is_dataclass
 import pytest
 from pydantic import TypeAdapter
 
-from core.state import (
-    ActionLog,
-    Citation,
-    Outline,
-    State,
-    increment_version,
-    validate_state,
-)
+from core.state import (ActionLog, Citation, Outline, State, increment_version,
+                        validate_state)
 
 
 @pytest.fixture()
