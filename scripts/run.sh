@@ -22,4 +22,4 @@ fi
 poetry run alembic upgrade head
 
 # Forward all arguments (e.g., --offline) to uvicorn
-poetry run uvicorn web.main:app --reload "$@"
+poetry run uvicorn web.main:create_app --reload "$@"

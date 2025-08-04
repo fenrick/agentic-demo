@@ -128,6 +128,12 @@ cp .env.example .env
 1. **Start the backend** (FastAPI + LangGraph):
 
    ```bash
+   ./scripts/run.sh [--offline]
+   ```
+
+   This helper invokes Uvicorn with:
+
+   ```bash
    poetry run uvicorn web.main:create_app --reload
    ```
 
