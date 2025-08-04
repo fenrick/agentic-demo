@@ -26,7 +26,7 @@ dependencies = [
     "sse-starlette (>=3.0.2,<4.0.0)",
     "pyarrow (>=21.0.0,<22.0.0)",
     "alembic (>=1.16.4,<2.0.0)",
-    "sqlalchemy (>=2.0.42,<3.0.0)"
+    "sqlalchemy (>=2.0.42,<3.0.0)",
     "weasyprint (>=66,<67)",
     "fastapi (>=0.111,<1.0)"
 ]
