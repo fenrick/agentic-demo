@@ -95,53 +95,56 @@ This document provides a **detailed**, **explicit** reference for all backend HT
 
 ## 4. Server-Sent Events (SSE)
 
-Clients subscribe to three SSE endpoints to receive real-time updates. Each SSE stream sends newline-delimited JSON messages.
+Clients subscribe to three SSE endpoints to receive real-time updates. Each SSE
+stream sends newline-delimited JSON messages where the `event` field indicates
+the channel and the payload conforms to the `SseEvent` schema
+(`type`, `payload`, `timestamp`).
 
 ### 4.1 State Snapshots
 
-#### GET `/api/stream/state?job_id=<job_id>`
+#### GET `/api/stream/{workspace_id}/state`
 
 - **Purpose**: Stream structured state snapshots as each agent completes.
-
 - **Authentication**: Required (`viewer`, `editor`, or `admin`).
+- **Path Parameter**:
 
-- **Query Parameter**:
+  | Parameter      | Type   | Description                          |
+  | -------------- | ------ | ------------------------------------ |
+  | `workspace_id` | String | Identifier of the workspace/job run. |
 
-  | Parameter | Type   | Required | Description      |
-  | --------- | ------ | -------- | ---------------- |
-  | `job_id`  | String | Yes      | UUID of the job. |
-
-- **Event Format**: `event: state` followed by JSON data.
+- **Event Format**: `event: state` followed by a serialized `SseEvent`.
 
   ```plaintext
   event: state
-  data: { "version": 1, "learning_objectives": ["..."], "modules": [...] }
+  data: { "type": "state", "payload": { "version": 1, "modules": [...] }, "timestamp": "2025-08-04T10:15:30Z" }
   ```
 
 ### 4.2 Action Log
 
-#### GET `/api/stream/actions?job_id=<job_id>`
+#### GET `/api/stream/{workspace_id}/actions`
 
 - **Purpose**: Stream chronological action records from agents.
 - **Authentication**: Required (`viewer`, `editor`, or `admin`).
-- **Event Format**: `event: action`.
+- **Path Parameter**: Same as `/state` above.
+- **Event Format**: `event: action` and an `SseEvent` payload.
 
   ```plaintext
   event: action
-  data: { "timestamp": "2025-08-04T10:15:30Z", "agent": "Researcher-Web", "message": "Fetched 5 citations", "tokens": 123, "cost_usd": 0.01 }
+  data: { "type": "action", "payload": { "agent": "Researcher-Web", "message": "Fetched 5 citations" }, "timestamp": "2025-08-04T10:15:30Z" }
   ```
 
 ### 4.3 New Citations
 
-#### GET `/api/stream/citations?job_id=<job_id>`
+#### GET `/api/stream/{workspace_id}/citations`
 
 - **Purpose**: Stream citation objects as they are added.
 - **Authentication**: Required (`viewer`, `editor`, or `admin`).
-- **Event Format**: `event: citation`.
+- **Path Parameter**: Same as `/state` above.
+- **Event Format**: `event: citation` and an `SseEvent` payload.
 
   ```plaintext
   event: citation
-  data: { "citation_id": "c1", "url": "https://example.edu/paper", "title": "...", "retrieved_at": "...", "license": "CC-BY" }
+  data: { "type": "citation", "payload": { "citation_id": "c1", "url": "https://example.edu/paper" }, "timestamp": "2025-08-04T10:15:30Z" }
   ```
 
 ---
