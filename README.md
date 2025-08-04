@@ -264,3 +264,4 @@ This project is licensed under the [MIT License](./LICENSE).
 - **SECURITY.md** — Security posture, secrets management, and encryption options
 - **TEST_PLAN.md** — Test cases, performance benchmarks, and QA checklist
 - **GOVERNANCE.md** — SLOs, metrics dashboard configuration, and audit procedures
+- [**CLI_REFERENCE.md**](./docs/CLI_REFERENCE.md) — Commands for running, testing, and maintenance tasks
