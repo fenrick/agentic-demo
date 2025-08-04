@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from dataclasses import asdict, dataclass
 from typing import Any, List, Optional, Protocol
 from urllib.parse import urlparse
@@ -130,6 +131,7 @@ async def _cached_search_async(
     try:
         results = client.search(query)
     except Exception:
+        logging.exception("Search client failed")
         if dense is None:
             raise
         stream_debug(f"dense retrieval fallback: {query}")

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, Optional
 
 from agentic_demo import config
@@ -75,6 +76,7 @@ def init_chat_model(**overrides: Any) -> Optional[Any]:
         _MODEL_CACHE[model_name] = model
         return model
     except Exception:  # pragma: no cover - optional dependencies
+        logging.exception("Failed to initialize chat model")
         return None
 
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass
 
@@ -34,6 +35,7 @@ async def call_planner_llm(topic: str) -> str:
     try:  # pragma: no cover - exercised via monkeypatch in tests
         from langchain_core.messages import HumanMessage, SystemMessage
     except Exception:  # dependency missing
+        logging.exception("Planner dependencies unavailable")
         return ""
 
     model = init_chat_model()

@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from typing import List, TYPE_CHECKING
 
+import logging
 import numpy as np
 
 try:  # pragma: no cover - optional dependency
     import faiss  # type: ignore
 except Exception:  # pragma: no cover - optional dependency
+    logging.exception("faiss library unavailable")
     faiss = None
 
 if TYPE_CHECKING:  # pragma: no cover - type checking only

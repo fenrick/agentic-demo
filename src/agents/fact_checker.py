@@ -7,6 +7,7 @@ import re
 from dataclasses import dataclass
 from typing import List
 
+import logging
 import httpx
 
 from config import Settings
@@ -116,6 +117,7 @@ async def verify_sources(urls: List[str]) -> List[SourceVerification]:
             status = "ok" if response.status_code < 400 else "error"
             licence = response.headers.get("License")
         except Exception:
+            logging.exception("Source verification failed")
             status = "error"
             licence = None
         return SourceVerification(url=url, status=status, licence=licence)

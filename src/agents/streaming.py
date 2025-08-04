@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 
@@ -17,6 +18,7 @@ def stream(channel: str, payload: Any) -> None:
 
         _stream(channel, payload)
     except Exception:  # pragma: no cover - optional dependency
+        logging.exception("Streaming via langgraph_sdk failed")
         if channel == "messages":
             print(payload, end="", flush=True)
         else:

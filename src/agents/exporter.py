@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 
 from config import settings
@@ -64,6 +65,7 @@ async def run_exporter(state: State) -> ExportStatus:
         state.log.append(ActionLog(message="Export complete"))
         state.exports = exported
     except Exception as exc:  # pragma: no cover - defensive
+        logging.exception("Export failed")
         state.log.append(ActionLog(message=f"Export failed: {exc}"))
         status.success = False
 
