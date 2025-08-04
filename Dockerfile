@@ -1,6 +1,6 @@
 # Dockerfile for FastAPI application with frontend build
 # Uses Python 3.11 slim base with WeasyPrint dependencies and Node for frontend
-FROM python:3.11-slim AS base
+FROM python:3.13-slim AS base
 
 # Install system packages needed for WeasyPrint and frontend build
 RUN apt-get update && apt-get install -y --no-install-recommends \
