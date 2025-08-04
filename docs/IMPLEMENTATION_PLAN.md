@@ -275,14 +275,14 @@ Each node module defines a single `async` handler function and its input/output 
 
 ---
 
-### C.1 Perplexity API Client & Offline Fallback
+### C.1 Perplexity Sonar Client & Offline Fallback
 
 #### 1. `src/agents/researcher_web.py`
 
 - **Class `PerplexityClient`**
 
 - **`search(self, query: str) → List[RawSearchResult]`**
-  Calls the Perplexity API, returns raw snippets + URLs.
+  Uses LangChain's `ChatPerplexity` with the Sonar model to return cited snippets + URLs.
 - **`fallback_search(self, query: str) → List[RawSearchResult]`**
   Invoked when `OFFLINE_MODE` is true; loads from cache instead of HTTP.
 
@@ -1058,7 +1058,7 @@ def from_schema(weave: WeaveResult) -> str:
 #### 1. In `create_app()` (main.py)
 
 - Read `Settings.OFFLINE_MODE` and:
-  - For search routes: bind `ResearcherWebClient` to either real Perplexity API or `CacheBackedResearcher`.
+  - For search routes: bind `ResearcherWebClient` to either `ChatPerplexity` or `CacheBackedResearcher`.
   - For FactChecker: disable external URL fetches and license checks if `OFFLINE_MODE=True`.
 
 #### 2. In Agents

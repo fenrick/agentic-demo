@@ -22,7 +22,7 @@ This document provides a **comprehensive**, **explicit** security specification 
 ### 2.1 Assets
 
 - **User Data:** Prompts, generated lecture content, citations
-- **Service Secrets:** API keys (OpenAI, Perplexity), vault tokens
+- **Service Secrets:** API keys (OpenAI, Perplexity Sonar), vault tokens
 - **Persistent Data:** SQLite/Postgres databases, cache, logs, document versions
 - **Infrastructure:** Compute resources, container images, network endpoints
 

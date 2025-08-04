@@ -1,6 +1,6 @@
 # Lecture Builder Agent
 
-A local-first, multi-agent system that generates high‑quality, university‑grade lecture and workshop outlines (with supporting materials) from a single topic prompt. Orchestrated by LangGraph and implemented in Python, the system integrates OpenAI o4‑mini/o3 models, Perplexity Search, and a React‑based UX. Full state, citations, logs, and intermediates persist in SQLite (with optional Postgres fallback). Exports include Markdown, DOCX, and PDF.
+A local-first, multi-agent system that generates high‑quality, university‑grade lecture and workshop outlines (with supporting materials) from a single topic prompt. Orchestrated by LangGraph and implemented in Python, the system integrates OpenAI o4‑mini/o3 models, Perplexity Sonar via LangChain, and a React‑based UX. Full state, citations, logs, and intermediates persist in SQLite (with optional Postgres fallback). Exports include Markdown, DOCX, and PDF.
 
 ---
 
@@ -38,7 +38,7 @@ A local-first, multi-agent system that generates high‑quality, university‑gr
 
 - **Multi-Agent Workflow**: Planner, Researcher, Synthesiser, Pedagogy Critic, Fact Checker, Human-in-Loop, and Exporter nodes working in a LangGraph state graph.
 - **Streaming UI**: Token-level draft streaming with diff highlights; action/reasoning log streaming via SSE.
-- **Robust Citations**: Perplexity Search integration, citation metadata stored in SQLite, Creative Commons and university domain filtering.
+- **Robust Citations**: Perplexity Sonar integration, citation metadata stored in SQLite, Creative Commons and university domain filtering.
 - **Local-First**: Operates offline using cached corpora and fallback to local dense retrieval.
 - **Flexible Exports**: Markdown (canonical), DOCX (python-docx), PDF (WeasyPrint), with cover page, TOC, and bibliography.
 - **Audit & Governance**: Immutable action logs, SHA‑256 state hashes, role‑based access, optional database encryption.
@@ -52,7 +52,7 @@ The system comprises:
 1. **LangGraph StateGraph**: Manages typed `State` objects through nodes and edges. Handles checkpointing in SQLite.
 2. **Agents**:
    - **Curriculum Planner**: Defines learning objectives and module structure.
-   - **Researcher-Web**: Executes parallel Perplexity/OpenAI searches, dedupes and ranks sources.
+   - **Researcher-Web**: Executes parallel Perplexity Sonar/OpenAI searches, dedupes and ranks sources.
    - **Content Weaver**: Generates Markdown outline, speaker notes, slide bullets.
    - **Pedagogy Critic**: Verifies Bloom taxonomy coverage, activity diversity, cognitive load.
    - **Fact Checker**: Scans for hallucinations via Cleanlab/regex.
@@ -72,7 +72,7 @@ The system comprises:
 - Node.js 18+ (for frontend)
 - `poetry` (recommended) or `pipenv`
 - OpenAI API key
-- Perplexity API key (optional for enhanced search)
+- Perplexity API key
 
 ### Installation
 
@@ -138,7 +138,7 @@ cp .env.example .env
 
 ### Retrieval & Citation
 
-- **PerplexitySearchClient** in `src/agents/researcher_web.py`
+- **ChatPerplexity** in `src/agents/researcher_web.py`
 - Citation objects stored in `state.citations` table.
 - Filtering by domain allowlist and SPDX license checks.
 
@@ -186,7 +186,7 @@ cp .env.example .env
 | Variable             | Description                              | Default    |
 | -------------------- | ---------------------------------------- | ---------- |
 | `OPENAI_API_KEY`     | API key for OpenAI                       | (required) |
-| `PERPLEXITY_API_KEY` | API key for Perplexity Search            | (required) |
+| `PERPLEXITY_API_KEY` | API key for Perplexity Sonar            | (required) |
 | `MODEL_NAME`         | Model to use (`o4-mini` or `o3`)         | `o4-mini`  |
 | `DATA_DIR`           | Path for SQLite DB, cache, logs          | (required) |
 | `DATABASE_URL`       | Postgres connection string (optional)    |            |

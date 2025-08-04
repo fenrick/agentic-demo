@@ -1,12 +1,12 @@
-"""Client for the Perplexity search API with offline fallback."""
+"""Client for the Perplexity Sonar API with offline fallback."""
 
 from __future__ import annotations
 
-import json
-import urllib.request
 from dataclasses import dataclass
-from typing import List, Protocol
+from typing import Any, List, Optional, Protocol
 from urllib.parse import urlparse
+
+from langchain_perplexity import ChatPerplexity
 
 from .offline_cache import load_cached_results, save_cached_results
 
@@ -30,32 +30,22 @@ class CitationDraft:
 
 
 class PerplexityClient:
-    """Wrapper around the Perplexity search endpoint."""
+    """Wrapper around the Perplexity Sonar model via LangChain."""
 
-    endpoint = "https://api.perplexity.ai/search"
-
-    def __init__(self, api_key: str) -> None:
-        self.api_key = api_key
+    def __init__(self, api_key: str, llm: Optional[Any] = None) -> None:
+        self.llm = llm or ChatPerplexity(model="sonar", pplx_api_key=api_key)
 
     def search(self, query: str) -> List[RawSearchResult]:
-        """Call the remote API and cache results."""
-        payload = json.dumps({"q": query}).encode("utf-8")
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}",
-        }
-        request = urllib.request.Request(
-            self.endpoint, data=payload, headers=headers, method="POST"
-        )
-        with urllib.request.urlopen(request) as response:  # nosec B310
-            data = json.loads(response.read().decode("utf-8"))
+        """Call the Sonar model and cache its cited search results."""
+        response = self.llm.invoke(query)
+        items = response.additional_kwargs.get("search_results", [])
         results = [
             RawSearchResult(
                 url=item.get("url", ""),
                 snippet=item.get("snippet", ""),
                 title=item.get("title", ""),
             )
-            for item in data.get("search_results", [])
+            for item in items
         ]
         save_cached_results(query, results)
         return results

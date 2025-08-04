@@ -16,7 +16,7 @@ def _to_draft(result: RawSearchResult) -> CitationDraft:
 
 
 def run_web_search(state: State) -> List[CitationDraft]:
-    """Run a Perplexity search using the state's prompt as query."""
+    """Run a Perplexity Sonar search using the state's prompt as query."""
     settings = Settings()
     if settings.offline_mode:
         client = CacheBackedResearcher()

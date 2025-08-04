@@ -1360,6 +1360,22 @@ openai = ">=1.86.0,<2.0.0"
 tiktoken = ">=0.7,<1"
 
 [[package]]
+name = "langchain-perplexity"
+version = "0.1.2"
+description = "An integration package connecting Perplexity and LangChain"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "langchain_perplexity-0.1.2-py3-none-any.whl", hash = "sha256:d1ba4bd4a393bca4e1eb4b7afe3bc8bfc9e46e5554bc0b8748b31a2f4067146e"},
+    {file = "langchain_perplexity-0.1.2.tar.gz", hash = "sha256:bf0d65f7342c2e2e93501efa768bc75b807dd158fad3222b7ce81b705a3699a0"},
+]
+
+[package.dependencies]
+langchain-core = ">=0.3.71,<1.0.0"
+openai = ">=1.97.1,<2.0.0"
+
+[[package]]
 name = "langchain-text-splitters"
 version = "0.3.9"
 description = "LangChain text splitting utilities"
@@ -3971,4 +3987,4 @@ test = ["aiosqlite", "httpx", "pytest", "pytest-cov"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">= 3.11,<4"
-content-hash = "1f2e919a4d61074b3400b3db6a890ade0c0a8196b4045af73d7cfea5ed229556"
+content-hash = "56a75530b5a7a1e1cf688cd0164fdce21b30271cdde2e6dfc72c765a0767c90f"
