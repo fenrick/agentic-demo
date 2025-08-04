@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+
 import pytest
 from langgraph.graph import END, START
 
@@ -87,3 +89,35 @@ async def test_start_invokes_planner(monkeypatch: pytest.MonkeyPatch) -> None:
     result = await orchestrator.start("hello")
     assert called["prompt"] == "hello"
     assert isinstance(result, PlanResult)
+
+
+@pytest.mark.asyncio
+async def test_wrap_logs_each_invocation(monkeypatch: pytest.MonkeyPatch) -> None:
+    """_wrap should log once for every node invocation."""
+
+    calls: list[str] = []
+
+    async def fake_log_action(
+        _conn, _workspace_id, agent_name, *args, **kwargs
+    ) -> None:  # noqa: ANN001, ANN002
+        calls.append(agent_name)
+
+    @asynccontextmanager
+    async def fake_session():
+        yield None
+
+    monkeypatch.setattr("core.orchestrator.log_action", fake_log_action)
+    monkeypatch.setattr("core.orchestrator.get_db_session", fake_session)
+
+    orch = GraphOrchestrator()
+
+    async def node_a(state: State) -> str:
+        return "a"
+
+    async def node_b(state: State) -> str:
+        return "b"
+
+    state = State(prompt="p")
+    await orch._wrap("A", node_a)(state)
+    await orch._wrap("B", node_b)(state)
+    assert calls == ["A", "B"]
