@@ -5,18 +5,35 @@ from __future__ import annotations
 import importlib
 import json
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Awaitable, Callable, Optional, TypeVar
+
+import tiktoken
 
 from agentic_demo import config
 from agentic_demo.config import Settings
 from langgraph.graph import END, START, StateGraph
+from persistence import get_db_session
+from persistence.logs import compute_hash, log_action
 
 from agents.planner import PlanResult
 from core.checkpoint import SqliteCheckpointManager
 from core.state import State
 
 logger = logging.getLogger(__name__)
+
+try:
+    _ENCODING = tiktoken.encoding_for_model(config.MODEL_NAME)
+except KeyError:
+    _ENCODING = tiktoken.get_encoding("cl100k_base")
+
+
+def _token_count(payload: object) -> int:
+    """Return tiktoken token length for ``payload``."""
+
+    dumped = json.dumps(payload, sort_keys=True, default=str)
+    return len(_ENCODING.encode(dumped))
 
 
 def validate_model_configuration() -> None:
@@ -68,12 +85,28 @@ class GraphOrchestrator:
         )
 
     def _wrap(
-        self, node: Callable[[State], Awaitable[T]]
+        self, name: str, node: Callable[[State], Awaitable[T]]
     ) -> Callable[[State], Awaitable[T]]:
         async def wrapped(state: State) -> T:
+            input_dict = state.to_dict()
+            input_hash = compute_hash(input_dict)
             result = await node(state)
             if self.checkpoint_manager is not None:
                 self.checkpoint_manager.save_checkpoint(state)
+            output_hash = compute_hash(result)
+            tokens = _token_count(input_dict) + _token_count(result)
+            workspace_id = getattr(state, "workspace_id", "default")
+            async with get_db_session() as conn:
+                await log_action(
+                    conn,
+                    workspace_id,
+                    name,
+                    input_hash,
+                    output_hash,
+                    tokens,
+                    0.0,
+                    datetime.utcnow(),
+                )
             return result
 
         return wrapped
@@ -87,7 +120,9 @@ class GraphOrchestrator:
         for node in spec.get("nodes", []):
             fn = _import_callable(node["callable"])
             graph.add_node(
-                self._wrap(fn), name=node["name"], streams=node.get("streams")
+                self._wrap(node["name"], fn),
+                name=node["name"],
+                streams=node.get("streams"),
             )
         self.graph = graph
 
@@ -115,7 +150,7 @@ class GraphOrchestrator:
             self.initialize_graph()
             self.register_edges()
         state = State(prompt=initial_prompt)
-        planner = self._wrap(_import_callable("agents.planner.run_planner"))
+        planner = self._wrap("Planner", _import_callable("agents.planner.run_planner"))
         return await planner(state)
 
     async def resume(self) -> PlanResult:
@@ -126,7 +161,7 @@ class GraphOrchestrator:
         if self.checkpoint_manager is None:
             raise RuntimeError("Checkpoint manager required to resume")
         state = self.checkpoint_manager.load_checkpoint()
-        planner = self._wrap(_import_callable("agents.planner.run_planner"))
+        planner = self._wrap("Planner", _import_callable("agents.planner.run_planner"))
         return await planner(state)
 
 
