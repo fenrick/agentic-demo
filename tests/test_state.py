@@ -10,6 +10,9 @@ from core.state import (
     Citation,
     Outline,
     State,
+    Module,
+    CritiqueReport,
+    FactCheckReport,
     increment_version,
     validate_state,
 )
@@ -19,13 +22,25 @@ from core.state import (
 def sample_state() -> State:
     """Provide a populated :class:`State` instance for reuse."""
     citation = Citation(url="https://example.com")
-    outline = Outline(steps=["intro"])
+    module = Module(
+        id="m1",
+        title="Intro",
+        duration_min=5,
+        learning_objectives=["Understand"],
+    )
+    outline = Outline(
+        steps=["intro"], learning_objectives=["Understand"], modules=[module]
+    )
     log_entry = ActionLog(message="start")
     return State(
         prompt="p",
         sources=[citation],
         outline=outline,
         log=[log_entry],
+        learning_objectives=["Understand"],
+        modules=[module],
+        critique_report=CritiqueReport(notes=["looks good"]),
+        factcheck_report=FactCheckReport(issues=[]),
         version=2,
     )
 
@@ -39,26 +54,20 @@ def test_state_defaults() -> None:
     assert state.outline is None
     assert state.log == []
     assert state.retries == {}
+    assert state.learning_objectives == []
+    assert state.modules == []
+    assert state.critique_report is None
+    assert state.factcheck_report is None
     assert state.version == 1
 
 
-def test_json_round_trip() -> None:
+def test_json_round_trip(sample_state: State) -> None:
     """State should serialize and deserialize via JSON consistently."""
-    citation = Citation(url="https://example.com")
-    outline = Outline(steps=["intro"])
-    log_entry = ActionLog(message="start")
-    state = State(
-        prompt="p",
-        sources=[citation],
-        outline=outline,
-        log=[log_entry],
-        version=2,
-    )
     adapter = TypeAdapter(State)
-    json_data = adapter.dump_json(state)
+    json_data = adapter.dump_json(sample_state)
     assert isinstance(json_data, (bytes, bytearray))
     new_state = adapter.validate_json(json_data)
-    assert new_state == state
+    assert new_state == sample_state
 
 
 def test_dict_round_trip(sample_state: State) -> None:
@@ -87,6 +96,13 @@ def test_validate_state_success(sample_state: State) -> None:
     [
         (State(), "prompt"),
         (State(prompt="ok", version=-1), "version"),
+        (
+            State(
+                prompt="p",
+                sources=[Citation(url="https://a"), Citation(url="https://a")],
+            ),
+            "citation",
+        ),
     ],
 )
 def test_validate_state_errors(state: State, message: str) -> None:
