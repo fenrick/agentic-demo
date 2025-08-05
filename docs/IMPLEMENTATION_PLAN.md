@@ -836,7 +836,7 @@ def from_schema(weave: WeaveResult) -> str:
 
 ### H2. React App Scaffolding
 
-1. **`frontend/src/index.tsx`**
+1. **`frontend/src/main.tsx`**
    - **What**: bootstraps React, renders `<App />` into root.
    - **Why**: entrypoint for your SPA.
 

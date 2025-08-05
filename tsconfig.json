@@ -7,10 +7,8 @@
     "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
-    "baseUrl": ".",
-    "paths": { "@/*": ["frontend/src/*"] },
-    "outDir": "frontend/dist",
-    "rootDir": "frontend/src"
+    "baseUrl": "frontend/src",
+    "paths": { "@/*": ["./*"] }
   },
   "include": ["frontend/src"]
 }
