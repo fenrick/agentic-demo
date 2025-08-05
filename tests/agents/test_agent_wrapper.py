@@ -13,7 +13,7 @@ os.environ.setdefault("OPENAI_API_KEY", "test-openai")
 os.environ.setdefault("PERPLEXITY_API_KEY", "test-perplexity")
 os.environ.setdefault("DATA_DIR", "/tmp")
 
-import config
+import config  # noqa: E402
 
 # Provide a minimal ``agentic_demo`` package for modules expecting it.
 pkg = types.ModuleType("agentic_demo")

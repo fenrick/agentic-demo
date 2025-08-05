@@ -13,7 +13,7 @@ os.environ.setdefault("OPENAI_API_KEY", "placeholder-openai")
 os.environ.setdefault("PERPLEXITY_API_KEY", "placeholder-perplexity")
 os.environ.setdefault("DATA_DIR", "/tmp")
 
-import config
+import config  # noqa: E402
 
 # Required configuration values for the application.
 REQUIRED_ENV = {
