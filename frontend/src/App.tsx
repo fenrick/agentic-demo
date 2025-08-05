@@ -4,6 +4,7 @@ import LogPanel from "./components/LogPanel";
 import SourcesPanel from "./components/SourcesPanel";
 import ControlsPanel from "./components/ControlsPanel";
 import DownloadsPanel from "./components/DownloadsPanel";
+import DataEntryForm from "./components/DataEntryForm";
 import { useWorkspaceStore } from "./store/useWorkspaceStore";
 
 // Top-level layout component that connects to the workspace stream
@@ -22,6 +23,7 @@ const App: React.FC = () => {
 
   return (
     <div>
+      <DataEntryForm />
       <DocumentPanel text={document || ""} onAcceptDiff={() => {}} />
       <LogPanel logs={logs} />
       <SourcesPanel sources={sources} />

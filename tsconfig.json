@@ -10,5 +10,5 @@
     "baseUrl": "frontend/src",
     "paths": { "@/*": ["./*"] }
   },
-  "include": ["frontend/src"]
+  "include": ["frontend/src", "tests"]
 }
