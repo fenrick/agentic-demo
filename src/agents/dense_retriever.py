@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:  # pragma: no cover - type checking only
     from .researcher_web import RawSearchResult

@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
+from html import escape
 from pathlib import Path
 from typing import Optional
-
-from html import escape
 
 try:  # pragma: no cover - optional dependency may be missing
     from weasyprint import HTML  # type: ignore

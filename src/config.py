@@ -5,10 +5,9 @@ Exposes configuration via a :class:`pydantic_settings.BaseSettings` subclass.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import json
 import os
+from pathlib import Path
 
 try:  # pragma: no cover - optional dependency
     from dotenv import load_dotenv

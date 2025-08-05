@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
-from typing import AsyncGenerator
-
 import asyncio
 import sqlite3
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 
 from config import Settings
 
