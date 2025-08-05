@@ -1,17 +1,8 @@
-"""Lightweight dense retriever using FAISS with a NumPy fallback."""
+"""Lightweight dense retriever using pure Python arrays."""
 
 from __future__ import annotations
 
-import logging
-from typing import TYPE_CHECKING, List
-
-import numpy as np
-
-try:  # pragma: no cover - optional dependency
-    import faiss  # type: ignore
-except Exception:  # pragma: no cover - optional dependency
-    logging.exception("faiss library unavailable")
-    faiss = None
+from typing import List, TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover - type checking only
     from .researcher_web import RawSearchResult
@@ -24,38 +15,27 @@ class DenseRetriever:
 
     def __init__(self, documents: List["RawSearchResult"]) -> None:
         self._docs = documents
-        vectors = self._embed_batch([d.snippet for d in documents])
-        if faiss is not None and vectors.size > 0:
-            self._index = faiss.IndexFlatL2(self._DIM)
-            self._index.add(vectors)
-            self._vectors = None
-        else:
-            self._index = None
-            self._vectors = vectors
+        self._vectors = [self._embed(d.snippet) for d in documents]
 
     @classmethod
-    def _embed(cls, text: str) -> np.ndarray:
-        arr = np.zeros(cls._DIM, dtype="float32")
+    def _embed(cls, text: str) -> List[float]:
+        arr = [0.0] * cls._DIM
         data = text.encode("utf-8")[: cls._DIM]
         for i, b in enumerate(data):
             arr[i] = float(b)
         return arr
-
-    @classmethod
-    def _embed_batch(cls, texts: List[str]) -> np.ndarray:
-        if not texts:
-            return np.empty((0, cls._DIM), dtype="float32")
-        return np.vstack([cls._embed(t) for t in texts])
 
     def search(self, query: str, k: int = 5) -> List["RawSearchResult"]:
         """Return top ``k`` documents similar to ``query``."""
 
         if not self._docs:
             return []
-        vector = self._embed(query).reshape(1, -1)
-        if self._index is not None:
-            _, indices = self._index.search(vector, k)
-            return [self._docs[i] for i in indices[0] if i < len(self._docs)]
-        distances = ((self._vectors - vector) ** 2).sum(axis=1)
-        order = np.argsort(distances)[:k]
+        qvec = self._embed(query)
+
+        def dist(vec):
+            return sum((a - b) ** 2 for a, b in zip(vec, qvec))
+
+        order = sorted(range(len(self._vectors)), key=lambda i: dist(self._vectors[i]))[
+            :k
+        ]
         return [self._docs[i] for i in order]

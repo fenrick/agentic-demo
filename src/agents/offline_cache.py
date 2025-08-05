@@ -10,8 +10,12 @@ from typing import TYPE_CHECKING, List, Optional
 
 from config import Settings
 
-# Directory for cached search results inside the configured data directory
-CACHE_DIR = Settings().data_dir / "cache"
+
+def _cache_dir() -> Path:
+    """Return the directory used for storing cached results."""
+
+    return Settings().data_dir / "cache"
+
 
 if TYPE_CHECKING:  # pragma: no cover - imported for type hints only
     from .researcher_web import RawSearchResult
@@ -20,7 +24,7 @@ if TYPE_CHECKING:  # pragma: no cover - imported for type hints only
 def _cache_file(query: str) -> Path:
     """Return filesystem path for ``query``'s cached results."""
     sanitized = re.sub(r"[^A-Za-z0-9_-]", "_", query)
-    return CACHE_DIR / f"{sanitized}.json"
+    return _cache_dir() / f"{sanitized}.json"
 
 
 def load_cached_results(query: str) -> Optional[List["RawSearchResult"]]:
@@ -36,7 +40,8 @@ def load_cached_results(query: str) -> Optional[List["RawSearchResult"]]:
 
 def save_cached_results(query: str, results: List["RawSearchResult"]) -> None:
     """Persist ``results`` for ``query`` to the cache directory."""
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    path = _cache_file(query)
+    cache_dir = _cache_dir()
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    path = cache_dir / _cache_file(query).name
     data = [asdict(result) for result in results]
     path.write_text(json.dumps(data))

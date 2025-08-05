@@ -6,13 +6,14 @@ import json
 from datetime import datetime
 from typing import List, Optional
 
-import aiosqlite
+import asyncio
+import sqlite3
 
 
 class RetrievalCacheRepo:
     """Persist and retrieve cached search results."""
 
-    def __init__(self, conn: aiosqlite.Connection) -> None:
+    def __init__(self, conn: sqlite3.Connection) -> None:
         self._conn = conn
 
     async def get(self, query: str) -> Optional[List[dict]]:
@@ -21,26 +22,28 @@ class RetrievalCacheRepo:
         Increments the ``hit_count`` when a cache entry is found.
         """
 
-        cur = await self._conn.execute(
+        cur = self._conn.execute(
             "SELECT results FROM retrieval_cache WHERE query = ?",
             (query,),
         )
-        row = await cur.fetchone()
-        await cur.close()
+        row = cur.fetchone()
+        cur.close()
         if row is None:
+            await asyncio.sleep(0)
             return None
-        await self._conn.execute(
+        self._conn.execute(
             "UPDATE retrieval_cache SET hit_count = hit_count + 1 WHERE query = ?",
             (query,),
         )
-        await self._conn.commit()
+        self._conn.commit()
+        await asyncio.sleep(0)
         return json.loads(row[0])
 
     async def set(self, query: str, results: List[dict]) -> None:
         """Store ``results`` for ``query`` in the cache."""
 
         now = datetime.utcnow().isoformat()
-        await self._conn.execute(
+        self._conn.execute(
             """
             INSERT OR REPLACE INTO retrieval_cache (query, results, hit_count, created_at)
             VALUES (
@@ -52,4 +55,5 @@ class RetrievalCacheRepo:
             """,
             (query, json.dumps(results), query, now),
         )
-        await self._conn.commit()
+        self._conn.commit()
+        await asyncio.sleep(0)
