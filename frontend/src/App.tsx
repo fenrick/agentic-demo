@@ -2,7 +2,9 @@ import React, { useEffect } from "react";
 import DocumentPanel from "./components/DocumentPanel";
 import LogPanel from "./components/LogPanel";
 import SourcesPanel from "./components/SourcesPanel";
+import ControlsPanel from "./components/ControlsPanel";
 import DownloadsPanel from "./components/DownloadsPanel";
+import DataEntryForm from "./components/DataEntryForm";
 import { useWorkspaceStore } from "./store/useWorkspaceStore";
 
 // Top-level layout component that connects to the workspace stream
@@ -13,6 +15,7 @@ const App: React.FC = () => {
   const logs = useWorkspaceStore((s) => s.logs);
   const sources = useWorkspaceStore((s) => s.sources);
   const workspaceId = useWorkspaceStore((s) => s.workspaceId);
+  const exportStatus = useWorkspaceStore((s) => s.exportStatus);
 
   useEffect(() => {
     connect("default");
@@ -20,10 +23,14 @@ const App: React.FC = () => {
 
   return (
     <div>
+      <DataEntryForm />
       <DocumentPanel text={document || ""} onAcceptDiff={() => {}} />
       <LogPanel logs={logs} />
       <SourcesPanel sources={sources} />
-      {workspaceId && <DownloadsPanel workspaceId={workspaceId} />}
+      {workspaceId && <ControlsPanel workspaceId={workspaceId} />}
+      {workspaceId && exportStatus === "ready" && (
+        <DownloadsPanel workspaceId={workspaceId} />
+      )}
     </div>
   );
 };

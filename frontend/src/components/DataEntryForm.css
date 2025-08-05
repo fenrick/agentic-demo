@@ -1,0 +1,49 @@
+.data-entry {
+  margin: 1rem 0;
+  font-family: sans-serif;
+}
+
+.data-entry__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-end;
+  margin-bottom: 1rem;
+}
+
+.data-entry__label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+}
+
+.data-entry__input {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.data-entry__submit {
+  padding: 0.5rem 1rem;
+  border: none;
+  background-color: #3b82f6;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.data-entry__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-entry__table th,
+.data-entry__table td {
+  border: 1px solid #ddd;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.data-entry__table th {
+  background-color: #f3f4f6;
+}
