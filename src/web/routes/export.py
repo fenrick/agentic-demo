@@ -4,9 +4,13 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Response
 
-from web.api.export_endpoints import (get_all_exports, get_citations_json,
-                                      get_docx_export, get_markdown_export,
-                                      get_pdf_export)
+from web.api.export_endpoints import (
+    get_all_exports,
+    get_citations_json,
+    get_docx_export,
+    get_markdown_export,
+    get_pdf_export,
+)
 
 router = APIRouter()
 

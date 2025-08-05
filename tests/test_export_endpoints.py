@@ -15,7 +15,8 @@ def _setup_db(path: Path) -> Path:
         "CREATE TABLE lectures (workspace_id TEXT, lecture_json TEXT, created_at TEXT)"
     )
     conn.execute(
-        "CREATE TABLE citations (workspace_id TEXT, url TEXT, title TEXT, retrieved_at TEXT, licence TEXT)"
+        "CREATE TABLE citations (workspace_id TEXT, url TEXT, title TEXT, retrieved_at"
+        " TEXT, licence TEXT)"
     )
     lecture = {
         "title": "Intro to AI",

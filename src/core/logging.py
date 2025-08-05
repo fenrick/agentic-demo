@@ -12,7 +12,6 @@ from typing import Optional
 
 from loguru import logger as _logger
 
-
 # Configure a single JSON sink for all application logs.
 _logger.remove()
 _logger.add(sys.stdout, serialize=True)

@@ -1,9 +1,10 @@
 """Integration tests for metrics and alert endpoints."""
 
-from fastapi.testclient import TestClient
-import pytest
 import sys
 import types
+
+import pytest
+from fastapi.testclient import TestClient
 
 
 @pytest.fixture()

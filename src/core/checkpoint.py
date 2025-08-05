@@ -33,12 +33,14 @@ class SqliteCheckpointManager:
         payload = json.dumps(state.to_dict())
         async with aiosqlite.connect(self._path) as db:
             await db.execute(
-                "CREATE TABLE IF NOT EXISTS checkpoints (id INTEGER PRIMARY KEY AUTOINCREMENT, state TEXT NOT NULL)"
+                """CREATE TABLE IF NOT EXISTS checkpoints
+                  (id INTEGER PRIMARY KEY AUTOINCREMENT, state TEXT NOT NULL)"""
             )
             await db.execute("INSERT INTO checkpoints (state) VALUES (?)", (payload,))
             if self._max_checkpoints is not None:
                 await db.execute(
-                    "DELETE FROM checkpoints WHERE id NOT IN (SELECT id FROM checkpoints ORDER BY id DESC LIMIT ?)",
+                    """lDELETE FROM checkpoints WHERE id NOT IN
+                    (SELECT id FROM checkpoints ORDER BY id DESC LIMIT ?)""",
                     (self._max_checkpoints,),
                 )
             await db.commit()
@@ -47,7 +49,8 @@ class SqliteCheckpointManager:
         """Load the most recent ``State`` snapshot."""
         async with aiosqlite.connect(self._path) as db:
             await db.execute(
-                "CREATE TABLE IF NOT EXISTS checkpoints (id INTEGER PRIMARY KEY AUTOINCREMENT, state TEXT NOT NULL)"
+                """CREATE TABLE IF NOT EXISTS checkpoints
+                (id INTEGER PRIMARY KEY AUTOINCREMENT, state TEXT NOT NULL)"""
             )
             cur = await db.execute(
                 "SELECT state FROM checkpoints ORDER BY id DESC LIMIT 1"

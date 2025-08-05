@@ -35,7 +35,8 @@ class MetricsRepository:
         """Insert ``metric`` into the database."""
 
         self._conn.execute(
-            "INSERT INTO metrics (workspace_id, name, value, timestamp) VALUES (?, ?, ?, ?)",
+            "INSERT INTO metrics (workspace_id, name, value, timestamp) VALUES (?, ?,"
+            " ?, ?)",
             (
                 metric.workspace_id,
                 metric.name,

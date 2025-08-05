@@ -1,7 +1,7 @@
 import importlib
 
-from agents.researcher_web import RawSearchResult
 import agents.offline_cache as offline_cache
+from agents.researcher_web import RawSearchResult
 
 
 def test_cache_respects_data_dir(monkeypatch, tmp_path):

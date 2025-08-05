@@ -5,8 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 
-from agents.models import (Activity, AssessmentItem, Citation, SlideBullet,
-                           WeaveResult)
+from agents.models import Activity, AssessmentItem, Citation, SlideBullet, WeaveResult
 
 from .markdown import from_weave_result
 
@@ -27,7 +26,8 @@ class MarkdownExporter:
     @staticmethod
     def _load_lecture(conn: sqlite3.Connection, workspace_id: str) -> WeaveResult:
         cur = conn.execute(
-            "SELECT lecture_json FROM lectures WHERE workspace_id = ? ORDER BY created_at DESC LIMIT 1",
+            "SELECT lecture_json FROM lectures WHERE workspace_id = ? ORDER BY"
+            " created_at DESC LIMIT 1",
             (workspace_id,),
         )
         row = cur.fetchone()

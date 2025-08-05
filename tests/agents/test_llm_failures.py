@@ -1,11 +1,11 @@
 """Tests for LLM failure handling and logging."""
 
-from types import SimpleNamespace
 import logging
 import os
 import sys
 import types
 from pathlib import Path
+from types import SimpleNamespace
 
 SRC = Path(__file__).resolve().parents[2] / "src"
 if str(SRC) not in sys.path:

@@ -46,7 +46,8 @@ async def test_log_action_persists(tmp_path, monkeypatch):
             ts,
         )
         cur = await conn.execute(
-            "SELECT workspace_id, agent_name, input_hash, output_hash, tokens, cost, timestamp FROM action_logs"
+            "SELECT workspace_id, agent_name, input_hash, output_hash, tokens, cost,"
+            " timestamp FROM action_logs"
         )
         rows = await cur.fetchall()
         assert rows == [

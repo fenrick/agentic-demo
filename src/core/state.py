@@ -187,7 +187,8 @@ def validate_state(state: State) -> None:
         state: The state instance to validate.
 
     Raises:
-        ValueError: If ``prompt`` is empty, citations are duplicated, or ``version`` is negative.
+        ValueError: If ``prompt`` is empty, citations
+        are duplicated, or ``version`` is negative.
     """
     if not state.prompt:
         raise ValueError("prompt must be non-empty")

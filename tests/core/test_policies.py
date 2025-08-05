@@ -5,13 +5,20 @@ from __future__ import annotations
 import os
 import sys
 import types
+import pytest
 from dataclasses import dataclass
+
+from core.policies import merge_research_results
+from core.policies import (
+    policy_retry_on_critic_failure,
+    policy_retry_on_low_confidence,
+    retry_tracker,
+)
+from core.state import State
 
 os.environ.setdefault("OPENAI_API_KEY", "test")
 os.environ.setdefault("PERPLEXITY_API_KEY", "test")
 os.environ.setdefault("DATA_DIR", "/tmp")
-
-import pytest
 
 
 @dataclass
@@ -52,14 +59,6 @@ sys.modules["agents.planner"] = planner_mod
 research_mod = types.ModuleType("web.researcher_web")
 research_mod.CitationResult = CitationResult
 sys.modules["web.researcher_web"] = research_mod
-
-from core.policies import (  # noqa: E402
-    merge_research_results,
-    policy_retry_on_critic_failure,
-    policy_retry_on_low_confidence,
-    retry_tracker,
-)
-from core.state import State  # noqa: E402
 
 
 def test_policy_retry_on_low_confidence() -> None:

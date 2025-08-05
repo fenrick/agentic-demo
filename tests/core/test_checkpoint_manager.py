@@ -1,10 +1,10 @@
 """Tests for SQLite-based checkpoint manager."""
 
+import json
 from pathlib import Path
 
-import pytest
 import aiosqlite
-import json
+import pytest
 
 from core.checkpoint import SqliteCheckpointManager
 from core.state import State

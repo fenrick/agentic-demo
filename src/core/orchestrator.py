@@ -2,28 +2,27 @@
 
 from __future__ import annotations
 
+import contextlib
 import importlib
 import json
-from core.logging import get_logger
-from opentelemetry import trace
-import contextlib
 from datetime import datetime
 from pathlib import Path
 from typing import Awaitable, Callable, Optional, TypeVar
 
 import tiktoken
-
 from agentic_demo import config
 from agentic_demo.config import Settings
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langsmith import Client
-from persistence import get_db_session
-from persistence.logs import compute_hash, log_action
+from opentelemetry import trace
 
 from agents.planner import PlanResult
 from core.checkpoint import SqliteCheckpointManager
+from core.logging import get_logger
 from core.state import State
+from persistence import get_db_session
+from persistence.logs import compute_hash, log_action
 
 logger = get_logger()
 tracer = trace.get_tracer(__name__)
@@ -53,7 +52,8 @@ def validate_model_configuration() -> None:
     configured = config.settings.model_name
     if configured != config.MODEL_NAME:
         raise ValueError(
-            f"MODEL_NAME misconfigured: expected '{config.MODEL_NAME}', got '{configured}'"
+            f"MODEL_NAME misconfigured: expected '{config.MODEL_NAME}', got"
+            f" '{configured}'"
         )
     logger.info("Using LLM engine %s", config.MODEL_NAME)
 

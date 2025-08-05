@@ -26,7 +26,9 @@ async def get_docx_export(request: Request, workspace_id: str) -> Response:
     headers = {"Content-Disposition": "attachment; filename=lecture.docx"}
     return Response(
         content=docx_bytes,
-        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        media_type=(
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        ),
         headers=headers,
     )
 

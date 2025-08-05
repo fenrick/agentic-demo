@@ -11,7 +11,8 @@ def export_citations_json(db_path: str, workspace_id: str) -> bytes:
     """Serialize citation records for ``workspace_id`` to JSON bytes."""
     with sqlite3.connect(db_path) as conn:
         cur = conn.execute(
-            "SELECT url, title, retrieved_at, licence FROM citations WHERE workspace_id = ? ORDER BY rowid",
+            "SELECT url, title, retrieved_at, licence FROM citations WHERE workspace_id"
+            " = ? ORDER BY rowid",
             (workspace_id,),
         )
         rows = cur.fetchall()

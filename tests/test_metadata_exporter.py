@@ -13,7 +13,8 @@ def _setup_db(path: Path) -> Path:
     db_path = path / "test.db"
     conn = sqlite3.connect(db_path)
     conn.execute(
-        "CREATE TABLE citations (workspace_id TEXT, url TEXT, title TEXT, retrieved_at TEXT, licence TEXT)"
+        "CREATE TABLE citations (workspace_id TEXT, url TEXT, title TEXT, retrieved_at"
+        " TEXT, licence TEXT)"
     )
     conn.execute(
         "INSERT INTO citations VALUES (?,?,?,?,?)",

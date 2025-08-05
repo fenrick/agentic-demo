@@ -39,7 +39,8 @@ class DocumentRepo:
     async def list_versions(self, state_id: int) -> List[DocumentMetadata]:
         """Return all document versions for ``state_id``."""
         cur = await self._conn.execute(
-            "SELECT id, created_at FROM documents WHERE state_id = ? ORDER BY created_at",
+            "SELECT id, created_at FROM documents WHERE state_id = ? ORDER BY"
+            " created_at",
             (state_id,),
         )
         rows = await cur.fetchall()

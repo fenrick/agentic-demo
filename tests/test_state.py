@@ -8,11 +8,11 @@ from pydantic import TypeAdapter
 from core.state import (
     ActionLog,
     Citation,
-    Outline,
-    State,
-    Module,
     CritiqueReport,
     FactCheckReport,
+    Module,
+    Outline,
+    State,
     increment_version,
     validate_state,
 )

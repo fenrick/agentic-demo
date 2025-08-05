@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import List, TYPE_CHECKING
-
 import logging
+from typing import TYPE_CHECKING, List
+
 import numpy as np
 
 try:  # pragma: no cover - optional dependency

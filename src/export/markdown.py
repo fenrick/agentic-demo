@@ -10,8 +10,7 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
-from agents.models import (Activity, AssessmentItem, Citation, SlideBullet,
-                           WeaveResult)
+from agents.models import Activity, AssessmentItem, Citation, SlideBullet, WeaveResult
 
 
 def render_section(title: str, content: Union[str, Iterable[str], None]) -> str:

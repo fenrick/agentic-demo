@@ -14,13 +14,7 @@ from core.state import State
 from prompts import get_prompt
 
 from .agent_wrapper import init_chat_model
-from .models import (
-    Activity,
-    AssessmentItem,
-    Citation,
-    SlideBullet,
-    WeaveResult,
-)
+from .models import Activity, AssessmentItem, Citation, SlideBullet, WeaveResult
 from .streaming import stream_debug, stream_messages
 
 

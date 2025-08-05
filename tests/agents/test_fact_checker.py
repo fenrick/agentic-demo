@@ -1,6 +1,7 @@
 """Tests for the fact checker agent."""
 
 import asyncio
+
 import httpx
 import pytest
 

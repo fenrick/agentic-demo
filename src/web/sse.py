@@ -4,13 +4,16 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator
 from datetime import datetime, timezone
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from fastapi import Request  # type: ignore[import-not-found]
+
 from web.schemas.sse import SseEvent  # type: ignore[import-not-found]
 
 if TYPE_CHECKING:  # pragma: no cover - only for type checking
-    from langgraph.graph.state import CompiledStateGraph  # type: ignore[import-not-found]
+    from langgraph.graph.state import (  # type: ignore[import-not-found]
+        CompiledStateGraph,
+    )
 else:  # pragma: no cover - dependency optional at runtime
     CompiledStateGraph = Any  # type: ignore[misc, assignment]
 

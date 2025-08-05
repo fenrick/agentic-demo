@@ -6,21 +6,21 @@ keyword heuristics only when necessary.
 
 from __future__ import annotations
 
+import logging
 from collections import Counter
 from dataclasses import dataclass
 from typing import Callable, Dict, List, cast
-import logging
 
 from agents.agent_wrapper import init_chat_model
 from agents.models import Activity
 from core.state import State
-from prompts import get_prompt
 from models import (
     ActivityDiversityReport,
     BloomCoverageReport,
     CognitiveLoadReport,
     CritiqueReport,
 )
+from prompts import get_prompt
 
 # Bloom's taxonomy levels used for coverage analysis
 BLOOM_LEVELS: List[str] = [

@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+import asyncio
+import logging
 from datetime import datetime
 from typing import List
 
-import asyncio
 import httpx
-import logging
 
 from core.state import State
 from persistence import Citation, CitationRepo, get_db_session
