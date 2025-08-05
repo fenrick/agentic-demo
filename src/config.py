@@ -56,6 +56,9 @@ class Settings:
         self.search_provider = os.getenv("SEARCH_PROVIDER", "perplexity")
         self.model_name = os.getenv("MODEL_NAME", MODEL_NAME)
         self.offline_mode = os.getenv("OFFLINE_MODE", "false").lower() == "true"
+        # Toggle for OpenTelemetry instrumentation. Modules are always imported
+        # but instrumentation can be disabled via configuration.
+        self.enable_tracing = os.getenv("ENABLE_TRACING", "true").lower() == "true"
         allowlist_raw = os.getenv("ALLOWLIST_DOMAINS")
         if allowlist_raw:
             try:
