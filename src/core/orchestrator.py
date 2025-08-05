@@ -140,6 +140,7 @@ class GraphOrchestrator:
                         run.end(outputs=result)
                     return result
 
+        wrapped.__name__ = name
         return wrapped
 
     def initialize_graph(self) -> None:
@@ -151,8 +152,8 @@ class GraphOrchestrator:
         for node in spec.get("nodes", []):
             fn = _import_callable(node["callable"])
             graph.add_node(
+                node["name"],
                 self._wrap(node["name"], fn),
-                name=node["name"],
                 streams=node.get("streams"),
             )
         self._graph = graph
