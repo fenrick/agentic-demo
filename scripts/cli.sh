@@ -2,7 +2,7 @@
 # Starts the CLI application locally without Docker.
 #
 # Usage:
-#   ./scripts/cli.sh [--offline]
+#   ./scripts/cli.sh <topic>
 #
 # The script will:
 #   1. Source environment variables from .env
@@ -21,5 +21,5 @@ fi
 # Run database migrations
 poetry run alembic upgrade head
 
-# Forward all arguments (e.g., --offline) to uvicorn
-poetry run cli.generate_lecture:main --reload "$@"
+# Forward all arguments (e.g., the topic) to the CLI entry point
+poetry run generate-lecture "$@"
