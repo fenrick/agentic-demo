@@ -15,4 +15,3 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${REPO_ROOT}"
 npm ci
 npm run build
-cp frontend/index.html frontend/dist/index.html
