@@ -48,7 +48,14 @@ def _token_count(payload: object) -> int:
 
 
 def validate_model_configuration() -> None:
-    """Ensure the configured model matches the enforced default."""
+    """Ensure the configured model matches the enforced default.
+
+    Loads :mod:`config` settings on demand to avoid requiring environment
+    variables at import time.
+    """
+
+    if config.settings is None:
+        config.settings = config.load_settings()
     configured = config.settings.model_name
     if configured != config.MODEL_NAME:
         raise ValueError(
