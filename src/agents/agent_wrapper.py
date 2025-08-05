@@ -28,7 +28,8 @@ def get_llm_params(**overrides: Any) -> Dict[str, Any]:
     ensuring every request specifies the enforced model.
     """
 
-    params: Dict[str, Any] = {"model": config.settings.model_name}
+    settings = config.load_settings()
+    params: Dict[str, Any] = {"model": settings.model_name}
     params.update(overrides)
     return params
 
@@ -62,9 +63,8 @@ def init_chat_model(**overrides: Any) -> Optional[Any]:
         if model_name.startswith("sonar"):
             from langchain_perplexity import ChatPerplexity  # type: ignore
 
-            pplx_api_key = params.pop(
-                "pplx_api_key", config.settings.perplexity_api_key
-            )
+            settings = config.load_settings()
+            pplx_api_key = params.pop("pplx_api_key", settings.perplexity_api_key)
             model = ChatPerplexity(
                 model=model_name, pplx_api_key=pplx_api_key, **params
             )

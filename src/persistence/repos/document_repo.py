@@ -34,7 +34,10 @@ class DocumentRepo:
             (state_id, blob, now),
         )
         await self._conn.commit()
-        return cur.lastrowid
+        row_id = cur.lastrowid
+        if row_id is None:  # pragma: no cover - unexpected
+            raise ValueError("failed to insert document")
+        return row_id
 
     async def list_versions(self, state_id: int) -> List[DocumentMetadata]:
         """Return all document versions for ``state_id``."""
