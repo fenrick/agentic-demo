@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import field as dc_field
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
@@ -58,15 +59,18 @@ class Outline(BaseModel):
     modules: List[Module] = Field(default_factory=list)
 
 
-# TODO: Extend to capture timestamps and log levels.
 class ActionLog(BaseModel):
     """Record of an action taken during processing.
 
     Attributes:
         message: Human-readable description of the action.
+        level: Severity level of the log entry.
+        timestamp: Time when the action occurred.
     """
 
     message: str
+    level: str = "INFO"
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
