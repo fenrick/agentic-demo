@@ -5,11 +5,12 @@ from __future__ import annotations
 import os
 import sys
 import types
-import pytest
 from dataclasses import dataclass
 
-from core.policies import merge_research_results
+import pytest
+
 from core.policies import (
+    merge_research_results,
     policy_retry_on_critic_failure,
     policy_retry_on_low_confidence,
     retry_tracker,
