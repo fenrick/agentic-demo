@@ -121,12 +121,13 @@ def register_routes(app: FastAPI) -> None:
 
     from .alert_endpoint import post_alerts
     from .metrics_endpoint import get_metrics
-    from .routes import citation, control, export, stream
+    from .routes import citation, control, entries, export, stream
 
     app.include_router(stream.router)
     app.include_router(control.router)
     app.include_router(export.router)
     app.include_router(citation.router)
+    app.include_router(entries.router)
     app.add_api_route("/metrics", get_metrics, methods=["GET"])
     app.add_api_route("/alerts/{workspace_id}", post_alerts, methods=["POST"])
 

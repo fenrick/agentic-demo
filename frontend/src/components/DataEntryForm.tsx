@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./DataEntryForm.css";
 
 interface Entry {
@@ -15,13 +15,38 @@ const DataEntryForm: React.FC = () => {
   const [email, setEmail] = useState("");
   const [entries, setEntries] = useState<Entry[]>([]);
 
-  const onSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/entries");
+        if (res.ok) {
+          const data: Entry[] = await res.json();
+          setEntries(data);
+        }
+      } catch {
+        // ignore network errors
+      }
+    })();
+  }, []);
+
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email) return;
-    const entry: Entry = { id: Date.now(), name, email };
-    setEntries((prev) => [...prev, entry]);
-    setName("");
-    setEmail("");
+    try {
+      const res = await fetch("/entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email }),
+      });
+      if (res.ok) {
+        const entry: Entry = await res.json();
+        setEntries((prev) => [...prev, entry]);
+        setName("");
+        setEmail("");
+      }
+    } catch {
+      // ignore network errors
+    }
   };
 
   return (
