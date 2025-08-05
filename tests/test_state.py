@@ -1,5 +1,7 @@
 import pytest
 
+from datetime import datetime
+
 from core.state import (
     ActionLog,
     Citation,
@@ -41,6 +43,12 @@ def test_to_dict_from_dict_roundtrip():
 def test_validate_state_success():
     state = State(prompt="topic", sources=[Citation(url="https://example.com")])
     validate_state(state)
+
+
+def test_action_log_defaults():
+    entry = ActionLog(message="hello")
+    assert entry.level == "INFO"
+    assert isinstance(entry.timestamp, datetime)
 
 
 @pytest.mark.parametrize(
