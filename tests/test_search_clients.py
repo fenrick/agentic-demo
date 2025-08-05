@@ -18,7 +18,11 @@ sys.modules["agentic_demo.config"] = config
 from agents import offline_cache  # noqa: E402
 from agents.dense_retriever import DenseRetriever  # noqa: E402
 from agents.researcher_web import PerplexityClient  # noqa: E402
-from agents.researcher_web import RawSearchResult, TavilyClient, cached_search
+from agents.researcher_web import (  # noqa: E402
+    RawSearchResult,
+    TavilyClient,
+    cached_search,
+)
 from persistence import get_db_session  # noqa: E402
 
 
