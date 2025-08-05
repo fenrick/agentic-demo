@@ -35,12 +35,12 @@ This document provides a **comprehensive** and **explicit** description of the L
 
 1. **API Layer (FastAPI)**
    - **Endpoints**:
-    - `POST /run` — start new lecture build job
-    - `POST /resume/{job_id}` — resume after crash
-     - `SSE /stream/{workspace_id}/state` — state snapshots
-     - `SSE /stream/{workspace_id}/actions` — action log
-     - `SSE /stream/{workspace_id}/citations` — new citations
-     - `GET /download/{job_id}/{format}` — retrieve final artifact
+   - `POST /run` — start new lecture build job
+   - `POST /resume/{job_id}` — resume after crash
+   - `SSE /stream/{workspace_id}/state` — state snapshots
+   - `SSE /stream/{workspace_id}/actions` — action log
+   - `SSE /stream/{workspace_id}/citations` — new citations
+   - `GET /download/{job_id}/{format}` — retrieve final artifact
 
 2. **LangGraph Orchestrator**
    - **Graph Definition**: `src/core/orchestrator.py`
@@ -157,15 +157,15 @@ This document provides a **comprehensive** and **explicit** description of the L
 
 ## 5. Interfaces and Protocols
 
-| Interface             | Protocol                               | Format         | Direction           |
-| --------------------- | -------------------------------------- | -------------- | ------------------- |
-| `/run`, `/resume`     | HTTP REST                              | JSON           | Client → Server     |
-| SSE Streams           | SSE                                    | JSON messages  | Server → Client     |
-| `/download`           | HTTP REST                              | Binary stream  | Client ← Server     |
-| LangGraph invocations | In-process Call                        | Python objects | Orchestrator        |
-| Perplexity Sonar (LangChain) | HTTP REST                        | JSON           | Server → Perplexity |
-| OpenAI API            | HTTP REST                              | JSON           | Server → OpenAI     |
-| DB Access             | SQL over TCP (PG) or File I/O (SQLite) | SQL            | Server ↔ DB        |
+| Interface                    | Protocol                               | Format         | Direction           |
+| ---------------------------- | -------------------------------------- | -------------- | ------------------- |
+| `/run`, `/resume`            | HTTP REST                              | JSON           | Client → Server     |
+| SSE Streams                  | SSE                                    | JSON messages  | Server → Client     |
+| `/download`                  | HTTP REST                              | Binary stream  | Client ← Server     |
+| LangGraph invocations        | In-process Call                        | Python objects | Orchestrator        |
+| Perplexity Sonar (LangChain) | HTTP REST                              | JSON           | Server → Perplexity |
+| OpenAI API                   | HTTP REST                              | JSON           | Server → OpenAI     |
+| DB Access                    | SQL over TCP (PG) or File I/O (SQLite) | SQL            | Server ↔ DB        |
 
 ---
 

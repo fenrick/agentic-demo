@@ -252,16 +252,16 @@ Further ER diagrams in ARCHITECTURE.md.
 
 ### 12.2 Environment Variables
 
-| Name                 | Purpose                                    | Required?              |
-| -------------------- | ------------------------------------------ | ---------------------- |
-| `OPENAI_API_KEY`     | OpenAI authentication                      | Yes                    |
-| `PERPLEXITY_API_KEY` | Perplexity Sonar authentication           | No (if using Tavily)   |
-| `TAVILY_API_KEY`     | Tavily search authentication              | No (if using Perplexity) |
+| Name                 | Purpose                                    | Required?                 |
+| -------------------- | ------------------------------------------ | ------------------------- |
+| `OPENAI_API_KEY`     | OpenAI authentication                      | Yes                       |
+| `PERPLEXITY_API_KEY` | Perplexity Sonar authentication            | No (if using Tavily)      |
+| `TAVILY_API_KEY`     | Tavily search authentication               | No (if using Perplexity)  |
 | `SEARCH_PROVIDER`    | `perplexity` or `tavily`                   | No (default `perplexity`) |
-| `MODEL_NAME`         | `o4-mini` or `o3`                          | No (default `o4-mini`) |
-| `DATA_DIR`           | Path for SQLite DB, cache, workspace files | No (default `./data`)  |
-| `DATABASE_URL`       | Postgres connection string (optional)      | No                     |
-| `GPG_SIGN_KEY`       | Key ID for package signing (optional)      | No                     |
+| `MODEL_NAME`         | `o4-mini` or `o3`                          | No (default `o4-mini`)    |
+| `DATA_DIR`           | Path for SQLite DB, cache, workspace files | No (default `./data`)     |
+| `DATABASE_URL`       | Postgres connection string (optional)      | No                        |
+| `GPG_SIGN_KEY`       | Key ID for package signing (optional)      | No                        |
 
 ### 12.3 Startup Commands
 
