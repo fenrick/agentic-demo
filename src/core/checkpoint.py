@@ -39,8 +39,11 @@ class SqliteCheckpointManager:
             await db.execute("INSERT INTO checkpoints (state) VALUES (?)", (payload,))
             if self._max_checkpoints is not None:
                 await db.execute(
-                    """lDELETE FROM checkpoints WHERE id NOT IN
-                    (SELECT id FROM checkpoints ORDER BY id DESC LIMIT ?)""",
+                    """
+                    DELETE FROM checkpoints WHERE id NOT IN (
+                        SELECT id FROM checkpoints ORDER BY id DESC LIMIT ?
+                    )
+                    """,
                     (self._max_checkpoints,),
                 )
             await db.commit()
