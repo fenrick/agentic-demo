@@ -6,7 +6,7 @@ import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import AsyncGenerator, List
+from typing import AsyncGenerator
 
 from jsonschema import Draft202012Validator
 
@@ -46,7 +46,7 @@ class ValidationResult:
     """Outcome of schema validation."""
 
     valid: bool
-    errors: List[str]
+    errors: list[str]
 
 
 def validate_against_schema(payload: dict) -> ValidationResult:
@@ -60,7 +60,7 @@ def validate_against_schema(payload: dict) -> ValidationResult:
     return ValidationResult(valid=not errors, errors=errors)
 
 
-def parse_function_response(tokens: List[str]) -> dict:
+def parse_function_response(tokens: list[str]) -> dict:
     """Assemble streamed ``tokens`` into a JSON object."""
 
     raw = "".join(tokens)
@@ -70,7 +70,7 @@ def parse_function_response(tokens: List[str]) -> dict:
         raise RetryableError("model returned invalid JSON") from exc
 
 
-async def call_openai_function(prompt: str, schema: dict) -> AsyncGenerator[str, None]:
+async def call_openai_function(prompt: str) -> AsyncGenerator[str, None]:
     """Invoke an LLM via LangChain and yield streamed tokens."""
 
     try:
@@ -118,8 +118,7 @@ async def content_weaver(state: State, section_id: int | None = None) -> WeaveRe
             is used.
     """
 
-    schema = load_schema()
-    tokens: List[str] = []
+    tokens: list[str] = []
 
     prompt = state.prompt
     if section_id is not None and state.outline:
@@ -127,7 +126,8 @@ async def content_weaver(state: State, section_id: int | None = None) -> WeaveRe
             raise IndexError("section_id out of range")
         prompt = state.outline.steps[section_id]
 
-    async for token in call_openai_function(prompt, schema):
+    stream = await call_openai_function(prompt)
+    async for token in stream:
         tokens.append(token)
         stream_messages(token)
     payload = parse_function_response(tokens)

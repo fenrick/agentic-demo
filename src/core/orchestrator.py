@@ -7,11 +7,10 @@ import importlib
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Awaitable, Callable, Optional, TypeVar
+from typing import Any, Awaitable, Callable, Optional, TypeVar, cast
 
 import tiktoken
 import config
-from config import Settings
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langsmith import Client
@@ -54,9 +53,7 @@ def validate_model_configuration() -> None:
     variables at import time.
     """
 
-    if config.settings is None:
-        config.settings = config.load_settings()
-    configured = config.settings.model_name
+    configured = config.load_settings().model_name
     if configured != config.MODEL_NAME:
         raise ValueError(
             f"MODEL_NAME misconfigured: expected '{config.MODEL_NAME}', got"
@@ -150,7 +147,9 @@ class GraphOrchestrator:
         graph = StateGraph(State)
         self._edge_spec = spec.get("edges", [])
         for node in spec.get("nodes", []):
-            fn = _import_callable(node["callable"])
+            fn = cast(
+                Callable[[State], Awaitable[Any]], _import_callable(node["callable"])
+            )
             graph.add_node(
                 node["name"],
                 self._wrap(node["name"], fn),
@@ -183,7 +182,13 @@ class GraphOrchestrator:
             self.initialize_graph()
             self.register_edges()
         state = State(prompt=initial_prompt)
-        planner = self._wrap("Planner", _import_callable("agents.planner.run_planner"))
+        planner_fn = cast(
+            Callable[[State], Awaitable[PlanResult]],
+            _import_callable("agents.planner.run_planner"),
+        )
+        planner: Callable[[State], Awaitable[PlanResult]] = self._wrap(
+            "Planner", planner_fn
+        )
         return await planner(state)
 
     async def resume(self) -> PlanResult:
@@ -194,12 +199,19 @@ class GraphOrchestrator:
         if self.checkpoint_manager is None:
             raise RuntimeError("Checkpoint manager required to resume")
         state = await self.checkpoint_manager.load_checkpoint()
-        planner = self._wrap("Planner", _import_callable("agents.planner.run_planner"))
+        planner_fn = cast(
+            Callable[[State], Awaitable[PlanResult]],
+            _import_callable("agents.planner.run_planner"),
+        )
+        planner: Callable[[State], Awaitable[PlanResult]] = self._wrap(
+            "Planner", planner_fn
+        )
         return await planner(state)
 
 
 def _create_checkpoint_manager(data_dir: Path | None = None) -> SqliteCheckpointManager:
-    data_dir = data_dir or Settings().data_dir  # type: ignore[call-arg]
+    settings = config.load_settings()
+    data_dir = data_dir or settings.data_dir
     data_dir.mkdir(parents=True, exist_ok=True)
     db_path = data_dir / "checkpoint.db"
     return SqliteCheckpointManager(str(db_path))

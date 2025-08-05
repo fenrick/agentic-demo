@@ -117,7 +117,8 @@ subscribe to:
 
 ### Configuration
 
-Copy the sample environment file and provide your secrets:
+Configuration is managed with `pydantic-settings` and sourced from environment
+variables (e.g. a `.env` file):
 
 ```bash
 cp .env.example .env
@@ -128,6 +129,10 @@ cp .env.example .env
 # SEARCH_PROVIDER=perplexity  # or 'tavily'
 # MODEL_NAME=o4-mini
 # DATA_DIR=./workspace
+# OFFLINE_MODE=false
+# ENABLE_TRACING=true
+# ALLOWLIST_DOMAINS=["wikipedia.org",".edu",".gov"]
+# ALERT_WEBHOOK_URL=https://example.com/hook
 # LANGCHAIN_API_KEY=...
 # LANGCHAIN_ENDPOINT=https://api.smith.langchain.com
 ```

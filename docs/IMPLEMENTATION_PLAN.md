@@ -57,32 +57,31 @@
 - **Variables listed**:
   - `OPENAI_API_KEY`
   - `PERPLEXITY_API_KEY`
+  - `TAVILY_API_KEY` (optional)
+  - `SEARCH_PROVIDER` (default: `perplexity`)
   - `MODEL_NAME` (default: `o4-mini`)
   - `DATA_DIR` (default: `./workspace`)
   - `OFFLINE_MODE` (default: `false`)
+  - `ENABLE_TRACING` (default: `true`)
+  - `ALLOWLIST_DOMAINS` (JSON list, default: `["wikipedia.org", ".edu", ".gov"]`)
+  - `ALERT_WEBHOOK_URL` (optional)
 
 1. **`src/config.py`**
 
 - **Class**: `Settings`
-  - **Method**: `load_from_env()`
-
-  - Reads `.env` (via python-dotenv) plus real `os.environ`.
-  - Fills attributes: `openai_api_key`, `perplexity_api_key`, `model_name`, `data_dir`, `offline_mode`.
-  - **Method**: `validate()`
-
-  - Checks required keys present, valid directory path for `data_dir`.
-  - Raises on missing/invalid values.
+  - Subclass of `pydantic_settings.BaseSettings` with typed fields.
+  - Automatically loads environment variables (and `.env` if present).
+  - Validators normalize `data_dir` paths and parse `ALLOWLIST_DOMAINS` JSON.
+- **Function**: `load_env(env_file: Path)`
+  - Loads variables from a given file and returns `Settings`.
+- **Function**: `load_settings()`
+  - Returns a cached `Settings` instance for reuse across modules.
 
 1. **`tests/test_config.py`**
 
-- **Test function**: `test_settings_defaults()`
-  - Clears env vars, calls `Settings.load_from_env()`, asserts default values.
-
-- **Test function**: `test_settings_override()`
-  - Sets env vars in test, calls `load_from_env()`, asserts those override defaults.
-
-- **Test function**: `test_settings_validate_errors()`
-  - Provides invalid `DATA_DIR`, expects `validate()` to raise.
+- Covers loading from environment variables and `.env` files.
+- Asserts default fallbacks for `data_dir` and `allowlist_domains`.
+- Validates custom allowlist JSON and error handling.
 
 ---
 

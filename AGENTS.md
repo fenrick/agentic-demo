@@ -21,3 +21,8 @@ This repository uses automated code quality tooling for all Python sources.
 - Refactor for readability and performance.
 - Keep functions small (cyclomatic complexity < 8).
 - Comment and extensively document files, functions and logic flows.
+
+## Documentation
+
+- Keep README and other docs in sync with code changes.
+- Maintain accurate docstrings for all public APIs.

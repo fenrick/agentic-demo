@@ -72,3 +72,7 @@ test = [
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
