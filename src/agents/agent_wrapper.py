@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, Optional
 
-from agentic_demo import config
+import config
 
 # Cache of initialized chat models keyed by model name.
 _MODEL_CACHE: Dict[str, Any] = {}

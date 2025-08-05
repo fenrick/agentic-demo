@@ -5,7 +5,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import List, Optional
 
-import aiosqlite
+import asyncio
+import sqlite3
 
 from ..models import Citation
 
@@ -13,14 +14,14 @@ from ..models import Citation
 class CitationRepo:
     """Provide CRUD operations for :class:`Citation` records."""
 
-    def __init__(self, conn: aiosqlite.Connection, workspace_id: str) -> None:
+    def __init__(self, conn: sqlite3.Connection, workspace_id: str) -> None:
         self._conn = conn
         self._workspace_id = workspace_id
 
     async def insert(self, citation: Citation) -> None:
         """Insert or replace a citation record."""
 
-        await self._conn.execute(
+        self._conn.execute(
             """
             INSERT OR REPLACE INTO citations (workspace_id, url, title, retrieved_at, licence)
             VALUES (?, ?, ?, ?, ?)
@@ -33,20 +34,22 @@ class CitationRepo:
                 citation.licence,
             ),
         )
-        await self._conn.commit()
+        self._conn.commit()
+        await asyncio.sleep(0)
 
     async def get_by_url(self, url: str) -> Optional[Citation]:
         """Return a citation matching ``url`` if present."""
 
-        cur = await self._conn.execute(
+        cur = self._conn.execute(
             """
             SELECT url, title, retrieved_at, licence FROM citations
             WHERE workspace_id = ? AND url = ?
             """,
             (self._workspace_id, url),
         )
-        row = await cur.fetchone()
-        await cur.close()
+        row = cur.fetchone()
+        cur.close()
+        await asyncio.sleep(0)
         if row is None:
             return None
         return Citation(
@@ -59,15 +62,16 @@ class CitationRepo:
     async def list_by_workspace(self, workspace_id: str) -> List[Citation]:
         """List all citations for ``workspace_id``."""
 
-        cur = await self._conn.execute(
+        cur = self._conn.execute(
             """
             SELECT url, title, retrieved_at, licence FROM citations
             WHERE workspace_id = ?
             """,
             (workspace_id,),
         )
-        rows = await cur.fetchall()
-        await cur.close()
+        rows = cur.fetchall()
+        cur.close()
+        await asyncio.sleep(0)
         return [
             Citation(
                 url=row[0],
