@@ -197,3 +197,16 @@ def validate_state(state: State) -> None:
     urls = [src.url for src in state.sources]
     if len(urls) != len(set(urls)):
         raise ValueError("citation URLs must be unique")
+
+
+__all__ = [
+    "Citation",
+    "Module",
+    "CritiqueReport",
+    "FactCheckReport",
+    "Outline",
+    "ActionLog",
+    "State",
+    "increment_version",
+    "validate_state",
+]
