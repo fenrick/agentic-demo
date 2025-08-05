@@ -31,7 +31,9 @@ def create_app() -> FastAPI:
     settings = load_settings()
     app = FastAPI()
     app.state.settings = settings
-    _configure_tracing(app)
+
+    if settings.enable_tracing:
+        _configure_tracing(app)
 
     # Bind search and fact-checking behaviour depending on offline mode.
     if settings.offline_mode:
