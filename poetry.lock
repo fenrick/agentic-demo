@@ -5478,4 +5478,4 @@ test = ["aiosqlite", "httpx", "pytest", "pytest-cov"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">= 3.11,<4"
-content-hash = "be6cbd849b2980802e385b4d3c385b3d9a436ac721bdb784573a4cb6caa47d5d"
+content-hash = "2992abe76cbf5f7d8900ab7b24eba3e8033d979570904f4de7b0f5ae2aa395d1"
