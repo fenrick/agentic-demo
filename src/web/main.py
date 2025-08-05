@@ -105,8 +105,15 @@ def mount_frontend(app: FastAPI) -> None:
     """Serve the built frontend from `frontend/dist`."""
 
     frontend_dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"
-    if frontend_dist.exists():
+    index_file = frontend_dist / "index.html"
+    if frontend_dist.exists() and index_file.exists():
         app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
+    else:
+
+        @app.get("/", include_in_schema=False)
+        async def root() -> dict[str, str]:
+            """Fallback response when frontend assets are missing."""
+            return {"detail": "Frontend build not found"}
 
 
 def register_routes(app: FastAPI) -> None:
