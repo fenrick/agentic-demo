@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Awaitable, Callable, Optional, TypeVar
 
 import tiktoken
-from agentic_demo import config
-from agentic_demo.config import Settings
+import config
+from config import Settings
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langsmith import Client
