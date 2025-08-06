@@ -86,6 +86,24 @@ def _resolve_endpoint(name: str) -> str:
     return name
 
 
+def _coerce_mapping_key(key: str) -> str | bool:
+    """Return ``key`` converted to native bool when applicable.
+
+    The JSON graph specification stores mapping keys as strings. When a
+    condition function returns a boolean value the keys "True" and "False"
+    would not match the mapping without conversion. This helper ensures that
+    such keys are converted to their boolean counterparts while leaving other
+    values untouched.
+    """
+
+    lower = key.lower()
+    if lower == "true":
+        return True
+    if lower == "false":
+        return False
+    return key
+
+
 class GraphOrchestrator:
     """Construct a LangGraph graph from a JSON specification."""
 
@@ -165,10 +183,14 @@ class GraphOrchestrator:
         for edge in self._edge_spec:
             if "condition" in edge:
                 func = _import_callable(edge["condition"])
+                mapping = {
+                    _coerce_mapping_key(k): _resolve_endpoint(v)
+                    for k, v in edge["mapping"].items()
+                }
                 self._graph.add_conditional_edges(
                     _resolve_endpoint(edge["source"]),
                     func,
-                    {k: _resolve_endpoint(v) for k, v in edge["mapping"].items()},
+                    mapping,
                 )
             else:
                 self._graph.add_edge(
