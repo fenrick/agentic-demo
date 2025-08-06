@@ -15,6 +15,7 @@ from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langsmith import Client
+from langsmith.run_helpers import trace as ls_trace
 from opentelemetry import trace
 
 from agents.planner import PlanResult  # noqa: F401
@@ -126,11 +127,11 @@ class GraphOrchestrator:
             input_dict = state.to_dict()
             input_hash = compute_hash(input_dict)
             trace_ctx = (
-                self.langsmith_client.trace(name, inputs=input_dict)  # type: ignore[attr-defined]
+                ls_trace(name, inputs=input_dict, client=self.langsmith_client)
                 if self.langsmith_client is not None
                 else contextlib.nullcontext()
             )
-            with trace_ctx as run:
+            async with trace_ctx as run:
                 with tracer.start_as_current_span(name):
                     result = await node(state)
                     output_hash = compute_hash(result)
@@ -148,8 +149,11 @@ class GraphOrchestrator:
                             datetime.utcnow(),
                         )
                     if run is not None:
-                        run.log_metrics({"token_count": tokens})
-                        run.end(outputs=result)
+                        run.add_metadata({"token_count": tokens})
+                        if isinstance(result, dict):
+                            run.end(outputs=result)
+                        else:
+                            run.end()
                     return result
 
         wrapped.__name__ = name
