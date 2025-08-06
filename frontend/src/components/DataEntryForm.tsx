@@ -61,7 +61,10 @@ const DataEntryForm: React.FC = () => {
 
   return (
     <div className="my-4">
-      <form onSubmit={onSubmit} className="flex flex-col items-center gap-2 mb-4">
+      <form
+        onSubmit={onSubmit}
+        className="flex flex-col items-center gap-2 mb-4"
+      >
         <textarea
           ref={textareaRef}
           value={topic}

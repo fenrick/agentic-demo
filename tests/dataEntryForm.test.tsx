@@ -27,7 +27,7 @@ describe("DataEntryForm", () => {
     });
     expect(global.fetch).toHaveBeenCalledWith(
       "/entries",
-      expect.objectContaining({ method: "POST" })
+      expect.objectContaining({ method: "POST" }),
     );
   });
 });
