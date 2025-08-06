@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import sqlite3
 from dataclasses import dataclass
 
 from config import settings
@@ -35,6 +36,11 @@ async def run_exporter(state: State) -> ExportStatus:
     -------
     ExportStatus
         Simple dataclass indicating whether all export operations succeeded.
+
+    Notes
+    -----
+    Expected I/O and database errors are captured and recorded in ``state.log``.
+    Unexpected exceptions are logged and re-raised so callers can handle them.
     """
 
     workspace_id = getattr(state, "workspace_id", "default")
@@ -64,9 +70,13 @@ async def run_exporter(state: State) -> ExportStatus:
 
         state.log.append(ActionLog(message="Export complete"))
         state.exports = exported
-    except Exception as exc:  # pragma: no cover - defensive
+    except (OSError, sqlite3.Error, ValueError) as exc:
         logging.exception("Export failed")
         state.log.append(ActionLog(message=f"Export failed: {exc}"))
         status.success = False
+    except Exception as exc:  # pragma: no cover - unexpected
+        logging.exception("Unexpected export failure")
+        state.log.append(ActionLog(message=f"Export failed: {exc}"))
+        raise
 
     return status
