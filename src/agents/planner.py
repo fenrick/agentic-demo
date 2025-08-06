@@ -19,11 +19,10 @@ class PlanResult:
     """Outcome of the planner step.
 
     Attributes:
-        outline: Planned outline generated from the topic.
-        confidence: Heuristic score between 0 and 1 indicating planning certainty.
+        confidence: Heuristic score between 0 and 1 indicating planning
+            certainty.
     """
 
-    outline: Outline
     confidence: float
 
 
@@ -65,7 +64,11 @@ def extract_outline(text: str) -> Outline:
 
 
 async def run_planner(state: State) -> PlanResult:
-    """Analyze ``state.prompt`` and draft an outline."""
+    """Analyze ``state.prompt`` and draft an outline.
+
+    The generated outline is assigned to ``state.outline`` before returning a
+    minimal :class:`PlanResult` for policy evaluation.
+    """
 
     raw = await call_planner_llm(state.prompt)
     stream_messages(raw)
@@ -77,12 +80,13 @@ async def run_planner(state: State) -> PlanResult:
             outline = Outline(steps=[str(step).strip() for step in steps])
     if not outline.steps:
         outline = extract_outline(raw)
+    state.outline = outline
     confidence = 0.0
     if outline.steps:
         confidence = min(1.0, round(0.5 + 0.1 * len(outline.steps), 2))
     else:
         stream_debug("planner produced empty outline")
-    return PlanResult(outline=outline, confidence=confidence)
+    return PlanResult(confidence=confidence)
 
 
 __all__ = [

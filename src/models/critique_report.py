@@ -1,9 +1,11 @@
-"""Dataclasses representing outputs from the pedagogy critic."""
+"""Data classes representing outputs from the pedagogy critic."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import field
 from typing import Dict, List, Optional
+
+from pydantic.dataclasses import dataclass
 
 
 @dataclass(slots=True)
@@ -40,3 +42,17 @@ class CritiqueReport:
     diversity: ActivityDiversityReport
     cognitive_load: CognitiveLoadReport
     recommendations: List[str] = field(default_factory=list)
+
+    @property
+    def issues(self) -> List[str]:
+        """List of actionable recommendations for remediation."""
+
+        return self.recommendations
+
+
+__all__ = [
+    "BloomCoverageReport",
+    "ActivityDiversityReport",
+    "CognitiveLoadReport",
+    "CritiqueReport",
+]

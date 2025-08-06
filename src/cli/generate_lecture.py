@@ -40,7 +40,6 @@ async def _generate(topic: str) -> Dict[str, Any]:
         {"prompt": topic}, config={"configurable": {"thread_id": "cli"}}
     )
 
-
 def main() -> None:
     """Entry point for console scripts."""
     args = parse_args()

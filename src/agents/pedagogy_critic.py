@@ -147,7 +147,7 @@ def assess_cognitive_load(outline: Outline) -> CognitiveLoadReport:
 
 
 async def run_pedagogy_critic(state: State) -> CritiqueReport:
-    """Orchestrate pedagogical checks against the current state outline."""
+    """Run pedagogical checks and update ``state.critique_report``."""
 
     outline = cast(Outline, state.outline)
     if outline is None:
@@ -169,9 +169,11 @@ async def run_pedagogy_critic(state: State) -> CritiqueReport:
             "reduce cognitive load in segments: "
             + ", ".join(cognitive.overloaded_segments)
         )
-    return CritiqueReport(
+    report = CritiqueReport(
         bloom=bloom,
         diversity=diversity,
         cognitive_load=cognitive,
         recommendations=recommendations,
     )
+    state.critique_report = report
+    return report
