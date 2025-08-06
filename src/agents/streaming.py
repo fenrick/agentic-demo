@@ -8,6 +8,19 @@ from typing import Any, Callable
 
 _logger = logging.getLogger(__name__)
 
+# Attempt to import the optional ``langgraph_sdk`` stream helper once at module
+# import time. This avoids repeatedly raising (and logging) an ``ImportError``
+# for every streamed token when the dependency is absent or the API has
+# changed.
+try:  # pragma: no cover - optional dependency
+    from langgraph_sdk import stream as _sdk_stream  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    _sdk_stream = None
+    _logger.debug(
+        "langgraph_sdk stream function not available; falling back to logging",
+        exc_info=True,
+    )
+
 
 def _log_fallback(channel: str, payload: Any) -> None:
     """Log ``payload`` tagged with ``channel``."""
@@ -35,13 +48,16 @@ def stream(
             and ``payload``.
     """
 
-    try:
-        from langgraph_sdk import stream as _stream  # type: ignore
+    handler = fallback or _log_fallback
 
-        _stream(channel, payload)
+    if _sdk_stream is None:
+        handler(channel, payload)
+        return
+
+    try:  # pragma: no cover - optional dependency
+        _sdk_stream(channel, payload)
     except Exception:  # pragma: no cover - optional dependency
-        _logger.exception("Streaming via langgraph_sdk failed")
-        handler = fallback or _log_fallback
+        _logger.debug("Streaming via langgraph_sdk failed", exc_info=True)
         handler(channel, payload)
 
 
