@@ -3,14 +3,36 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Callable
 
 
-def stream(channel: str, payload: Any) -> None:
-    """Send ``payload`` to ``channel`` if ``langgraph_sdk`` is installed.
+_logger = logging.getLogger(__name__)
 
-    Falls back to printing when the optional dependency is missing or raises
-    an exception.
+
+def _log_fallback(channel: str, payload: Any) -> None:
+    """Log ``payload`` tagged with ``channel``."""
+
+    level = logging.DEBUG if channel == "debug" else logging.INFO
+    _logger.log(level, "[%s] %s", channel, payload)
+
+
+def stream(
+    channel: str,
+    payload: Any,
+    *,
+    fallback: Callable[[str, Any], None] | None = None,
+) -> None:
+    """Send ``payload`` to ``channel`` using ``langgraph_sdk`` if available.
+
+    Falls back to ``fallback`` when the optional dependency is missing or raises
+    an exception. The default fallback logs the payload and tags it with its
+    ``channel``.
+
+    Args:
+        channel: Name of the stream channel (e.g., ``"messages"``, ``"debug"``).
+        payload: Data to send.
+        fallback: Optional callable invoked on failure. It receives ``channel``
+            and ``payload``.
     """
 
     try:
@@ -18,11 +40,9 @@ def stream(channel: str, payload: Any) -> None:
 
         _stream(channel, payload)
     except Exception:  # pragma: no cover - optional dependency
-        logging.exception("Streaming via langgraph_sdk failed")
-        if channel == "messages":
-            print(payload, end="", flush=True)
-        else:
-            print(payload, flush=True)
+        _logger.exception("Streaming via langgraph_sdk failed")
+        handler = fallback or _log_fallback
+        handler(channel, payload)
 
 
 def stream_messages(token: str) -> None:
