@@ -11,8 +11,7 @@ router = APIRouter()
 class EntryCreate(BaseModel):
     """Payload for creating a new entry."""
 
-    name: str
-    email: str
+    topic: str
 
 
 class Entry(EntryCreate):

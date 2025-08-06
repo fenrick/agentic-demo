@@ -1,19 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./DataEntryForm.css";
 
 interface Entry {
   id: number;
-  name: string;
-  email: string;
+  topic: string;
 }
 
 /**
- * Simple data entry form with a tracking table that lists all submissions.
+ * Topic submission form with a tracking table that lists all submitted topics.
  */
 const DataEntryForm: React.FC = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [topic, setTopic] = useState("");
   const [entries, setEntries] = useState<Entry[]>([]);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     (async () => {
@@ -31,44 +30,47 @@ const DataEntryForm: React.FC = () => {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email) return;
+    if (!topic) return;
     try {
       const res = await fetch("/entries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email }),
+        body: JSON.stringify({ topic }),
       });
       if (res.ok) {
         const entry: Entry = await res.json();
         setEntries((prev) => [...prev, entry]);
-        setName("");
-        setEmail("");
+        setTopic("");
+        const el = textareaRef.current;
+        if (el) {
+          el.style.height = "auto";
+        }
       }
     } catch {
       // ignore network errors
     }
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setTopic(e.target.value);
+    const el = textareaRef.current;
+    if (el) {
+      el.style.height = "auto";
+      el.style.height = `${el.scrollHeight}px`;
+    }
+  };
+
   return (
     <div className="data-entry">
       <form onSubmit={onSubmit} className="data-entry__form">
-        <label className="data-entry__label">
-          Name
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="data-entry__input"
-          />
-        </label>
-        <label className="data-entry__label">
-          Email
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="data-entry__input"
-          />
-        </label>
+        <textarea
+          ref={textareaRef}
+          value={topic}
+          onChange={handleChange}
+          className="data-entry__textarea"
+          placeholder="Enter topic"
+          rows={1}
+        />
         <button type="submit" className="data-entry__submit">
           Add
         </button>
@@ -77,15 +79,13 @@ const DataEntryForm: React.FC = () => {
         <table className="data-entry__table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Email</th>
+              <th>Topic</th>
             </tr>
           </thead>
           <tbody>
             {entries.map((e) => (
               <tr key={e.id}>
-                <td>{e.name}</td>
-                <td>{e.email}</td>
+                <td>{e.topic}</td>
               </tr>
             ))}
           </tbody>
