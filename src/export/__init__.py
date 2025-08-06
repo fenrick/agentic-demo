@@ -1,7 +1,21 @@
-"""Data export functionality.
+"""Helpers for exporting lecture data into multiple formats."""
 
-This package will be responsible for exporting data into various formats or
-external systems.
+from __future__ import annotations
 
-TODO: Implement export formats and mechanisms.
-"""
+from .markdown_exporter import MarkdownExporter
+from .metadata_exporter import export_citations_json
+from .pdf_exporter import PdfExporter
+
+__all__ = [
+    "MarkdownExporter",
+    "PdfExporter",
+    "export_citations_json",
+    "EXPORTERS",
+]
+
+
+EXPORTERS = {
+    "markdown": MarkdownExporter,
+    "pdf": PdfExporter,
+    "metadata": export_citations_json,
+}
