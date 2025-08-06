@@ -1,13 +1,22 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 import sys
 from pathlib import Path
 
+import pytest
+
+os.environ.setdefault("OPENAI_API_KEY", "test")
+os.environ.setdefault("PERPLEXITY_API_KEY", "test")
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from agents.models import Activity, AssessmentItem, Citation, SlideBullet, WeaveResult
+from agents.exporter import run_exporter
+from config import settings
+from core.state import State
 from export.markdown import embed_citations, from_weave_result, render_section
 from export.markdown_exporter import MarkdownExporter
 
@@ -79,3 +88,36 @@ def test_from_weave_result_builds_complete_document() -> None:
     assert "Slide 1" in md
     assert "Assessment" in md
     assert md.endswith("X - http://x (retrieved 2024-01-01)\n")
+
+
+@pytest.mark.asyncio
+async def test_run_exporter_handles_expected_errors(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """run_exporter reports failure for anticipated exceptions."""
+
+    monkeypatch.setattr(settings, "data_dir", tmp_path)
+    state = State(prompt="p")
+    state.workspace_id = "ws"
+    status = await run_exporter(state)
+    assert not status.success
+    assert any("Export failed" in entry.message for entry in state.log)
+
+
+@pytest.mark.asyncio
+async def test_run_exporter_reraises_unexpected_errors(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """run_exporter bubbles up unanticipated exceptions."""
+
+    monkeypatch.setattr(settings, "data_dir", tmp_path)
+    state = State(prompt="p")
+    state.workspace_id = "ws"
+
+    def boom(*_args, **_kwargs):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(MarkdownExporter, "export", boom)
+    with pytest.raises(RuntimeError):
+        await run_exporter(state)
+    assert any("Export failed" in entry.message for entry in state.log)
