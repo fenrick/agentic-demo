@@ -20,7 +20,6 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExport
 from agents.cache_backed_researcher import CacheBackedResearcher
 from agents.researcher_web import PerplexityClient, TavilyClient
 from config import Settings, load_settings
-from core.checkpoint import SqliteCheckpointManager
 from core.orchestrator import GraphOrchestrator
 from persistence.database import get_db_session, init_db
 
@@ -90,12 +89,9 @@ async def setup_database(app: FastAPI) -> None:
 
 
 def setup_graph(app: FastAPI) -> None:
-    """Initialize the LangGraph graph and checkpoint saver."""
+    """Initialize the LangGraph graph."""
 
-    settings: Settings = app.state.settings
-    checkpoint_path = settings.data_dir / "checkpoint.db"
-    manager = SqliteCheckpointManager(str(checkpoint_path))
-    orchestrator = GraphOrchestrator(manager)
+    orchestrator = GraphOrchestrator()
     orchestrator.initialize_graph()
     orchestrator.register_edges()
     app.state.graph = orchestrator.graph

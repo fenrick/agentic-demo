@@ -265,8 +265,8 @@ Each node module defines a single `async` handler function and its input/output 
 
 - **In `orchestrator.py`**, wiring:
 
-- Instantiate `SqliteCheckpointManager` with `DATA_DIR`.
-- Pass it into `GraphOrchestrator`, so every node completion triggers `save_checkpoint()`.
+- Instantiate an `AsyncSqliteSaver` with `DATA_DIR`.
+- Execute the compiled graph via `graph.ainvoke(..., config={"checkpoint": saver, "resume": True})` so each node snapshot is persisted and runs can resume from any step.
 
 ---
 

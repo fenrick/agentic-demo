@@ -7,17 +7,17 @@ import importlib
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Optional, TypeVar, cast
+from typing import Any, AsyncIterator, Awaitable, Callable, Optional, TypeVar, cast
 
 import tiktoken
 import config
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langsmith import Client
 from opentelemetry import trace
 
-from agents.planner import PlanResult
-from core.checkpoint import SqliteCheckpointManager
+from agents.planner import PlanResult  # noqa: F401
 from core.logging import get_logger
 from core.state import State
 from persistence import get_db_session
@@ -109,13 +109,11 @@ class GraphOrchestrator:
 
     def __init__(
         self,
-        checkpoint_manager: SqliteCheckpointManager | None = None,
         spec_path: Path | None = None,
         langsmith_client: Client | None = langsmith_client,
     ) -> None:
         self._graph: Optional[StateGraph[State]] = None
         self.graph: Optional[CompiledStateGraph[State]] = None
-        self.checkpoint_manager = checkpoint_manager
         self.langsmith_client = langsmith_client
         self.spec_path = (
             spec_path or Path(__file__).resolve().parents[1] / "langgraph.json"
@@ -128,15 +126,13 @@ class GraphOrchestrator:
             input_dict = state.to_dict()
             input_hash = compute_hash(input_dict)
             trace_ctx = (
-                self.langsmith_client.trace(name, inputs=input_dict)
+                self.langsmith_client.trace(name, inputs=input_dict)  # type: ignore[attr-defined]
                 if self.langsmith_client is not None
                 else contextlib.nullcontext()
             )
             with trace_ctx as run:
                 with tracer.start_as_current_span(name):
                     result = await node(state)
-                    if self.checkpoint_manager is not None:
-                        await self.checkpoint_manager.save_checkpoint(state)
                     output_hash = compute_hash(result)
                     tokens = _token_count(input_dict) + _token_count(result)
                     workspace_id = getattr(state, "workspace_id", "default")
@@ -173,7 +169,7 @@ class GraphOrchestrator:
                 node["name"],
                 self._wrap(node["name"], fn),
                 streams=node.get("streams"),
-            )
+            )  # type: ignore[call-overload]
         self._graph = graph
 
     def register_edges(self) -> None:
@@ -189,8 +185,8 @@ class GraphOrchestrator:
                 }
                 self._graph.add_conditional_edges(
                     _resolve_endpoint(edge["source"]),
-                    func,
-                    mapping,
+                    cast(Any, func),
+                    cast(Any, mapping),
                 )
             else:
                 self._graph.add_edge(
@@ -199,52 +195,23 @@ class GraphOrchestrator:
                 )
         self.graph = self._graph.compile()
 
-    async def start(self, initial_prompt: str) -> PlanResult:
-        """Create initial state and invoke the planner."""
-        if self.graph is None:
-            self.initialize_graph()
-            self.register_edges()
-        state = State(prompt=initial_prompt)
-        planner_fn = cast(
-            Callable[[State], Awaitable[PlanResult]],
-            _import_callable("agents.planner.run_planner"),
-        )
-        planner: Callable[[State], Awaitable[PlanResult]] = self._wrap(
-            "Planner", planner_fn
-        )
-        return await planner(state)
 
-    async def resume(self) -> PlanResult:
-        """Resume a previously checkpointed run."""
-        if self.graph is None:
-            self.initialize_graph()
-            self.register_edges()
-        if self.checkpoint_manager is None:
-            raise RuntimeError("Checkpoint manager required to resume")
-        state = await self.checkpoint_manager.load_checkpoint()
-        planner_fn = cast(
-            Callable[[State], Awaitable[PlanResult]],
-            _import_callable("agents.planner.run_planner"),
-        )
-        planner: Callable[[State], Awaitable[PlanResult]] = self._wrap(
-            "Planner", planner_fn
-        )
-        return await planner(state)
+def create_checkpoint_saver(
+    data_dir: Path | None = None,
+) -> AsyncIterator[AsyncSqliteSaver]:
+    """Yield an AsyncSqliteSaver connected to the checkpoint database."""
 
-
-def _create_checkpoint_manager(data_dir: Path | None = None) -> SqliteCheckpointManager:
     settings = config.load_settings()
     data_dir = data_dir or settings.data_dir
     data_dir.mkdir(parents=True, exist_ok=True)
     db_path = data_dir / "checkpoint.db"
-    return SqliteCheckpointManager(str(db_path))
+    return cast(
+        AsyncIterator[AsyncSqliteSaver],
+        AsyncSqliteSaver.from_conn_string(str(db_path)),
+    )
 
 
-checkpoint_manager = _create_checkpoint_manager()
-
-graph_orchestrator = GraphOrchestrator(
-    checkpoint_manager, langsmith_client=langsmith_client
-)
+graph_orchestrator = GraphOrchestrator(langsmith_client=langsmith_client)
 graph_orchestrator.initialize_graph()
 graph_orchestrator.register_edges()
 
@@ -254,6 +221,6 @@ __all__ = [
     "GraphOrchestrator",
     "PlanResult",
     "graph",
-    "checkpoint_manager",
+    "create_checkpoint_saver",
     "langsmith_client",
 ]

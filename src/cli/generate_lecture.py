@@ -9,7 +9,7 @@ import logging
 from typing import Any, Dict
 
 from agents.streaming import stream_messages
-from core.orchestrator import graph
+from core.orchestrator import create_checkpoint_saver, graph
 
 
 def parse_args() -> argparse.Namespace:
@@ -36,9 +36,16 @@ async def _generate(topic: str) -> Dict[str, Any]:
         Dict[str, Any]: Final graph state serialized to a plain dictionary.
     """
 
-    return await graph.ainvoke(
-        {"prompt": topic}, config={"configurable": {"thread_id": "cli"}}
-    )
+    async with create_checkpoint_saver() as saver:
+        return await graph.ainvoke(
+            {"prompt": topic},
+            config={
+                "checkpoint": saver,
+                "resume": True,
+                "configurable": {"thread_id": "cli"},
+            },
+        )
+
 
 def main() -> None:
     """Entry point for console scripts."""

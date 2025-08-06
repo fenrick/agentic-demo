@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import sys
 import types
+from contextlib import asynccontextmanager
 
 
 def test_generate(monkeypatch):
@@ -15,8 +16,15 @@ def test_generate(monkeypatch):
         return {"title": "Test"}
 
     fake_graph = types.SimpleNamespace(ainvoke=fake_ainvoke)
+
+    @asynccontextmanager
+    async def fake_saver():
+        yield object()
+
     monkeypatch.setitem(
-        sys.modules, "core.orchestrator", types.SimpleNamespace(graph=fake_graph)
+        sys.modules,
+        "core.orchestrator",
+        types.SimpleNamespace(graph=fake_graph, create_checkpoint_saver=fake_saver),
     )
 
     from cli.generate_lecture import _generate
