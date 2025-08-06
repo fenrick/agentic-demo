@@ -13,7 +13,6 @@ from jsonschema import Draft202012Validator
 from core.state import State
 from prompts import get_prompt
 
-from .agent_wrapper import init_chat_model
 from .models import Activity, AssessmentItem, Citation, SlideBullet, WeaveResult
 from .streaming import stream_debug, stream_messages
 
@@ -67,6 +66,12 @@ def parse_function_response(tokens: list[str]) -> dict:
     try:
         return json.loads(raw)
     except json.JSONDecodeError as exc:  # pragma: no cover - defensive
+        start, end = raw.find("{"), raw.rfind("}") + 1
+        if start >= 0 and end > start:
+            try:
+                return json.loads(raw[start:end])
+            except json.JSONDecodeError as inner_exc:  # pragma: no cover - defensive
+                raise RetryableError("model returned invalid JSON") from inner_exc
         raise RetryableError("model returned invalid JSON") from exc
 
 
@@ -75,6 +80,7 @@ async def call_openai_function(prompt: str) -> AsyncGenerator[str, None]:
 
     try:
         from langchain_core.messages import HumanMessage, SystemMessage
+        from .agent_wrapper import init_chat_model
     except Exception:  # pragma: no cover - dependency not installed
         logging.exception("Content weaver dependencies unavailable")
 
