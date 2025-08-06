@@ -34,11 +34,11 @@ def test_create_and_list_entries() -> None:
 
     entries_routes._entries.clear()
     client = TestClient(create_app())
-    resp = client.post("/entries", json={"name": "Alice", "email": "alice@example.com"})
+    resp = client.post("/entries", json={"topic": "Graph Theory"})
     assert resp.status_code == 200
     data = resp.json()
-    assert data["name"] == "Alice"
+    assert data["topic"] == "Graph Theory"
     resp = client.get("/entries")
     assert resp.status_code == 200
     entries = resp.json()
-    assert entries[0]["email"] == "alice@example.com"
+    assert entries[0]["topic"] == "Graph Theory"
