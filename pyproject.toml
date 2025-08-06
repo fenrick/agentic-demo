@@ -36,6 +36,7 @@ dependencies = [
     "sse-starlette",
     "uvicorn[standard]",
     "weasyprint",
+    "langgraph-checkpoint-sqlite (>=2.0.11,<3.0.0)",
 ]
 
 [build-system]
