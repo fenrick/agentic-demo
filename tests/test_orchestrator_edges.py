@@ -149,20 +149,6 @@ core_policies_stub.policy_retry_on_low_confidence = policy_retry_on_low_confiden
 core_policies_stub.policy_retry_on_critic_failure = policy_retry_on_critic_failure
 sys.modules["core.policies"] = core_policies_stub
 
-core_checkpoint_stub = types.ModuleType("core.checkpoint")
-
-
-class SqliteCheckpointManager:  # type: ignore[too-many-ancestors]
-    def __init__(self, *_args, **_kwargs):
-        pass
-
-    async def save_checkpoint(self, _state):
-        pass
-
-
-core_checkpoint_stub.SqliteCheckpointManager = SqliteCheckpointManager
-sys.modules["core.checkpoint"] = core_checkpoint_stub
-
 core_logging_stub = types.ModuleType("core.logging")
 
 

@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from fastapi import Request  # type: ignore[import-not-found]
 
 from web.schemas.sse import SseEvent  # type: ignore[import-not-found]
+from core.orchestrator import create_checkpoint_saver
+from langchain_core.runnables import RunnableConfig
 
 if TYPE_CHECKING:  # pragma: no cover - only for type checking
     from langgraph.graph.state import (  # type: ignore[import-not-found]
@@ -40,17 +42,26 @@ async def stream_workspace_events(
     if graph is None:  # pragma: no cover - sanity guard
         return
 
-    async for update in graph.astream(
-        {}, config={"configurable": {"thread_id": workspace_id}}
-    ):
-        if update.get("type") != event_type:
-            # Only forward updates matching the requested channel.
-            continue
+    async with create_checkpoint_saver() as saver:
+        async for update in graph.astream(
+            {},
+            cast(
+                RunnableConfig,
+                {
+                    "checkpoint": saver,
+                    "resume": True,
+                    "configurable": {"thread_id": workspace_id},
+                },
+            ),
+        ):
+            if update.get("type") != event_type:
+                # Only forward updates matching the requested channel.
+                continue
 
-        event = SseEvent(
-            type=event_type,
-            payload=update.get("payload", update),
-            timestamp=datetime.now(timezone.utc),
-        )
-        # ``event`` field allows clients to subscribe to specific SSE types.
-        yield {"event": event_type, "data": event.model_dump_json()}
+            event = SseEvent(
+                type=event_type,
+                payload=update.get("payload", update),
+                timestamp=datetime.now(timezone.utc),
+            )
+            # ``event`` field allows clients to subscribe to specific SSE types.
+            yield {"event": event_type, "data": event.model_dump_json()}
