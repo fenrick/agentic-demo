@@ -22,7 +22,7 @@ if [ -f .env ]; then
 fi
 
 # Run database migrations
-python -m alembic upgrade head
+poetry run alembic upgrade head
 
 # Forward all arguments (e.g., the topic) to the CLI entry point
-python -m cli.generate_lecture "$@"
+poetry run python -m cli.generate_lecture "$@"
