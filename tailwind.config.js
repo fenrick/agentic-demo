@@ -1,5 +1,8 @@
+import forms from "@tailwindcss/forms";
+import typography from "@tailwindcss/typography";
+
 export default {
-  content: ["./frontend/index.html", "./frontend/src/**/*.{ts,tsx}"],
+  content: ["./frontend/index.html", "./frontend/src/**/*.{ts,tsx,html,css}"],
   theme: {
     extend: {
       fontFamily: {
@@ -15,5 +18,5 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [forms, typography],
 };

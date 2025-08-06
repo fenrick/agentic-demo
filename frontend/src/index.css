@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @config "../../tailwind.config.js";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -18,10 +19,10 @@
 
 @layer components {
   .card {
-    @apply bg-white rounded shadow-card p-6;
+    @apply shadow-card rounded bg-white p-6;
   }
 
   .btn {
-    @apply px-4 py-2 rounded bg-primary text-white hover:bg-accent hover:text-black transition-colors;
+    @apply bg-primary hover:bg-accent rounded px-4 py-2 text-white transition-colors hover:text-black;
   }
 }

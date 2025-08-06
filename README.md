@@ -199,6 +199,8 @@ cp .env.example .env
 - React app (`frontend/src/`): Panels for Document, Log, Sources.
 - SSE client in `frontend/src/services/stream.ts`.
 - Diff highlighting via `diff-match-patch`.
+- Tailwind CSS enhanced with `@tailwindcss/forms` and `@tailwindcss/typography`; utility
+  classes are auto-sorted via `prettier-plugin-tailwindcss`.
 
 ### Exporters
 
