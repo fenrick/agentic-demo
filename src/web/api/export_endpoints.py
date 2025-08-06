@@ -2,13 +2,52 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import FastAPI, Request, Response
+from pydantic import BaseModel
 
 from export.docx_exporter import DocxExporter
 from export.markdown_exporter import MarkdownExporter
 from export.metadata_exporter import export_citations_json
 from export.pdf_exporter import PdfExporter
 from export.zip_exporter import ZipExporter
+
+
+class ExportStatus(BaseModel):
+    """Readiness of generated export artifacts."""
+
+    ready: bool
+
+
+class ExportUrls(BaseModel):
+    """Download links for available export formats."""
+
+    md: str
+    docx: str
+    pdf: str
+    zip: str
+
+
+async def get_export_status(request: Request, workspace_id: str) -> ExportStatus:
+    """Return whether all export files exist for ``workspace_id``."""
+
+    data_dir: Path = request.app.state.settings.data_dir
+    export_dir = data_dir / "exports" / workspace_id
+    expected = ["lecture.md", "lecture.docx", "lecture.pdf"]
+    ready = all((export_dir / name).exists() for name in expected)
+    return ExportStatus(ready=ready)
+
+
+async def get_export_urls(workspace_id: str) -> ExportUrls:
+    """Produce download URLs for export files."""
+
+    return ExportUrls(
+        md=f"/export/{workspace_id}/md",
+        docx=f"/export/{workspace_id}/docx",
+        pdf=f"/export/{workspace_id}/pdf",
+        zip=f"/export/{workspace_id}/all",
+    )
 
 
 async def get_markdown_export(request: Request, workspace_id: str) -> Response:
