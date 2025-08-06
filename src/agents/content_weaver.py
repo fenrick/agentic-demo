@@ -76,7 +76,11 @@ def parse_function_response(tokens: list[str]) -> dict:
 
 
 async def call_openai_function(prompt: str) -> AsyncGenerator[str, None]:
-    """Invoke an LLM via LangChain and yield streamed tokens."""
+    """Invoke an LLM via LangChain and yield streamed tokens.
+
+    The lecture schema is supplied as a system message so the model knows the
+    exact structure required for its response.
+    """
 
     try:
         from langchain_core.messages import HumanMessage, SystemMessage
@@ -100,8 +104,12 @@ async def call_openai_function(prompt: str) -> AsyncGenerator[str, None]:
         return empty()
 
     async def generator() -> AsyncGenerator[str, None]:
+        schema = json.dumps(load_schema(), indent=2)
         messages = [
             SystemMessage(content=get_prompt("content_weaver_system")),
+            SystemMessage(
+                content=f"Output must conform to this JSON schema:\n{schema}"
+            ),
             HumanMessage(content=prompt),
         ]
         stream = model.astream(messages)
