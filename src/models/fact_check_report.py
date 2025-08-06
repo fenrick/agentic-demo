@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import List
+from dataclasses import field
+from typing import List, Union
+
+from pydantic.dataclasses import dataclass
 
 
 @dataclass(slots=True)
@@ -31,3 +33,16 @@ class FactCheckReport:
     unsupported_claims: List[ClaimFlag] = field(default_factory=list)
     hallucination_count: int = 0
     unsupported_claims_count: int = 0
+
+    @property
+    def issues(self) -> List[Union[SentenceProbability, ClaimFlag]]:
+        """Combined list of detected factual issues."""
+
+        return [*self.hallucinations, *self.unsupported_claims]
+
+
+__all__ = [
+    "SentenceProbability",
+    "ClaimFlag",
+    "FactCheckReport",
+]

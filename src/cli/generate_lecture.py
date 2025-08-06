@@ -6,7 +6,6 @@ import argparse
 import asyncio
 import json
 import logging
-from dataclasses import asdict
 from typing import Any, Dict
 
 from agents.content_weaver import run_content_weaver
@@ -39,8 +38,8 @@ async def _generate(topic: str) -> Dict[str, Any]:
     """
 
     state = State(prompt=topic)
-    result = await run_content_weaver(state)
-    return asdict(result)
+    module = await run_content_weaver(state)
+    return module.model_dump()
 
 
 def main() -> None:
