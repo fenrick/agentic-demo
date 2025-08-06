@@ -1,3 +1,5 @@
+"""Unit tests for policy decision helpers."""
+
 import sys
 import types
 from dataclasses import dataclass, field
@@ -7,14 +9,33 @@ from core.state import State
 
 # Stub modules to avoid heavy dependencies during import of core.policies
 critics_stub = types.ModuleType("agents.critics")
-critics_stub.CritiqueReport = type("CritiqueReport", (), {})  # type: ignore[attr-defined]
-critics_stub.FactCheckReport = type("FactCheckReport", (), {})  # type: ignore[attr-defined]
+
+
+@dataclass(slots=True)
+class DummyCritiqueReport:
+    """Minimal critique report with recommendations."""
+
+    recommendations: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class DummyFactCheckReport:
+    """Minimal fact-check report with issue counters."""
+
+    hallucination_count: int = 0
+    unsupported_claims_count: int = 0
+
+
+critics_stub.CritiqueReport = DummyCritiqueReport  # type: ignore[attr-defined]
+critics_stub.FactCheckReport = DummyFactCheckReport  # type: ignore[attr-defined]
 sys.modules.setdefault("agents", types.ModuleType("agents"))
 sys.modules["agents.critics"] = critics_stub
 
 
 @dataclass(slots=True)
 class DummyPlanResult:
+    """Planner result with a confidence score."""
+
     confidence: float
 
 
@@ -28,12 +49,9 @@ from core.policies import (  # noqa: E402
 )
 
 
-@dataclass(slots=True)
-class DummyReport:
-    issues: list[str] = field(default_factory=list)
+def test_policy_retry_on_low_confidence_retries_until_limit() -> None:
+    """Planner should loop until retry limit then continue."""
 
-
-def test_policy_retry_on_low_confidence_retries_until_limit():
     state = State(prompt="topic")
     result = DummyPlanResult(confidence=0.5)
 
@@ -45,9 +63,17 @@ def test_policy_retry_on_low_confidence_retries_until_limit():
     assert policy_retry_on_low_confidence(result, state) == "continue"
 
 
-def test_policy_retry_on_critic_failure_raises_after_limit():
+@pytest.mark.parametrize(
+    "report",
+    [
+        DummyCritiqueReport(recommendations=["fix"]),
+        DummyFactCheckReport(hallucination_count=1),
+    ],
+)
+def test_policy_retry_on_critic_failure_raises_after_limit(report) -> None:
+    """Critic failures trigger retries and eventually raise."""
+
     state = State(prompt="topic")
-    report = DummyReport(issues=["bad"])
 
     for _ in range(3):
         assert policy_retry_on_critic_failure(report, state) is True

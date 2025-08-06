@@ -64,11 +64,16 @@ def policy_retry_on_critic_failure(
         agent_name: Identifier passed to :func:`retry_tracker`.
 
     Returns:
-        ``True`` when issues were flagged and the content weaver should be
-        reinvoked, ``False`` when critique passes.
+        ``True`` when recommendations or factual issues were flagged and the
+        content weaver should be reinvoked, ``False`` when critique passes.
     """
 
-    should_retry = bool(report.issues)
+    if isinstance(report, CritiqueReport):
+        should_retry = bool(report.recommendations)
+    else:
+        should_retry = bool(
+            report.hallucination_count or report.unsupported_claims_count
+        )
     if should_retry:
         retry_tracker(state, agent_name)
     return should_retry
