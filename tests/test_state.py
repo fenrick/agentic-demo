@@ -1,6 +1,6 @@
 import pytest
-
 from datetime import datetime
+from pydantic import ValidationError
 
 from core.state import (
     ActionLog,
@@ -40,6 +40,32 @@ def test_to_dict_from_dict_roundtrip():
     assert restored.to_dict() == state.to_dict()
 
 
+def test_state_requires_prompt_on_init():
+    with pytest.raises(ValueError):
+        State(prompt="")
+
+
+def test_citation_urls_unique_on_init():
+    with pytest.raises(ValueError):
+        State(
+            prompt="topic",
+            sources=[
+                Citation(url="https://dup.com"),
+                Citation(url="https://dup.com"),
+            ],
+        )
+
+
+def test_citation_url_validation():
+    with pytest.raises(ValidationError):
+        Citation(url="not-a-url")
+
+
+def test_default_outline_present():
+    state = State(prompt="topic")
+    assert isinstance(state.outline, Outline)
+
+
 def test_validate_state_success():
     state = State(prompt="topic", sources=[Citation(url="https://example.com")])
     validate_state(state)
@@ -57,7 +83,7 @@ def test_action_log_defaults():
         lambda s: setattr(s, "prompt", ""),
         lambda s: setattr(s, "version", -1),
         lambda s: s.sources.extend(
-            [Citation(url="https://dup"), Citation(url="https://dup")]
+            [Citation(url="https://dup.com"), Citation(url="https://dup.com")]
         ),
     ],
 )

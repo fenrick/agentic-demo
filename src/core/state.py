@@ -6,7 +6,7 @@ from dataclasses import field as dc_field
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 from pydantic.dataclasses import dataclass
 
 
@@ -19,7 +19,7 @@ class Citation(BaseModel):
         url: Location of the referenced material.
     """
 
-    url: str
+    url: HttpUrl
 
 
 # TODO: Replace placeholder with richer module structure.
@@ -91,12 +91,9 @@ class State:
         version: Monotonic revision number for persistence.
     """
 
-    # TODO: Add validation rules (e.g., non-empty prompt) once requirements are defined.
     prompt: str = ""
-    # TODO: Ensure citations are unique and URLs valid.
     sources: List[Citation] = dc_field(default_factory=list)
-    # TODO: Provide a sensible default outline when planner is implemented.
-    outline: Optional[Outline] = None
+    outline: Outline = dc_field(default_factory=Outline)
     # TODO: Include structured log entries with metadata like timestamps.
     log: List[ActionLog] = dc_field(default_factory=list)
     # TODO: Track retry counts for individual nodes.
@@ -113,6 +110,14 @@ class State:
     # TODO: Revisit versioning strategy for future schema evolution.
     version: int = 1
 
+    def __post_init__(self) -> None:
+        """Validate basic invariants after initialization."""
+        if not self.prompt:
+            raise ValueError("prompt must be non-empty")
+        urls = [src.url for src in self.sources]
+        if len(urls) != len(set(urls)):
+            raise ValueError("citation URLs must be unique")
+
     def to_dict(self) -> dict:
         """Serialize the current state into a plain dict for persistence.
 
@@ -123,7 +128,7 @@ class State:
         return {
             "prompt": self.prompt,
             "sources": [source.model_dump() for source in self.sources],
-            "outline": self.outline.model_dump() if self.outline else None,
+            "outline": self.outline.model_dump(),
             "log": [entry.model_dump() for entry in self.log],
             "retries": self.retries,
             "retry_counts": self.retry_counts,
@@ -151,7 +156,7 @@ class State:
         return cls(
             prompt=raw.get("prompt", ""),
             sources=[Citation(**c) for c in raw.get("sources", [])],
-            outline=Outline(**raw["outline"]) if raw.get("outline") else None,
+            outline=Outline(**raw["outline"]) if raw.get("outline") else Outline(),
             log=[ActionLog(**entry_data) for entry_data in raw.get("log", [])],
             retries=raw.get("retries", {}),
             retry_counts=raw.get("retry_counts", {}),
