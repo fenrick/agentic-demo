@@ -38,15 +38,15 @@ dependencies = [
     "weasyprint",
 ]
 
-[project.scripts]
-"generate-lecture" = "cli.generate_lecture:main"
-
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 package-mode = false
+
+[tool.poetry.scripts]
+generate-lecture = "cli.generate_lecture:main"
 
 [tool.isort]
 profile = "black"
