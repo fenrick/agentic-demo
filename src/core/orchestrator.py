@@ -134,6 +134,7 @@ class GraphOrchestrator:
                             datetime.utcnow(),
                         )
                     if run is not None:
+                        run.log_metrics({"token_count": tokens})
                         run.end(outputs=result)
                     return result
 

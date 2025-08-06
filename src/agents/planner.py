@@ -10,6 +10,7 @@ from core.state import Outline, State
 from prompts import get_prompt
 
 from .agent_wrapper import init_chat_model
+from .json_utils import load_json
 from .streaming import stream_debug, stream_messages
 
 
@@ -68,7 +69,14 @@ async def run_planner(state: State) -> PlanResult:
 
     raw = await call_planner_llm(state.prompt)
     stream_messages(raw)
-    outline = extract_outline(raw)
+    outline = Outline(steps=[])
+    data = load_json(raw)
+    if data is not None:
+        steps = data.get("steps", [])
+        if isinstance(steps, list):
+            outline = Outline(steps=[str(step).strip() for step in steps])
+    if not outline.steps:
+        outline = extract_outline(raw)
     confidence = 0.0
     if outline.steps:
         confidence = min(1.0, round(0.5 + 0.1 * len(outline.steps), 2))
