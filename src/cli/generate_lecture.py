@@ -10,6 +10,7 @@ from dataclasses import asdict
 from typing import Any, Dict
 
 from agents.content_weaver import run_content_weaver
+from agents.streaming import stream_messages
 from core.state import State
 
 
@@ -47,10 +48,13 @@ def main() -> None:
     args = parse_args()
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
+        stream_messages("LLM response stream start")
     try:
         payload = asyncio.run(_generate(args.topic))
     except Exception as exc:  # pragma: no cover - defensive
         raise SystemExit(f"Error generating lecture: {exc}") from exc
+    if args.verbose:
+        stream_messages("LLM response stream complete: %s" % json.dumps(payload))
     print(json.dumps(payload, indent=2))
 
 
