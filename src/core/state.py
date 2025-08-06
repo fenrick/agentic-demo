@@ -9,6 +9,8 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel, Field, HttpUrl
 from pydantic.dataclasses import dataclass
 
+from models import CritiqueReport, FactCheckReport
+
 
 class Citation(BaseModel):
     """Reference to an external information source.
@@ -27,18 +29,6 @@ class Module(BaseModel):
     title: str
     duration_min: int
     learning_objectives: List[str] = Field(default_factory=list)
-
-
-class CritiqueReport(BaseModel):
-    """Feedback produced by the pedagogy critic."""
-
-    notes: List[str] = Field(default_factory=list)
-
-
-class FactCheckReport(BaseModel):
-    """Issues surfaced by fact checking routines."""
-
-    issues: List[str] = Field(default_factory=list)
 
 
 class Outline(BaseModel):

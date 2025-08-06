@@ -10,7 +10,7 @@ from typing import AsyncGenerator
 
 from jsonschema import Draft202012Validator
 
-from core.state import State
+from core.state import Module, State
 from prompts import get_prompt
 
 from .models import Activity, AssessmentItem, Citation, SlideBullet, WeaveResult
@@ -184,14 +184,24 @@ async def content_weaver(state: State, section_id: int | None = None) -> WeaveRe
     )
 
 
-async def run_content_weaver(
-    state: State, section_id: int | None = None
-) -> WeaveResult:
-    """Entry point used by the orchestrator.
+async def run_content_weaver(state: State, section_id: int | None = None) -> Module:
+    """Generate content and store it in ``state.modules``.
 
     Args:
         state: Orchestrator state passed through the graph.
         section_id: Optional outline index to generate only a specific section.
+
+    Returns:
+        Module: Simplified representation of the generated content for
+        downstream policies.
     """
 
-    return await content_weaver(state, section_id=section_id)
+    weave = await content_weaver(state, section_id=section_id)
+    module = Module(
+        id=f"m{len(state.modules) + 1}",
+        title=weave.title,
+        duration_min=weave.duration_min,
+        learning_objectives=weave.learning_objectives,
+    )
+    state.modules.append(module)
+    return module

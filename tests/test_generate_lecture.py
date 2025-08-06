@@ -9,20 +9,28 @@ import types
 
 
 @dataclass
-class DummyResult:
-    """Minimal stand-in for :class:`agents.models.WeaveResult`."""
+class DummyModule:
+    """Minimal stand-in for :class:`core.state.Module`."""
 
+    id: str
     title: str
-    learning_objectives: list[str]
-    activities: list
     duration_min: int
+    learning_objectives: list[str]
+
+    def model_dump(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "duration_min": self.duration_min,
+            "learning_objectives": self.learning_objectives,
+        }
 
 
 def test_generate(monkeypatch):
     """_generate returns a dictionary derived from the weave result."""
 
     async def fake_run_content_weaver(_state):
-        return DummyResult("Test", [], [], 0)
+        return DummyModule("m1", "Test", 0, [])
 
     class DummyState:
         def __init__(self, prompt: str) -> None:
