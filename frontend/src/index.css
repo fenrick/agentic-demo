@@ -3,3 +3,24 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-serif;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded shadow-card p-6;
+  }
+
+  .btn {
+    @apply px-4 py-2 rounded bg-primary text-white hover:bg-accent hover:text-black transition-colors;
+  }
+}
+
