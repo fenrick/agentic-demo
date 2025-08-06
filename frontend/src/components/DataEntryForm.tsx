@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import "./DataEntryForm.css";
 
 interface Entry {
   id: number;
@@ -61,31 +60,36 @@ const DataEntryForm: React.FC = () => {
   };
 
   return (
-    <div className="data-entry">
-      <form onSubmit={onSubmit} className="data-entry__form">
+    <div className="my-4">
+      <form onSubmit={onSubmit} className="flex flex-col items-center gap-2 mb-4">
         <textarea
           ref={textareaRef}
           value={topic}
           onChange={handleChange}
-          className="data-entry__textarea"
+          className="w-full max-w-md p-2 border border-gray-300 rounded resize-none overflow-hidden"
           placeholder="Enter topic"
           rows={1}
         />
-        <button type="submit" className="data-entry__submit">
+        <button
+          type="submit"
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
           Add
         </button>
       </form>
       {entries.length > 0 && (
-        <table className="data-entry__table">
+        <table className="w-full border-collapse">
           <thead>
             <tr>
-              <th>Topic</th>
+              <th className="border border-gray-300 p-2 text-left bg-gray-100">
+                Topic
+              </th>
             </tr>
           </thead>
           <tbody>
             {entries.map((e) => (
               <tr key={e.id}>
-                <td>{e.topic}</td>
+                <td className="border border-gray-300 p-2">{e.topic}</td>
               </tr>
             ))}
           </tbody>

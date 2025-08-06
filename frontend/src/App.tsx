@@ -22,14 +22,28 @@ const App: React.FC = () => {
   }, [connect]);
 
   return (
-    <div>
-      <DataEntryForm />
-      <DocumentPanel text={document || ""} onAcceptDiff={() => {}} />
-      <LogPanel logs={logs} />
-      <SourcesPanel sources={sources} />
-      {workspaceId && <ControlsPanel workspaceId={workspaceId} />}
+    <div className="max-w-4xl mx-auto p-4 space-y-4">
+      <div className="bg-white rounded shadow p-4">
+        <DataEntryForm />
+      </div>
+      <div className="bg-white rounded shadow p-4">
+        <DocumentPanel text={document || ""} onAcceptDiff={() => {}} />
+      </div>
+      <div className="bg-white rounded shadow p-4">
+        <LogPanel logs={logs} />
+      </div>
+      <div className="bg-white rounded shadow p-4">
+        <SourcesPanel sources={sources} />
+      </div>
+      {workspaceId && (
+        <div className="bg-white rounded shadow p-4">
+          <ControlsPanel workspaceId={workspaceId} />
+        </div>
+      )}
       {workspaceId && exportStatus === "ready" && (
-        <DownloadsPanel workspaceId={workspaceId} />
+        <div className="bg-white rounded shadow p-4">
+          <DownloadsPanel workspaceId={workspaceId} />
+        </div>
       )}
     </div>
   );

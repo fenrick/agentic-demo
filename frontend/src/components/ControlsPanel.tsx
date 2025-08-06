@@ -37,20 +37,40 @@ const ControlsPanel: React.FC<Props> = ({ workspaceId }) => {
   };
 
   return (
-    <div>
-      <button onClick={onRunClick} disabled={status === "running"}>
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        onClick={onRunClick}
+        disabled={status === "running"}
+        className="px-3 py-1 bg-green-500 text-white rounded disabled:opacity-50"
+      >
         Run
       </button>
-      <button onClick={onPauseClick} disabled={status !== "running"}>
+      <button
+        onClick={onPauseClick}
+        disabled={status !== "running"}
+        className="px-3 py-1 bg-yellow-500 text-white rounded disabled:opacity-50"
+      >
         Pause
       </button>
-      <button onClick={onRetryClick} disabled={status === "running"}>
+      <button
+        onClick={onRetryClick}
+        disabled={status === "running"}
+        className="px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
+      >
         Retry
       </button>
-      <button onClick={onResumeClick} disabled={status !== "paused"}>
+      <button
+        onClick={onResumeClick}
+        disabled={status !== "paused"}
+        className="px-3 py-1 bg-purple-500 text-white rounded disabled:opacity-50"
+      >
         Resume
       </button>
-      <select value={model} onChange={onModelChange}>
+      <select
+        value={model}
+        onChange={onModelChange}
+        className="border rounded px-2 py-1"
+      >
         <option value="o4-mini">o4-mini</option>
         <option value="o3">o3</option>
       </select>
