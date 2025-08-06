@@ -3,38 +3,20 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
 import sys
 import types
 
 
-@dataclass
-class DummyResult:
-    """Minimal stand-in for :class:`agents.models.WeaveResult`."""
-
-    title: str
-    learning_objectives: list[str]
-    activities: list
-    duration_min: int
-
-
 def test_generate(monkeypatch):
-    """_generate returns a dictionary derived from the weave result."""
+    """_generate returns final graph state."""
 
-    async def fake_run_content_weaver(_state):
-        return DummyResult("Test", [], [], 0)
+    async def fake_ainvoke(payload, config=None):  # type: ignore[unused-argument]
+        assert payload["prompt"] == "topic"
+        return {"title": "Test"}
 
-    class DummyState:
-        def __init__(self, prompt: str) -> None:
-            self.prompt = prompt
-
+    fake_graph = types.SimpleNamespace(ainvoke=fake_ainvoke)
     monkeypatch.setitem(
-        sys.modules,
-        "agents.content_weaver",
-        types.SimpleNamespace(run_content_weaver=fake_run_content_weaver),
-    )
-    monkeypatch.setitem(
-        sys.modules, "core.state", types.SimpleNamespace(State=DummyState)
+        sys.modules, "core.orchestrator", types.SimpleNamespace(graph=fake_graph)
     )
 
     from cli.generate_lecture import _generate

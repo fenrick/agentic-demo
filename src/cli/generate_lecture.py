@@ -6,12 +6,10 @@ import argparse
 import asyncio
 import json
 import logging
-from dataclasses import asdict
 from typing import Any, Dict
 
-from agents.content_weaver import run_content_weaver
 from agents.streaming import stream_messages
-from core.state import State
+from core.orchestrator import graph
 
 
 def parse_args() -> argparse.Namespace:
@@ -29,18 +27,18 @@ def parse_args() -> argparse.Namespace:
 
 
 async def _generate(topic: str) -> Dict[str, Any]:
-    """Invoke the content weaver for ``topic``.
+    """Run the full LangGraph for ``topic``.
 
     Args:
         topic: Subject matter to base the lecture on.
 
     Returns:
-        Dict[str, Any]: Lecture material as a plain dictionary.
+        Dict[str, Any]: Final graph state serialized to a plain dictionary.
     """
 
-    state = State(prompt=topic)
-    result = await run_content_weaver(state)
-    return asdict(result)
+    return await graph.ainvoke(
+        {"prompt": topic}, config={"configurable": {"thread_id": "cli"}}
+    )
 
 
 def main() -> None:
