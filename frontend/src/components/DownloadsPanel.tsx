@@ -37,15 +37,23 @@ const DownloadsPanel: React.FC<Props> = ({ workspaceId }) => {
   }, [workspaceId]);
 
   if (!urls) {
-    return <div>Preparing export…</div>;
+    return <div className="text-sm text-gray-500">Preparing export…</div>;
   }
 
   return (
-    <div>
-      <a href={urls.md}>Markdown</a>
-      <a href={urls.docx}>DOCX</a>
-      <a href={urls.pdf}>PDF</a>
-      <a href={urls.zip}>ZIP</a>
+    <div className="flex gap-4">
+      <a className="text-blue-600 hover:underline" href={urls.md}>
+        Markdown
+      </a>
+      <a className="text-blue-600 hover:underline" href={urls.docx}>
+        DOCX
+      </a>
+      <a className="text-blue-600 hover:underline" href={urls.pdf}>
+        PDF
+      </a>
+      <a className="text-blue-600 hover:underline" href={urls.zip}>
+        ZIP
+      </a>
     </div>
   );
 };

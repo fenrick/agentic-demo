@@ -1,6 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import "./index.css";
 
 // Bootstraps the React application and mounts it to the DOM root element.
 const container = document.getElementById("root");
