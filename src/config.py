@@ -83,4 +83,8 @@ def load_settings() -> Settings:
     return Settings()  # type: ignore[call-arg]
 
 
-__all__ = ["Settings", "load_settings", "load_env", "MODEL_NAME"]
+# Backwards compatible convenience instance.
+settings = load_settings()
+
+
+__all__ = ["Settings", "settings", "load_settings", "load_env", "MODEL_NAME"]
