@@ -10,6 +10,7 @@ A local-first, multi-agent system that generates high‑quality, university‑gr
   - [Table of Contents](#table-of-contents)
   - [Key Features](#key-features)
   - [Architecture Overview](#architecture-overview)
+    - [Stream Channels](#stream-channels)
   - [Getting Started](#getting-started)
     - [Prerequisites](#prerequisites)
     - [Installation](#installation)
@@ -24,6 +25,7 @@ A local-first, multi-agent system that generates high‑quality, university‑gr
     - [Frontend UX](#frontend-ux)
     - [Exporters](#exporters)
   - [Storage Options](#storage-options)
+    - [Database Migrations](#database-migrations)
   - [Configuration \& Environment Variables](#configuration--environment-variables)
   - [Logging \& Tracing](#logging--tracing)
   - [Testing \& QA](#testing--qa)
@@ -133,8 +135,8 @@ cp .env.example .env
 # ENABLE_TRACING=true
 # ALLOWLIST_DOMAINS=["wikipedia.org",".edu",".gov"]
 # ALERT_WEBHOOK_URL=https://example.com/hook
-# LANGCHAIN_API_KEY=...
-# LANGCHAIN_ENDPOINT=https://api.smith.langchain.com
+# LANGSMITH_API_KEY=...
+# LANGSMITH_ENDPOINT=https://api.smith.langchain.com
 ```
 
 ### Running Locally
