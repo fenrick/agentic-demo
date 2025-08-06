@@ -4,36 +4,19 @@ from types import ModuleType, SimpleNamespace
 
 
 def test_main_logs_stream_boundaries(monkeypatch, caplog):
-    fake_agents = ModuleType("agents")
-    fake_cw = ModuleType("agents.content_weaver")
     fake_streaming = ModuleType("agents.streaming")
-
-    async def fake_run_content_weaver(state):
-        return SimpleNamespace()
-
-    fake_cw.run_content_weaver = fake_run_content_weaver
-    fake_agents.content_weaver = fake_cw
 
     def fake_stream_messages(message: str) -> None:
         logging.getLogger("agents.streaming").info("[messages] %s", message)
 
     fake_streaming.stream_messages = fake_stream_messages
-    fake_agents.streaming = fake_streaming
-    sys.modules["agents"] = fake_agents
-    sys.modules["agents.content_weaver"] = fake_cw
     sys.modules["agents.streaming"] = fake_streaming
 
-    fake_core = ModuleType("core")
-    fake_state = ModuleType("core.state")
-
-    class State:  # type: ignore[too-few-public-methods]
-        def __init__(self, prompt: str):
-            self.prompt = prompt
-
-    fake_state.State = State
-    fake_core.state = fake_state
-    sys.modules["core"] = fake_core
-    sys.modules["core.state"] = fake_state
+    fake_orchestrator = ModuleType("core.orchestrator")
+    fake_orchestrator.graph = SimpleNamespace(
+        ainvoke=lambda *_a, **_k: {"result": "ok"}
+    )
+    sys.modules["core.orchestrator"] = fake_orchestrator
 
     from cli import generate_lecture
 
