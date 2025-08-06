@@ -14,6 +14,14 @@ Command-line shortcuts for running the application, executing tests, and handlin
 
   Launches the backend with hot reload; use `--offline` to disable external network calls.
 
+- **Generate lecture material**
+
+  ```bash
+  ./scripts/cli.sh [--verbose] "<topic>"
+  ```
+
+  Produces lecture JSON for the topic. `--verbose` shows progress logs.
+
 ## Testing
 
 - **Backend tests**

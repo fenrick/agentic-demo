@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import logging
 from dataclasses import asdict
 from typing import Any, Dict
 
@@ -15,9 +16,14 @@ from core.state import State
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
-        description="Generate lecture material from a topic prompt."
+        description="Generate lecture material from a topic prompt.",
     )
     parser.add_argument("topic", help="Topic or outline for the lecture")
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Enable progress feedback on the console",
+    )
     return parser.parse_args()
 
 
@@ -39,6 +45,8 @@ async def _generate(topic: str) -> Dict[str, Any]:
 def main() -> None:
     """Entry point for console scripts."""
     args = parse_args()
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
     try:
         payload = asyncio.run(_generate(args.topic))
     except Exception as exc:  # pragma: no cover - defensive
