@@ -11,6 +11,9 @@
 
 set -euo pipefail
 
+# Ensure project modules are discoverable
+export PYTHONPATH="${PYTHONPATH:-}:$(pwd)/src"
+
 # Source environment variables if .env exists
 if [ -f .env ]; then
   set -a
@@ -19,7 +22,7 @@ if [ -f .env ]; then
 fi
 
 # Run database migrations
-poetry run alembic upgrade head
+python -m alembic upgrade head
 
 # Forward all arguments (e.g., the topic) to the CLI entry point
-poetry run generate-lecture "$@"
+python -m cli.generate_lecture "$@"
