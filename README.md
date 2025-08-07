@@ -1,6 +1,6 @@
 # Lecture Builder Agent
 
-A local-first, multi-agent system that generates high‑quality, university‑grade lecture and workshop outlines (with supporting materials) from a single topic prompt. Orchestrated by LangGraph and implemented in Python, the system integrates OpenAI o4‑mini/o3 models, pluggable web search (Perplexity Sonar or Tavily) via Pydantic AI, and a React‑based UX. Full state, citations, logs, and intermediates persist in SQLite (with optional Postgres fallback). Exports include Markdown, DOCX, and PDF.
+A local-first, multi-agent system that generates high‑quality, university‑grade lecture and workshop outlines (with supporting materials) from a single topic prompt. Agents are defined with Pydantic‑AI models and coordinated by a custom Python orchestrator. The system integrates OpenAI o4‑mini/o3 models, pluggable web search (Perplexity Sonar or Tavily), and a React‑based UX. Full state, citations, logs, and intermediates persist in SQLite (with optional Postgres fallback). Observability is handled by Logfire. Exports include Markdown, DOCX, and PDF.
 
 ---
 
@@ -17,7 +17,7 @@ A local-first, multi-agent system that generates high‑quality, university‑gr
     - [Configuration](#configuration)
     - [Running Locally](#running-locally)
   - [Component Breakdown](#component-breakdown)
-    - [Orchestration (LangGraph)](#orchestration-langgraph)
+    - [Orchestration](#orchestration)
     - [Retrieval \& Citation](#retrieval--citation)
     - [Content Synthesis](#content-synthesis)
     - [Quality Control](#quality-control)
@@ -39,7 +39,7 @@ A local-first, multi-agent system that generates high‑quality, university‑gr
 
 ## Key Features
 
-- **Multi-Agent Workflow**: Planner, Researcher, Synthesiser, Pedagogy Critic, Fact Checker, Human-in-Loop, and Exporter nodes working in a LangGraph state graph.
+- **Multi-Agent Workflow**: Planner, Researcher, Synthesiser, Pedagogy Critic, Fact Checker, Human-in-Loop, and Exporter nodes coordinated by a lightweight custom orchestrator.
 - **Streaming UI**: Token-level draft streaming with diff highlights; action/reasoning log streaming via SSE.
 - **Robust Citations**: Pluggable Perplexity or Tavily search, citation metadata stored in SQLite, Creative Commons and university domain filtering.
 - **Local-First**: Operates offline using cached corpora and fallback to local dense retrieval.
@@ -52,7 +52,7 @@ A local-first, multi-agent system that generates high‑quality, university‑gr
 
 The system comprises:
 
-1. **LangGraph StateGraph**: Manages typed `State` objects through nodes and edges. Handles checkpointing in SQLite.
+1. **Custom Orchestrator**: Manages typed `State` objects through nodes and edges defined with Pydantic models. Handles checkpointing in SQLite.
 2. **Agents**:
    - **Curriculum Planner**: Defines learning objectives and module structure.
    - **Researcher-Web**: Executes parallel Perplexity Sonar/OpenAI searches, dedupes and ranks sources.
@@ -67,7 +67,7 @@ The system comprises:
 
 ### Stream Channels
 
-Agents emit events over several LangGraph channels that the frontend can
+Agents emit events over several orchestrator channels that the frontend can
 subscribe to:
 
 - `messages` – token-level content such as LLM outputs.
@@ -129,19 +129,19 @@ cp .env.example .env
 # PERPLEXITY_API_KEY=...
 # TAVILY_API_KEY=...
 # SEARCH_PROVIDER=perplexity  # or 'tavily'
+# LOGFIRE_API_KEY=...
+# LOGFIRE_PROJECT=...
 # MODEL_NAME=o4-mini
 # DATA_DIR=./workspace
 # OFFLINE_MODE=false
 # ENABLE_TRACING=true
 # ALLOWLIST_DOMAINS=["wikipedia.org",".edu",".gov"]
 # ALERT_WEBHOOK_URL=https://example.com/hook
-# LANGSMITH_API_KEY=...
-# LANGSMITH_ENDPOINT=https://api.smith.langchain.com
 ```
 
 ### Running Locally
 
-1. **Start the backend** (FastAPI + LangGraph):
+1. **Start the backend** (FastAPI + custom orchestrator):
 
    ```bash
    ./scripts/run.sh [--offline]
@@ -166,10 +166,10 @@ cp .env.example .env
 
 ## Component Breakdown
 
-### Orchestration (LangGraph)
+### Orchestration
 
-- **StateGraph setup** in `src/core/orchestrator.py`.
-- **Checkpointing** via `AsyncSqliteSaver`.
+- **Custom orchestrator** implemented in `src/core/orchestrator.py` and leveraging Pydantic‑AI models for agent interfaces.
+- **Checkpointing** handled in `src/core/checkpoint.py` with SQLite or Postgres backends.
 - **Edge policies** enforce confidence thresholds and retry loops.
 
 ### Retrieval & Citation
@@ -182,7 +182,7 @@ cp .env.example .env
 
 - **OpenAIFunctionCaller** utilizes function-call pattern for outline JSON.
 - Schema enforcement in `schemas/outline.json`.
-- Token streaming via LangGraph `stream(messages)`.
+- Token streaming via the orchestrator's `messages` channel.
 
 ### Quality Control
 
@@ -267,7 +267,7 @@ The command reads `alembic.ini` and writes migration scripts to
 ## Testing & QA
 
 - **Unit tests**: `pytest` in `tests/`
-- **Integration tests**: mock LangGraph runs in CI.
+- **Integration tests**: mock orchestrator runs in CI.
 - **Performance tests**: `k6` scripts in `performance/`
 - **Accessibility**: Lighthouse audit configured in CI pipeline.
 
