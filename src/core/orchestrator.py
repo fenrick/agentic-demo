@@ -1,4 +1,8 @@
-"""Lightweight orchestration over a simple node pipeline."""
+"""Lightweight orchestration over a simple node pipeline.
+
+Each node is wrapped with :func:`wrap_with_tracing` so that execution occurs
+inside a ``logfire`` span capturing input/output hashes and token counts.
+"""
 
 from __future__ import annotations
 
@@ -59,6 +63,45 @@ validate_model_configuration()
 T = TypeVar("T")
 
 
+def wrap_with_tracing(
+    fn: Callable[[State], Awaitable[T]],
+) -> Callable[[State], Awaitable[T]]:
+    """Wrap ``fn`` to trace inputs, outputs and token usage.
+
+    A ``logfire`` span is opened using the function name. The span records
+    hashes of the input and output payloads along with the total token count.
+    """
+
+    async def wrapped(state: State) -> T:
+        name = fn.__name__
+        input_dict = state.to_dict()
+        input_hash = compute_hash(input_dict)
+        with logfire.span(name, inputs=input_dict, input_hash=input_hash) as span:
+            result = await fn(state)
+            output_hash = compute_hash(result)
+            tokens = _token_count(input_dict) + _token_count(result)
+            span.set_attributes({"output_hash": output_hash, "token_count": tokens})
+            if isinstance(result, dict):
+                span.set_attributes({"outputs": result})
+            workspace_id = getattr(state, "workspace_id", "default")
+            async with get_db_session() as conn:
+                await log_action(
+                    conn,
+                    workspace_id,
+                    name,
+                    input_hash,
+                    output_hash,
+                    tokens,
+                    0.0,
+                    datetime.utcnow(),
+                )
+            logfire.trace("completed node {node}", node=name, token_count=tokens)
+            return result
+
+    wrapped.__name__ = fn.__name__
+    return wrapped
+
+
 @dataclass
 class Node:
     """Single executable unit within the processing pipeline."""
@@ -91,23 +134,32 @@ def build_main_flow() -> List[Node]:
         )
 
     return [
-        Node("Planner", run_planner, "Content-Weaver", planner_condition),
-        Node("Researcher-Web", run_researcher_web, "Planner"),
-        Node("Content-Weaver", run_content_weaver, "Pedagogy-Critic"),
+        Node(
+            "Planner",
+            wrap_with_tracing(run_planner),
+            "Content-Weaver",
+            planner_condition,
+        ),
+        Node("Researcher-Web", wrap_with_tracing(run_researcher_web), "Planner"),
+        Node(
+            "Content-Weaver",
+            wrap_with_tracing(run_content_weaver),
+            "Pedagogy-Critic",
+        ),
         Node(
             "Pedagogy-Critic",
-            run_pedagogy_critic,
+            wrap_with_tracing(run_pedagogy_critic),
             "Fact-Checker",
             pedagogy_condition,
         ),
         Node(
             "Fact-Checker",
-            run_fact_checker,
+            wrap_with_tracing(run_fact_checker),
             "Human-In-Loop",
             factcheck_condition,
         ),
-        Node("Human-In-Loop", run_approver, "Exporter"),
-        Node("Exporter", run_exporter, None),
+        Node("Human-In-Loop", wrap_with_tracing(run_approver), "Exporter"),
+        Node("Exporter", wrap_with_tracing(run_exporter), None),
     ]
 
 
@@ -115,46 +167,8 @@ class GraphOrchestrator:
     """Execute nodes sequentially according to the defined pipeline."""
 
     def __init__(self, flow: List[Node]):
-        wrapped_flow: List[Node] = []
-        for node in flow:
-            wrapped_flow.append(
-                Node(
-                    node.name, self._wrap(node.name, node.fn), node.next, node.condition
-                )
-            )
-        self.flow = wrapped_flow
+        self.flow = flow
         self._lookup: Dict[str, Node] = {n.name: n for n in self.flow}
-
-    def _wrap(
-        self, name: str, node: Callable[[State], Awaitable[T]]
-    ) -> Callable[[State], Awaitable[T]]:
-        async def wrapped(state: State) -> T:
-            input_dict = state.to_dict()
-            input_hash = compute_hash(input_dict)
-            with logfire.span(name, inputs=input_dict) as span:
-                result = await node(state)
-                output_hash = compute_hash(result)
-                tokens = _token_count(input_dict) + _token_count(result)
-                workspace_id = getattr(state, "workspace_id", "default")
-                async with get_db_session() as conn:
-                    await log_action(
-                        conn,
-                        workspace_id,
-                        name,
-                        input_hash,
-                        output_hash,
-                        tokens,
-                        0.0,
-                        datetime.utcnow(),
-                    )
-                span.set_attributes({"token_count": tokens})
-                if isinstance(result, dict):
-                    span.set_attributes({"outputs": result})
-                logfire.trace("completed node {node}", node=name, token_count=tokens)
-                return result
-
-        wrapped.__name__ = name
-        return wrapped
 
     async def run(self, state: State) -> State:
         """Run the pipeline for ``state``."""
