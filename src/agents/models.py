@@ -2,62 +2,56 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import List, Optional
+from pydantic import BaseModel, Field
 
 
-@dataclass(slots=True)
-class Activity:
+class Activity(BaseModel):
     """Learning activity performed during the lecture."""
 
     type: str
     description: str
     duration_min: int
-    learning_objectives: List[str] = field(default_factory=list)
+    learning_objectives: list[str] = Field(default_factory=list)
 
 
-@dataclass(slots=True)
-class SlideBullet:
+class SlideBullet(BaseModel):
     """Bullet points associated with a slide."""
 
     slide_number: int
-    bullets: List[str]
+    bullets: list[str]
 
 
-@dataclass(slots=True)
-class AssessmentItem:
+class AssessmentItem(BaseModel):
     """Assessment or quiz used to evaluate understanding."""
 
     type: str
     description: str
-    max_score: Optional[float] = None
+    max_score: float | None = None
 
 
-@dataclass(slots=True)
-class Citation:
+class Citation(BaseModel):
     """Reference to an external source."""
 
     url: str
     title: str
     retrieved_at: str
-    licence: Optional[str] = None
+    licence: str | None = None
 
 
-@dataclass(slots=True)
-class WeaveResult:
+class WeaveResult(BaseModel):
     """Typed container mirroring the weave schema output."""
 
     title: str
-    learning_objectives: List[str]
-    activities: List[Activity]
+    learning_objectives: list[str]
+    activities: list[Activity]
     duration_min: int
-    author: Optional[str] = None
-    date: Optional[str] = None
-    version: Optional[str] = None
-    summary: Optional[str] = None
-    tags: Optional[List[str]] = None
-    prerequisites: Optional[List[str]] = None
-    slide_bullets: Optional[List[SlideBullet]] = None
-    speaker_notes: Optional[str] = None
-    assessment: Optional[List[AssessmentItem]] = None
-    references: Optional[List[Citation]] = None
+    author: str | None = None
+    date: str | None = None
+    version: str | None = None
+    summary: str | None = None
+    tags: list[str] | None = None
+    prerequisites: list[str] | None = None
+    slide_bullets: list[SlideBullet] | None = None
+    speaker_notes: str | None = None
+    assessment: list[AssessmentItem] | None = None
+    references: list[Citation] | None = None

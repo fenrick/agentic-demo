@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import sys
 import types
@@ -10,62 +11,77 @@ from typing import Any
 import pytest
 
 from agents import content_weaver
-from agents.content_weaver import parse_function_response, RetryableError
-
-
-def test_parse_function_response_extracts_json() -> None:
-    """parse_function_response returns the inner JSON block."""
-    tokens = ["prefix", '{"title": "Demo"}', "suffix"]
-    result = parse_function_response(tokens)
-    assert result["title"] == "Demo"
-
-
-def test_parse_function_response_errors_without_json() -> None:
-    """parse_function_response raises when JSON is absent."""
-    with pytest.raises(RetryableError):
-        parse_function_response(["no json here"])
+from agents.content_weaver import RetryableError, WeaveResult
 
 
 def test_call_openai_function_supplies_schema(monkeypatch: Any) -> None:
-    """call_openai_function sends the lecture schema to the model."""
-
-    class FakeMessage:
-        def __init__(self, content: str) -> None:
-            self.content = content
-
-    fake_messages = types.SimpleNamespace(
-        HumanMessage=FakeMessage, SystemMessage=FakeMessage
-    )
-    monkeypatch.setitem(sys.modules, "pydantic_ai.messages", fake_messages)
+    """call_openai_function sends the model JSON schema."""
 
     captured: dict[str, Any] = {}
 
-    class DummyModel:
-        async def astream(self, messages: list[FakeMessage]) -> Any:
-            captured["messages"] = messages
+    class DummyAgent:
+        def __init__(self, *, instructions: list[str], model: Any) -> None:
+            captured["instructions"] = instructions
 
-            async def gen() -> Any:
-                yield FakeMessage("")
+        async def run_stream(
+            self, prompt: str
+        ) -> Any:  # pragma: no cover - used in test
+            class Resp:
+                async def __aenter__(self) -> "Resp":
+                    return self
 
-            return gen()
+                async def __aexit__(self, *args: Any) -> None:
+                    return None
 
-    def fake_init_chat_model(streaming: bool = True) -> DummyModel:
-        return DummyModel()
+                async def stream_text(self, delta: bool = False) -> Any:
+                    async def gen() -> Any:
+                        yield ""
 
-    fake_wrapper = types.SimpleNamespace(init_chat_model=fake_init_chat_model)
-    monkeypatch.setitem(sys.modules, "agents.agent_wrapper", fake_wrapper)
+                    return gen()
+
+            return Resp()
+
+    monkeypatch.setitem(
+        sys.modules, "pydantic_ai", types.SimpleNamespace(Agent=DummyAgent)
+    )
+
+    monkeypatch.setitem(
+        sys.modules,
+        "agents.agent_wrapper",
+        types.SimpleNamespace(
+            init_chat_model=lambda **_: types.SimpleNamespace(_model=None)
+        ),
+    )
 
     schema_marker = {"marker": "value"}
-    monkeypatch.setattr(content_weaver, "load_schema", lambda: schema_marker)
+    monkeypatch.setattr(
+        WeaveResult, "model_json_schema", staticmethod(lambda: schema_marker)
+    )
 
     async def run() -> None:
         stream = await content_weaver.call_openai_function("topic")
         _ = [token async for token in stream]
 
-    import asyncio
-
     asyncio.run(run())
 
     schema_str = json.dumps(schema_marker, indent=2)
-    messages = captured.get("messages", [])
-    assert any(schema_str in m.content for m in messages)
+    instructions = captured.get("instructions", [])
+    assert any(schema_str in instr for instr in instructions)
+
+
+def test_content_weaver_propagates_validation_error(monkeypatch: Any) -> None:
+    """Invalid model output raises :class:`RetryableError`."""
+
+    async def fake_call(prompt: str) -> Any:  # pragma: no cover - used in test
+        async def gen() -> Any:
+            yield "{}"  # missing required fields
+
+        return gen()
+
+    monkeypatch.setattr(content_weaver, "call_openai_function", fake_call)
+
+    from core.state import State
+
+    state = State(prompt="topic")
+    with pytest.raises(RetryableError):
+        asyncio.run(content_weaver.content_weaver(state))
