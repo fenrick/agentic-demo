@@ -214,17 +214,8 @@ Each node module defines a single `async` handler function and its input/output 
 - **File:** `src/core/orchestrator.py`
 - **Class `GraphOrchestrator`**
 
-- **Method `initialize_graph()`**
-  - Register all nodes with their stream channels (`values`, `updates`, `messages`, `debug`).
-
-- **Method `register_edges()`**
-  - Wire node-to-node transitions, referencing policies (see B.3).
-
-- **Method `start(initial_prompt: str)`**
-  - Create initial `State`, invoke the first Planner run, and begin streaming.
-
-- **Method `resume()`**
-  - Load check-pointed state, hook into an existing graph instance, and continue where it left off.
+  - `run(state: State) -> State` — execute the pipeline for a given state.
+  - `stream(state: State)` — yield progress events for each executed node.
 
 ---
 

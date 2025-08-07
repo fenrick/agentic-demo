@@ -15,7 +15,7 @@ from observability import install_auto_tracing
 install_auto_tracing()
 
 from agents.streaming import stream_messages
-from core.orchestrator import graph
+from core.orchestrator import graph_orchestrator
 from core.state import State
 from config import load_settings
 
@@ -38,7 +38,7 @@ async def _generate(topic: str) -> Dict[str, Any]:
     """Run the full graph for ``topic`` and return the final state."""
 
     state = State(prompt=topic)
-    await graph.run(state)
+    await graph_orchestrator.run(state)
     return state.to_dict()
 
 

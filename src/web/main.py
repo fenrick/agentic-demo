@@ -19,7 +19,7 @@ from fastapi.staticfiles import StaticFiles
 from agents.cache_backed_researcher import CacheBackedResearcher
 from agents.researcher_web import PerplexityClient, TavilyClient
 from config import Settings, load_settings
-from core.orchestrator import GraphOrchestrator
+from core.orchestrator import graph_orchestrator
 from persistence.database import get_db_session, init_db
 
 
@@ -76,12 +76,9 @@ async def setup_database(app: FastAPI) -> None:
 
 
 def setup_graph(app: FastAPI) -> None:
-    """Initialize the application graph."""
+    """Expose the orchestrator instance on the application state."""
 
-    orchestrator = GraphOrchestrator()
-    orchestrator.initialize_graph()
-    orchestrator.register_edges()
-    app.state.graph = orchestrator.graph
+    app.state.graph = graph_orchestrator
 
 
 def mount_frontend(app: FastAPI) -> None:

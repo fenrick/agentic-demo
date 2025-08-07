@@ -175,10 +175,18 @@ class GraphOrchestrator:
 
         current = self.flow[0]
         while current:
-            result = await current.fn(state)
+            try:
+                result = await current.fn(state)
+            except Exception:
+                logger.exception("Node %s failed", current.name)
+                raise
             next_name = current.next
             if current.condition is not None:
-                next_name = current.condition(result, state)
+                try:
+                    next_name = current.condition(result, state)
+                except Exception:
+                    logger.exception("Condition for %s failed", current.name)
+                    raise
             if next_name is None:
                 break
             current = self._lookup[next_name]
@@ -190,11 +198,19 @@ class GraphOrchestrator:
         current = self.flow[0]
         while current:
             yield {"type": "action", "payload": current.name}
-            result = await current.fn(state)
+            try:
+                result = await current.fn(state)
+            except Exception:
+                logger.exception("Node %s failed", current.name)
+                raise
             yield {"type": "state", "payload": state.to_dict()}
             next_name = current.next
             if current.condition is not None:
-                next_name = current.condition(result, state)
+                try:
+                    next_name = current.condition(result, state)
+                except Exception:
+                    logger.exception("Condition for %s failed", current.name)
+                    raise
             if next_name is None:
                 break
             current = self._lookup[next_name]
