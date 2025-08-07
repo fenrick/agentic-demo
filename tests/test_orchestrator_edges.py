@@ -1,3 +1,4 @@
+"""Unit tests for edge registration in the orchestrator."""
 # mypy: ignore-errors
 import sys
 import types
@@ -83,121 +84,18 @@ sys.modules["logfire"] = logfire_stub
 async def _dummy_async(*_args, **_kwargs):
     return None
 
+from __future__ import annotations
 
-agents_planner_stub = types.ModuleType("agents.planner")
+from pathlib import Path
 
-
-class PlanResult:  # type: ignore[too-many-ancestors]
-    pass
-
-
-agents_planner_stub.PlanResult = PlanResult
-agents_planner_stub.run_planner = _dummy_async
-sys.modules.setdefault("agents", types.ModuleType("agents"))
-sys.modules["agents.planner"] = agents_planner_stub
+from core.orchestrator import GraphOrchestrator
 
 
-# Additional agent stubs referenced by langgraph.json
-for _mod, _name in [
-    ("agents.researcher_web_node", "run_researcher_web"),
-    ("agents.content_weaver", "run_content_weaver"),
-    ("agents.pedagogy_critic", "run_pedagogy_critic"),
-    ("agents.fact_checker", "run_fact_checker"),
-    ("agents.approver", "run_approver"),
-    ("agents.exporter", "run_exporter"),
-]:
-    mod = types.ModuleType(_mod)
-    setattr(mod, _name, _dummy_async)
-    sys.modules[_mod] = mod
-
-core_policies_stub = types.ModuleType("core.policies")
-
-
-def policy_retry_on_low_confidence(*_a, **_k):  # type: ignore[no-untyped-def]
-    return "continue"
-
-
-def policy_retry_on_critic_failure(*_a, **_k):  # type: ignore[no-untyped-def]
-    return False
-
-
-core_policies_stub.policy_retry_on_low_confidence = policy_retry_on_low_confidence
-core_policies_stub.policy_retry_on_critic_failure = policy_retry_on_critic_failure
-sys.modules["core.policies"] = core_policies_stub
-
-core_logging_stub = types.ModuleType("core.logging")
-
-
-def get_logger(*_args, **_kwargs):  # type: ignore[no-untyped-def]
-    class _Logger:
-        def info(self, *a, **k):  # type: ignore[no-untyped-def]
-            pass
-
-        def exception(self, *a, **k):  # type: ignore[no-untyped-def]
-            pass
-
-    return _Logger()
-
-
-core_logging_stub.get_logger = get_logger
-sys.modules["core.logging"] = core_logging_stub
-
-core_state_stub = types.ModuleType("core.state")
-
-
-class State:  # type: ignore[too-many-ancestors]
-    def __init__(self, prompt: str = "") -> None:
-        self.prompt = prompt
-        self.retries = {}
-
-    def to_dict(self):  # type: ignore[no-untyped-def]
-        return {}
-
-
-core_state_stub.State = State
-core_state_stub.Citation = object
-sys.modules["core.state"] = core_state_stub
-
-persistence_stub = types.ModuleType("persistence")
-
-
-async def get_db_session():  # type: ignore[no-untyped-def]
-    class _Ctx:
-        async def __aenter__(self):  # type: ignore[no-untyped-def]
-            return self
-
-        async def __aexit__(self, *exc):  # type: ignore[no-untyped-def]
-            pass
-
-    return _Ctx()
-
-
-persistence_stub.get_db_session = get_db_session
-sys.modules["persistence"] = persistence_stub
-
-persistence_logs_stub = types.ModuleType("persistence.logs")
-
-
-def compute_hash(_):  # type: ignore[no-untyped-def]
-    return "hash"
-
-
-async def log_action(*_a, **_k):  # type: ignore[no-untyped-def]
-    pass
-
-
-persistence_logs_stub.compute_hash = compute_hash
-persistence_logs_stub.log_action = log_action
-sys.modules["persistence.logs"] = persistence_logs_stub
-
-from core.orchestrator import GraphOrchestrator  # noqa: E402
-
-
-def dummy_cond(prev, state):  # type: ignore[no-untyped-def]
+def dummy_cond(prev, state):
     return True
 
 
-def cond_str(prev, state):  # type: ignore[no-untyped-def]
+def cond_str(prev, state):
     return "loop"
 
 
