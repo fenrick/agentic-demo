@@ -7,6 +7,7 @@ import os
 from typing import TYPE_CHECKING
 
 import logfire
+from loguru import logger as loguru_logger
 
 if TYPE_CHECKING:  # pragma: no cover - import for type checking only
     from fastapi import FastAPI
@@ -28,13 +29,7 @@ def init_observability() -> None:
     logfire.instrument_sqlalchemy()
     logfire.instrument_sqlite3()
     logfire.instrument_system_metrics()
-
-    try:  # pragma: no cover - loguru is optional at runtime
-        from loguru import logger as loguru_logger
-    except Exception:  # pragma: no cover - dependency missing
-        pass
-    else:
-        loguru_logger.add(logfire.loguru_handler())
+    loguru_logger.add(logfire.loguru_handler())
 
 
 def instrument_app(app: "FastAPI") -> None:
