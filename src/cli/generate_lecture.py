@@ -1,5 +1,6 @@
 """Command-line interface for generating lecture material."""
 
+# ruff: noqa: E402
 from __future__ import annotations
 
 import argparse
@@ -8,11 +9,15 @@ import json
 import logging
 from typing import Any, Dict
 
+import logfire
+from observability import install_auto_tracing
+
+install_auto_tracing()
+
 from agents.streaming import stream_messages
 from core.orchestrator import graph
 from core.state import State
 from config import load_settings
-import logfire
 
 
 def parse_args() -> argparse.Namespace:
