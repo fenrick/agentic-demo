@@ -6,11 +6,12 @@ keyword heuristics only when necessary.
 
 from __future__ import annotations
 
-import json
 import logging
 from collections import Counter
 from dataclasses import dataclass
 from typing import Callable, Dict, List, cast
+
+from pydantic import BaseModel, ValidationError
 
 from agents.agent_wrapper import init_chat_model
 from agents.models import Activity
@@ -59,6 +60,12 @@ class Outline:
     activities: List[Activity]
 
 
+class _LevelResponse(BaseModel):
+    """Schema for Bloom level classification responses."""
+
+    level: str
+
+
 def _keyword_classify(text: str) -> str:
     """Map ``text`` to a Bloom level via keyword matching."""
 
@@ -83,11 +90,11 @@ def classify_bloom_level(text: str) -> str:
             response = model.invoke(prompt)
             content = response.content or ""
             try:
-                data = json.loads(content)
-            except json.JSONDecodeError:
-                logging.warning("LLM response not valid JSON: %s", content)
+                data = _LevelResponse.model_validate_json(content)
+            except ValidationError:
+                logging.warning("LLM response not valid schema: %s", content)
             else:
-                level = str(data.get("level", "")).strip().lower()
+                level = data.level.strip().lower()
                 if level in BLOOM_LEVELS:
                     return level
     except Exception:

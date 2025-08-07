@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import re
 from dataclasses import dataclass
@@ -94,7 +93,7 @@ async def run_planner(state: State) -> PlanResult:
     try:
         data = PlannerOutput.model_validate_json(raw)
         outline = Outline(steps=[step.strip() for step in data.steps])
-    except (ValidationError, json.JSONDecodeError):
+    except ValidationError:
         outline = extract_outline(raw)
     state.outline = outline
     confidence = 0.0
