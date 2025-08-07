@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 from types import SimpleNamespace
 from typing import Any, Dict, Optional
 
@@ -80,21 +79,17 @@ def init_chat_model(**overrides: Any) -> Optional[PydanticAIChatModel]:
     if model_id in _MODEL_CACHE:
         return _MODEL_CACHE[model_id]
 
-    try:
-        if provider_name == "perplexity":
-            pplx_api_key = overrides.pop("pplx_api_key", settings.perplexity_api_key)
-            provider = OpenAIProvider(
-                base_url="https://api.perplexity.ai", api_key=pplx_api_key
-            )
-        else:
-            provider = OpenAIProvider()
+    if provider_name == "perplexity":
+        pplx_api_key = overrides.pop("pplx_api_key", settings.perplexity_api_key)
+        provider = OpenAIProvider(
+            base_url="https://api.perplexity.ai", api_key=pplx_api_key
+        )
+    else:
+        provider = OpenAIProvider()
 
-        model = PydanticAIChatModel(model_name, provider)
-        _MODEL_CACHE[model_id] = model
-        return model
-    except Exception:  # pragma: no cover - optional dependencies
-        logging.exception("Failed to initialize chat model")
-        return None
+    model = PydanticAIChatModel(model_name, provider)
+    _MODEL_CACHE[model_id] = model
+    return model
 
 
 __all__ = ["init_chat_model", "clear_model_cache"]

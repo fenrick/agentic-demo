@@ -144,7 +144,7 @@ Risk assessment assumes default deployment in a secure network.
 - **Platform:** GitHub Actions or GitLab CI in isolated runner
 - **Checks:** SAST (Bandit for Python), dependency audit (`npm audit`, `pip-audit`), container scan (Trivy)
 - **Secrets in CI:** Stored in encrypted secrets store; never printed in logs
-- **Branch Protection:** Require code review, status checks, signed commits optional
+- **Branch Protection:** Require code review, status checks, signed commits
 
 ---
 

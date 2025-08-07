@@ -1,6 +1,6 @@
 # Lecture Builder Agent
 
-A local-first, multi-agent system that generates high‑quality, university‑grade lecture and workshop outlines (with supporting materials) from a single topic prompt. Agents are defined with Pydantic‑AI models and coordinated by a custom Python orchestrator. The system integrates OpenAI o4‑mini/o3 models, pluggable web search (Perplexity Sonar or Tavily), and a React‑based UX. Full state, citations, logs, and intermediates persist in SQLite (with optional Postgres fallback). Observability is handled by Logfire. Exports include Markdown, DOCX, and PDF.
+A local-first, multi-agent system that generates high‑quality, university‑grade lecture and workshop outlines (with supporting materials) from a single topic prompt. Agents are defined with Pydantic‑AI models and coordinated by a custom Python orchestrator. The system integrates OpenAI o4‑mini/o3 models, pluggable web search (Perplexity Sonar or Tavily), and a React‑based UX. Full state, citations, logs, and intermediates persist in SQLite or Postgres. Observability is handled by Logfire. Exports include Markdown, DOCX, and PDF.
 
 ---
 
@@ -44,7 +44,7 @@ A local-first, multi-agent system that generates high‑quality, university‑gr
 - **Robust Citations**: Pluggable Perplexity or Tavily search, citation metadata stored in SQLite, Creative Commons and university domain filtering.
 - **Local-First**: Operates offline using cached corpora and fallback to local dense retrieval.
 - **Flexible Exports**: Markdown (canonical), DOCX (python-docx), PDF (WeasyPrint), with cover page, TOC, and bibliography.
-- **Audit & Governance**: Immutable action logs, SHA‑256 state hashes, role‑based access, optional database encryption.
+- **Audit & Governance**: Immutable action logs, SHA‑256 state hashes, role‑based access, database encryption.
 
 ---
 
@@ -62,7 +62,7 @@ The system comprises:
    - **Exporter**: Renders final deliverables.
 
 3. **Web UX**: React + Tailwind, SSE-driven, panels for document, log, sources, and controls.
-4. **Storage Layer**: SQLite for state, logs, citations; optional Postgres via repository abstraction.
+4. **Storage Layer**: SQLite or Postgres for state, logs, citations via repository abstraction.
 5. **Export Pipeline**: Pandoc-ready Markdown, python-docx, WeasyPrint PDF.
 
 ### Stream Channels

@@ -8,21 +8,10 @@ from __future__ import annotations
 import json
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-try:  # pragma: no cover - optional dependency
-    from dotenv import load_dotenv as _load_dotenv
-except Exception:  # pragma: no cover - when python-dotenv is not installed
-
-    def _load_dotenv(*_args: Any, **_kwargs: Any) -> bool:  # type: ignore[misc]
-        """Fallback ``load_dotenv`` that does nothing when dependency missing."""
-        return False
-
-
-load_dotenv = _load_dotenv
+from dotenv import load_dotenv
 
 # Load environment variables from a `.env` file if present.
 load_dotenv()

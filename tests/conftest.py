@@ -1,7 +1,7 @@
 """Pytest configuration and lightweight dependency stubs.
 
 Adds the project's ``src`` directory to ``sys.path`` and provides small
-stand-ins for optional third-party packages so tests can execute without
+stand-ins for selected third-party packages so tests can execute without
 network access or heavyweight installations.
 """
 
@@ -23,7 +23,7 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 # ---------------------------------------------------------------------------
-# Lightweight stubs for optional third-party dependencies
+# Lightweight stubs for third-party dependencies
 # ---------------------------------------------------------------------------
 
 # Provide dummy environment keys expected by the settings module.
@@ -60,29 +60,6 @@ run_helpers_stub = types.ModuleType("langsmith.run_helpers")
 run_helpers_stub.trace = lambda *a, **k: contextlib.nullcontext()  # type: ignore[attr-defined]
 sys.modules.setdefault("langsmith.run_helpers", run_helpers_stub)
 
-# Minimal loguru stub to satisfy the logging module.
-
-
-class _Logger:
-    def remove(self, *a, **k) -> None:  # pragma: no cover - simple stub
-        pass
-
-    def add(self, *a, **k) -> None:  # pragma: no cover - simple stub
-        pass
-
-    def bind(self, **_k):  # pragma: no cover - simple stub
-        return self
-
-    def info(self, *a, **k) -> None:  # pragma: no cover - simple stub
-        pass
-
-    def exception(self, *a, **k) -> None:  # pragma: no cover - simple stub
-        pass
-
-
-loguru_stub = types.ModuleType("loguru")
-loguru_stub.logger = _Logger()  # type: ignore[attr-defined]
-sys.modules.setdefault("loguru", loguru_stub)
 
 # Provide an ``opentelemetry`` tracer that acts as a no-op context manager.
 

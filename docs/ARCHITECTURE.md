@@ -51,7 +51,7 @@ This document provides a **comprehensive** and **explicit** description of the L
 3. **Retrieval Layer**
    - **ChatPerplexity (Sonar model)**: LangChain wrapper with API key support
    - **Cache Manager**: reads/writes to `retrieval_cache` table
-   - **Dense Retriever**: optional fallback using `faiss` index of CC-BY abstracts
+   - **Dense Retriever**: fallback using `faiss` index of CC-BY abstracts
 
 4. **Synthesis Layer**
    - **LangChain ChatOpenAI**: wraps chat completions with streaming
@@ -67,7 +67,7 @@ This document provides a **comprehensive** and **explicit** description of the L
    - **MarkdownRenderer**: Jinja templates
    - **DocxRenderer**: `python-docx` templates
    - **PdfRenderer**: WeasyPrint with MathJax pre-render
-   - **Signer**: optional GPG signing of ZIP manifest
+   - **Signer**: GPG signing of ZIP manifest
 
 7. **Storage Layer**
    - **SQLite / Postgres**: `state_snapshots`, `citations`, `action_log`, `documents`, `critique_report`, `factcheck_report`

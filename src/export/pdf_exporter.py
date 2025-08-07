@@ -6,10 +6,7 @@ from html import escape
 from pathlib import Path
 from typing import Optional
 
-try:  # pragma: no cover - optional dependency may be missing
-    from weasyprint import HTML  # type: ignore
-except Exception:  # pragma: no cover - fallback when WeasyPrint isn't available
-    HTML = None  # type: ignore
+from weasyprint import HTML  # type: ignore
 
 from .markdown_exporter import MarkdownExporter
 
@@ -89,14 +86,7 @@ class PdfExporter:
     def render_pdf(html: str) -> bytes:
         """Render HTML content into PDF bytes.
 
-        The original implementation depends on :mod:`weasyprint`, which in turn
-        requires native libraries such as ``gobject`` that are not available in
-        the execution environment of these kata-style tests.  Importing
-        WeasyPrint in such an environment raises an :class:`OSError` during
-        module import.  To keep the exporter usable and the tests hermetic we
-        provide a tiny pure-Python fallback that generates a minimal PDF
-        document.  The resulting bytes still begin with ``%PDF`` so existing
-        callers continue to work, albeit without full PDF rendering.
+        Relies on :mod:`weasyprint` to render a styled PDF document.
 
         Args:
             html: The HTML representation of the document.
@@ -104,9 +94,5 @@ class PdfExporter:
         Returns:
             The binary PDF data.
         """
-
-        if HTML is None:
-            body = html.encode("utf-8")
-            return b"%PDF-1.4\n%" + body + b"\n%%EOF"
 
         return HTML(string=html).write_pdf()

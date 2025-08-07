@@ -1,4 +1,4 @@
-"""Utilities for emitting LangGraph stream events with optional fallbacks."""
+"""Utilities for emitting LangGraph stream events."""
 
 from __future__ import annotations
 
