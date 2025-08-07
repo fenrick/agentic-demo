@@ -5,7 +5,8 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
+from starlette.types import ASGIApp
 
 import logfire
 from loguru import logger as loguru_logger
@@ -56,4 +57,4 @@ def init_observability() -> None:
 def instrument_app(app: "FastAPI") -> None:
     """Instrument a FastAPI application and its ASGI server."""
     logfire.instrument_fastapi(app, capture_headers=True)
-    logfire.instrument_asgi(app)
+    logfire.instrument_asgi(cast(ASGIApp, app))  # type: ignore[arg-type]
