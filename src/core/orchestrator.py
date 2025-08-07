@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from datetime import datetime
+from time import perf_counter
 from typing import Any, Awaitable, Callable, Dict, List, Optional, TypeVar
 
 import config
@@ -29,10 +30,14 @@ from core.policies import (
     policy_retry_on_low_confidence,
 )
 from core.state import State
+from metrics.collector import MetricsCollector
+from metrics.repository import MetricsRepository
 from persistence import get_db_session
 from persistence.logs import compute_hash, log_action
 
 logger = get_logger()
+
+metrics = MetricsCollector(MetricsRepository(":memory:"))
 
 try:
     _ENCODING = tiktoken.encoding_for_model(config.DEFAULT_MODEL_NAME)
@@ -76,14 +81,24 @@ def wrap_with_tracing(
         name = fn.__name__
         input_dict = state.to_dict()
         input_hash = compute_hash(input_dict)
+        start = perf_counter()
         with logfire.span(name, inputs=input_dict, input_hash=input_hash) as span:
             result = await fn(state)
             output_hash = compute_hash(result)
             tokens = _token_count(input_dict) + _token_count(result)
-            span.set_attributes({"output_hash": output_hash, "token_count": tokens})
+            duration_ms = (perf_counter() - start) * 1000
+            span.set_attributes(
+                {
+                    "output_hash": output_hash,
+                    "token_count": tokens,
+                    "latency_ms": duration_ms,
+                }
+            )
             if isinstance(result, dict):
                 span.set_attributes({"outputs": result})
             workspace_id = getattr(state, "workspace_id", "default")
+            metrics.record(workspace_id, f"{name}.tokens", tokens)
+            metrics.record(workspace_id, f"{name}.latency_ms", duration_ms)
             async with get_db_session() as conn:
                 await log_action(
                     conn,
@@ -95,7 +110,12 @@ def wrap_with_tracing(
                     0.0,
                     datetime.utcnow(),
                 )
-            logfire.trace("completed node {node}", node=name, token_count=tokens)
+            logfire.trace(
+                "completed node {node}",
+                node=name,
+                token_count=tokens,
+                latency_ms=duration_ms,
+            )
             return result
 
     wrapped.__name__ = fn.__name__
@@ -227,4 +247,5 @@ __all__ = [
     "build_main_flow",
     "graph_orchestrator",
     "graph",
+    "metrics",
 ]

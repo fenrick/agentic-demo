@@ -295,6 +295,8 @@ been replaced by Logfire's settings.
 - **Tracing:** Logfire spans capture node execution details, including token
   counts. OpenTelemetry instrumentation remains enabled for FastAPI and
   outbound HTTP requests.
+- **Metrics:** High-volume nodes record token usage and latency through
+  Logfire and the in-memory metrics collector for proactive monitoring.
 
 ---
 
@@ -303,6 +305,8 @@ been replaced by Logfire's settings.
 - **Unit tests**: `pytest` in `tests/`
 - **Integration tests**: mock orchestrator runs in CI.
 - **Performance tests**: `k6` scripts in `performance/`
+- **Benchmarks**: `scripts/benchmark_pipeline.py` compares the current
+  pipeline against the previous implementation to surface regressions.
 - **Accessibility**: Lighthouse audit configured in CI pipeline.
 
 ---
