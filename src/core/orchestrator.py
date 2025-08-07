@@ -1,19 +1,29 @@
-"""Lightweight orchestration over a JSON-defined DAG."""
+"""Lightweight orchestration over a simple node pipeline."""
 
 from __future__ import annotations
 
-import importlib
 import json
+from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Awaitable, Callable, Optional, TypeVar, cast
+from typing import Any, Awaitable, Callable, Dict, List, Optional, TypeVar
 
-import tiktoken
 import config
 import logfire
+import tiktoken
 
 from agents.planner import PlanResult  # noqa: F401
+from agents.planner import run_planner
+from agents.researcher_web_node import run_researcher_web
+from agents.content_weaver import run_content_weaver
+from agents.pedagogy_critic import run_pedagogy_critic
+from agents.fact_checker import run_fact_checker
+from agents.approver import run_approver
+from agents.exporter import run_exporter
 from core.logging import get_logger
+from core.policies import (
+    policy_retry_on_critic_failure,
+    policy_retry_on_low_confidence,
+)
 from core.state import State
 from persistence import get_db_session
 from persistence.logs import compute_hash, log_action
@@ -22,7 +32,7 @@ logger = get_logger()
 
 try:
     _ENCODING = tiktoken.encoding_for_model(config.DEFAULT_MODEL_NAME)
-except KeyError:
+except KeyError:  # pragma: no cover - fallback for unknown models
     _ENCODING = tiktoken.get_encoding("cl100k_base")
 
 
@@ -34,11 +44,7 @@ def _token_count(payload: object) -> int:
 
 
 def validate_model_configuration() -> None:
-    """Ensure the configured model matches the enforced default.
-
-    Loads :mod:`config` settings on demand to avoid requiring environment
-    variables at import time.
-    """
+    """Ensure the configured model matches the enforced default."""
 
     configured = config.load_settings().model
     if configured != config.MODEL:
@@ -50,112 +56,74 @@ def validate_model_configuration() -> None:
 
 validate_model_configuration()
 
-
 T = TypeVar("T")
 
 
-def _import_callable(path: str) -> Callable[..., Awaitable | object]:
-    """Import a callable from ``module:qualname`` style paths."""
+@dataclass
+class Node:
+    """Single executable unit within the processing pipeline."""
 
-    module, name = path.rsplit(".", 1)
-    mod = importlib.import_module(module)
-    return getattr(mod, name)
-
-
-def _coerce_mapping_key(key: str) -> str | bool:
-    """Return ``key`` converted to native bool when applicable.
-
-    The JSON graph specification stores mapping keys as strings. When a
-    condition function returns a boolean value the keys "True" and "False"
-    would not match the mapping without conversion. This helper ensures that
-    such keys are converted to their boolean counterparts while leaving other
-    values untouched.
-    """
-
-    lower = key.lower()
-    if lower == "true":
-        return True
-    if lower == "false":
-        return False
-    return key
+    name: str
+    fn: Callable[[State], Awaitable[Any]]
+    next: Optional[str]
+    condition: Optional[Callable[[Any, State], Optional[str]]] = None
 
 
-START = "START"
-END = "END"
+def build_main_flow() -> List[Node]:
+    """Return the ordered list of nodes forming the primary pipeline."""
 
+    def planner_condition(result: PlanResult, state: State) -> Optional[str]:
+        decision = policy_retry_on_low_confidence(result, state)
+        return "Researcher-Web" if decision == "loop" else "Content-Weaver"
 
-class Graph:
-    """Simple directed acyclic graph executor."""
+    def pedagogy_condition(report: Any, state: State) -> Optional[str]:
+        return (
+            "Content-Weaver"
+            if policy_retry_on_critic_failure(report, state)
+            else "Fact-Checker"
+        )
 
-    def __init__(
-        self,
-        nodes: dict[str, Callable[[State], Awaitable[Any]]],
-        edges: dict[str, list[str]],
-        conditionals: dict[str, tuple[Callable[[State], Any], dict[Any, str]]],
-    ) -> None:
-        self.nodes = nodes
-        self.edges = edges
-        self.conditionals = conditionals
+    def factcheck_condition(report: Any, state: State) -> Optional[str]:
+        return (
+            "Content-Weaver"
+            if policy_retry_on_critic_failure(report, state)
+            else "Human-In-Loop"
+        )
 
-    async def invoke(self, name: str, state: State, **kwargs: Any) -> Any:
-        """Execute a single node by ``name``."""
-
-        fn = self.nodes[name]
-        return await fn(state, **kwargs)
-
-    async def run(self, state: State) -> State:
-        """Run nodes sequentially starting from ``START`` until ``END``."""
-
-        current = START
-        while True:
-            next_nodes = self.edges.get(current, [])
-            if not next_nodes:
-                break
-            node = next_nodes[0]
-            if node == END:
-                break
-            await self.nodes[node](state)
-            if node in self.conditionals:
-                cond, mapping = self.conditionals[node]
-                key = cond(state)
-                current = mapping.get(key, END)
-            else:
-                current = node
-        return state
-
-    async def stream(self, state: State):
-        """Yield events for each node execution."""
-
-        current = START
-        while True:
-            next_nodes = self.edges.get(current, [])
-            if not next_nodes:
-                break
-            node = next_nodes[0]
-            if node == END:
-                break
-            yield {"type": "action", "payload": node}
-            await self.nodes[node](state)
-            yield {"type": "state", "payload": state.to_dict()}
-            if node in self.conditionals:
-                cond, mapping = self.conditionals[node]
-                key = cond(state)
-                current = mapping.get(key, END)
-            else:
-                current = node
+    return [
+        Node("Planner", run_planner, "Content-Weaver", planner_condition),
+        Node("Researcher-Web", run_researcher_web, "Planner"),
+        Node("Content-Weaver", run_content_weaver, "Pedagogy-Critic"),
+        Node(
+            "Pedagogy-Critic",
+            run_pedagogy_critic,
+            "Fact-Checker",
+            pedagogy_condition,
+        ),
+        Node(
+            "Fact-Checker",
+            run_fact_checker,
+            "Human-In-Loop",
+            factcheck_condition,
+        ),
+        Node("Human-In-Loop", run_approver, "Exporter"),
+        Node("Exporter", run_exporter, None),
+    ]
 
 
 class GraphOrchestrator:
-    """Construct and execute a :class:`Graph` from a JSON specification."""
+    """Execute nodes sequentially according to the defined pipeline."""
 
-    def __init__(
-        self,
-        spec_path: Path | None = None,
-    ) -> None:
-        self.graph: Optional[Graph] = None
-        self.spec_path = (
-            spec_path or Path(__file__).resolve().parents[1] / "langgraph.json"
-        )
+    def __init__(self, flow: List[Node]):
+        wrapped_flow: List[Node] = []
+        for node in flow:
+            wrapped_flow.append(
+                Node(
+                    node.name, self._wrap(node.name, node.fn), node.next, node.condition
+                )
+            )
+        self.flow = wrapped_flow
+        self._lookup: Dict[str, Node] = {n.name: n for n in self.flow}
 
     def _wrap(
         self, name: str, node: Callable[[State], Awaitable[T]]
@@ -188,47 +156,45 @@ class GraphOrchestrator:
         wrapped.__name__ = name
         return wrapped
 
-    def initialize_graph(self) -> None:
-        """Instantiate the graph from the JSON specification."""
+    async def run(self, state: State) -> State:
+        """Run the pipeline for ``state``."""
 
-        with self.spec_path.open("r", encoding="utf-8") as f:
-            spec = json.load(f)
-        self._edge_spec = spec.get("edges", [])
-        nodes: dict[str, Callable[[State], Awaitable[Any]]] = {}
-        for node in spec.get("nodes", []):
-            fn = cast(
-                Callable[[State], Awaitable[Any]], _import_callable(node["callable"])
-            )
-            nodes[node["name"]] = self._wrap(node["name"], fn)
-        self._nodes = nodes
+        current = self.flow[0]
+        while current:
+            result = await current.fn(state)
+            next_name = current.next
+            if current.condition is not None:
+                next_name = current.condition(result, state)
+            if next_name is None:
+                break
+            current = self._lookup[next_name]
+        return state
 
-    def register_edges(self) -> None:
-        """Wire node-to-node transitions from the JSON spec."""
+    async def stream(self, state: State):
+        """Yield progress events for each executed node."""
 
-        edges: dict[str, list[str]] = {}
-        conditionals: dict[str, tuple[Callable[[State], Any], dict[Any, str]]] = {}
-        for edge in self._edge_spec:
-            source = edge["source"].replace("__start__", START)
-            if "condition" in edge:
-                func = cast(Callable[[State], Any], _import_callable(edge["condition"]))
-                mapping = {
-                    _coerce_mapping_key(k): v.replace("__end__", END)
-                    for k, v in edge["mapping"].items()
-                }
-                conditionals[source] = (func, mapping)
-            else:
-                target = edge["target"].replace("__end__", END)
-                edges.setdefault(source, []).append(target)
-        self.graph = Graph(self._nodes, edges, conditionals)
+        current = self.flow[0]
+        while current:
+            yield {"type": "action", "payload": current.name}
+            result = await current.fn(state)
+            yield {"type": "state", "payload": state.to_dict()}
+            next_name = current.next
+            if current.condition is not None:
+                next_name = current.condition(result, state)
+            if next_name is None:
+                break
+            current = self._lookup[next_name]
 
 
-graph_orchestrator = GraphOrchestrator()
-try:  # pragma: no cover - defensive import-time initialization
-    graph_orchestrator.initialize_graph()
-    graph_orchestrator.register_edges()
-except Exception:  # pragma: no cover - tolerate missing spec or dependencies
-    graph_orchestrator.graph = Graph({}, {}, {})
+graph_orchestrator = GraphOrchestrator(build_main_flow())
 
-graph = graph_orchestrator.graph
+graph = graph_orchestrator
 
-__all__ = ["Graph", "GraphOrchestrator", "PlanResult", "graph"]
+__all__ = [
+    "Node",
+    "GraphOrchestrator",
+    "PlanResult",
+    "build_main_flow",
+    "graph_orchestrator",
+    "graph",
+]
