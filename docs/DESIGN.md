@@ -26,10 +26,11 @@ This document provides a **detailed, explicit** design specification for the Lec
 The Lecture Builder Agent transforms a single-topic prompt into a fully fleshed, university-grade lecture or workshop package. Key characteristics:
 
 - **Local-first**: Offline capability via cached corpora and local models.
-- **Multi-agent orchestration**: Managed by LangGraph.
+- **Multi-agent orchestration**: Coordinated by a custom engine using Pydantic‑AI models.
 - **Streaming updates**: Real-time document evolution in a browser UX.
 - **Persistence**: State and logs in SQLite (or Postgres).
 - **Export**: Markdown, DOCX, PDF with full citations and metadata.
+- **Observability**: Logfire captures structured logs and execution traces.
 
 Component interactions are visualized in ARCHITECTURE.md.
 
@@ -37,7 +38,7 @@ Component interactions are visualized in ARCHITECTURE.md.
 
 ## 3. Agent Workflows
 
-Each agent is a LangGraph node. Workflow phases:
+Each agent is defined using Pydantic‑AI models and scheduled by the orchestrator. Workflow phases:
 
 | Phase        | Agent              | Input                                    | Output                                       | Retry Logic                            |
 | ------------ | ------------------ | ---------------------------------------- | -------------------------------------------- | -------------------------------------- |
@@ -55,9 +56,9 @@ Agents communicate via typed state transitions and stream deltas to the frontend
 
 ## 4. Orchestration Layer
 
-### 4.1 LangGraph Orchestrator
+### 4.1 Custom Orchestrator
 
-- Graph topology defined in `langgraph.json` and loaded at runtime.
+- Graph topology defined in Python and loaded at runtime.
 - Maintains a `State` class with attributes:
   - `prompt: str`
   - `learning_objectives: List[str]`
@@ -71,9 +72,9 @@ Agents communicate via typed state transitions and stream deltas to the frontend
 
 ### 4.2 Checkpointing
 
-- **SQLite**: `SqliteCheckpointSaver` stores serialized `State` snapshots with timestamp.
-- **Resume**: Graph can invoke with `resume=True` to continue after crash.
-- **Optional Postgres**: Swap saver to `PostgresCheckpointSaver` for concurrent loads.
+- **SQLite**: persistence layer stores serialized `State` snapshots with timestamp.
+- **Resume**: Orchestrator can restart with `resume=True` to continue after crash.
+- **Optional Postgres**: swap persistence backend for concurrent loads.
 
 ### 4.3 Edge Policies & Concurrency
 
@@ -109,9 +110,9 @@ Further ER diagrams in ARCHITECTURE.md.
 
 ### 6.1 Web Search Providers
 
-- **Clients**: `ChatPerplexity` from `langchain_perplexity` or `TavilySearchAPIWrapper` from `langchain_community`, exposed via the `SearchClient` abstraction.
-- **Query templates**: Include objective keywords, `--QDF=3` for recency boost.
-- **Rate limiting**: Token bucket, configurable via env var.
+- **Clients**: Pydantic‑AI wrappers for Perplexity Sonar and Tavily search, exposed via the `SearchClient` abstraction.
+  - **Query templates**: Include objective keywords, `--QDF=3` for recency boost.
+  - **Rate limiting**: Token bucket, configurable via env var.
 
 ### 6.2 Caching & Offline Support
 
@@ -140,11 +141,11 @@ Further ER diagrams in ARCHITECTURE.md.
 
 ### 7.3 Streaming Protocols
 
-- **LangGraph streams**:
-  - `stream(messages)`: token-level markdown chunks.
-  - `stream(values)`: structured state snapshots (e.g. objectives).
-  - `stream(updates)`: citation updates.
-  - `stream(debug)`: critic warnings and fact-check flags.
+- **Orchestrator streams**:
+  - `messages`: token-level markdown chunks.
+  - `values`: structured state snapshots (e.g. objectives).
+  - `updates`: citation updates.
+  - `debug`: critic warnings and fact-check flags.
 
 ---
 
@@ -261,6 +262,8 @@ Further ER diagrams in ARCHITECTURE.md.
 | `MODEL_NAME`         | `o4-mini` or `o3`                          | No (default `o4-mini`)    |
 | `DATA_DIR`           | Path for SQLite DB, cache, workspace files | No (default `./data`)     |
 | `DATABASE_URL`       | Postgres connection string (optional)      | No                        |
+| `LOGFIRE_API_KEY`    | Logfire authentication token              | No                        |
+| `LOGFIRE_PROJECT`    | Logfire project identifier                | No                        |
 | `GPG_SIGN_KEY`       | Key ID for package signing (optional)      | No                        |
 
 ### 12.3 Startup Commands

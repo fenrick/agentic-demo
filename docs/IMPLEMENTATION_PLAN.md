@@ -59,6 +59,8 @@
   - `PERPLEXITY_API_KEY`
   - `TAVILY_API_KEY` (optional)
   - `SEARCH_PROVIDER` (default: `perplexity`)
+  - `LOGFIRE_API_KEY` (optional)
+  - `LOGFIRE_PROJECT` (optional)
   - `MODEL_NAME` (default: `o4-mini`)
   - `DATA_DIR` (default: `./workspace`)
   - `OFFLINE_MODE` (default: `false`)
@@ -132,7 +134,7 @@ project-root/
 
 ---
 
-## B. Orchestration Core (LangGraph JSON Graph)
+## B. Orchestration Core (Custom Engine)
 
 ---
 
@@ -281,7 +283,7 @@ Each node module defines a single `async` handler function and its input/output 
 - **Class `PerplexityClient`**
 
 - **`search(self, query: str) → List[RawSearchResult]`**
-  Uses LangChain's `ChatPerplexity` with the Sonar model to return cited snippets + URLs.
+  Uses Pydantic‑AI to call the Perplexity Sonar model and return cited snippets + URLs.
 - **`fallback_search(self, query: str) → List[RawSearchResult]`**
   Invoked when `OFFLINE_MODE` is true; loads from cache instead of HTTP.
 
@@ -389,10 +391,10 @@ Each node module defines a single `async` handler function and its input/output 
 
 #### Hand-Off to the Orchestrator
 
-Once `researcher_pipeline` returns `List[Citation]`, your LangGraph node will:
+Once `researcher_pipeline` returns `List[Citation]`, the orchestrator will:
 
 - Merge them into `state.sources`.
-- Emit a `stream(updates)` event, so the UI can show new citations in real time.
+- Emit an `updates` event so the UI can show new citations in real time.
 
 ---
 
@@ -418,7 +420,7 @@ Once `researcher_pipeline` returns `List[Citation]`, your LangGraph node will:
    2.1. Implement `async def content_weaver(state: State) -> WeaveResult:` that:
 
 - Calls OpenAI via function-calling API, passing system + user prompts and schema.
-- Streams partial tokens back via LangGraph’s `.stream("messages")`.
+ - Streams partial tokens back via the orchestrator's `messages` channel.
   2.2. On completion, parse function output into Python model and validate against schema.
   2.3. Write unit tests mocking OpenAI responses (correct and schema-violating).
 
@@ -663,7 +665,7 @@ def from_schema(weave: WeaveResult) -> str:
 
 - **File:** `scripts/test_resume.sh`
 - **Steps:**
-  1. Start FastAPI + LangGraph with a sample prompt.
+  1. Start FastAPI + the orchestrator with a sample prompt.
   2. Wait for “outline ready” event in logs.
   3. Kill the process.
   4. Restart with `--resume`.
@@ -806,7 +808,7 @@ def from_schema(weave: WeaveResult) -> str:
 
 1. **`src/web/sse.py`**
    - `stream_workspace_events(workspace_id: str) -> AsyncGenerator[SseEvent]`
-     • **What**: connect to your LangGraph `graph.astream()` for the given workspace, wrap each update in an `SseEvent` namedtuple/dict (`type`, `payload`, `timestamp`).
+     • **What**: connect to the orchestrator's async event stream for the given workspace, wrap each update in an `SseEvent` namedtuple/dict (`type`, `payload`, `timestamp`).
      • **Why**: centralises SSE logic so routes stay thin.
 
 1. **`src/web/schemas/sse.py`**
@@ -957,9 +959,9 @@ def from_schema(weave: WeaveResult) -> str:
   - Connect to SQLite, apply migrations (via Alembic).
   - Attach the DB session factory to `app.state.db`.
 
-- **`setup_graph(app)`**
-  - Initialize the LangGraph `StateGraph` and checkpoint saver.
-  - Store graph instance on `app.state.graph` for endpoint handlers.
+- **`setup_orchestrator(app)`**
+  - Initialize the custom orchestrator and checkpointing module.
+  - Store orchestrator instance on `app.state.orchestrator` for endpoint handlers.
 
 - **`mount_frontend(app)`**
   - Serve the React build directory (`/frontend/dist`) at the root path.
