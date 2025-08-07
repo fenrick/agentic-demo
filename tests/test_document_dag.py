@@ -1,4 +1,4 @@
-"""Verify document DAG orchestration using the internal graph executor."""
+"""Tests for sequential document generation without graph utilities."""
 
 from __future__ import annotations
 
@@ -42,17 +42,19 @@ a_critic = types.ModuleType("agents.pedagogy_critic")
 a_critic.run_pedagogy_critic = _run_pedagogy_critic  # type: ignore[attr-defined]
 sys.modules["agents.pedagogy_critic"] = a_critic
 
-# Policy stub to bypass retry logic.
+# Policy stub to satisfy imports; patched per test.
 policies = types.ModuleType("core.policies")
 policies.policy_retry_on_critic_failure = lambda *a, **k: False  # type: ignore[attr-defined]
 sys.modules["core.policies"] = policies
 
-from core.document_dag import run_document_dag  # noqa: E402
+import core.document_dag as document_dag  # noqa: E402
 
 
 def test_run_document_dag_processes_sections() -> None:
+    calls.clear()
+    document_dag.policy_retry_on_critic_failure = lambda *a, **k: False
     state = State(prompt="p", outline=Outline(steps=["a", "b"]))
-    asyncio.run(run_document_dag(state, skip_plan=True))
+    asyncio.run(document_dag.run_document_dag(state, skip_plan=True))
     assert calls == [
         "research",
         "draft",
@@ -63,3 +65,26 @@ def test_run_document_dag_processes_sections() -> None:
     ]
     assert len(state.modules) == 2
     assert state.outline.modules == state.modules
+
+
+def test_run_document_dag_retries_on_critic_feedback() -> None:
+    calls.clear()
+
+    class Report:
+        def __init__(self, recommendations: list[str]):
+            self.recommendations = recommendations
+
+    reports = iter([Report(["revise"]), Report([])])
+
+    async def _critic(state: State) -> Report:  # type: ignore[override]
+        calls.append("critic")
+        return next(reports)
+
+    document_dag.run_pedagogy_critic = _critic
+    document_dag.policy_retry_on_critic_failure = lambda report, _state: bool(
+        report.recommendations
+    )
+
+    state = State(prompt="p", outline=Outline(steps=["a"]))
+    asyncio.run(document_dag.run_document_dag(state, skip_plan=True))
+    assert calls == ["research", "draft", "critic", "draft", "critic"]
