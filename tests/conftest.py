@@ -7,7 +7,6 @@ network access or heavyweight installations.
 
 from __future__ import annotations
 
-import contextlib
 import importlib
 import os
 import sys
@@ -43,22 +42,6 @@ setattr(
     lambda _name: types.SimpleNamespace(encode=lambda s: []),
 )  # type: ignore[attr-defined]
 sys.modules.setdefault("tiktoken", tiktoken_stub)
-
-# Basic LangSmith client and tracing helpers used for instrumentation.
-
-
-class _Client:  # pragma: no cover - simple placeholder
-    def __init__(self, *args, **kwargs) -> None:
-        pass
-
-
-langsmith_stub = types.ModuleType("langsmith")
-langsmith_stub.Client = _Client  # type: ignore[attr-defined]
-sys.modules.setdefault("langsmith", langsmith_stub)
-
-run_helpers_stub = types.ModuleType("langsmith.run_helpers")
-run_helpers_stub.trace = lambda *a, **k: contextlib.nullcontext()  # type: ignore[attr-defined]
-sys.modules.setdefault("langsmith.run_helpers", run_helpers_stub)
 
 
 # Provide an ``opentelemetry`` tracer that acts as a no-op context manager.

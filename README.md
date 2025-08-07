@@ -239,6 +239,11 @@ The command reads `alembic.ini` and writes migration scripts to
 
 ## Configuration & Environment Variables
 
+All runtime configuration is supplied via environment variables or a `.env`
+file. Secret tokens (API keys, project identifiers, etc.) must be sourced from
+your secret manager and never hard-coded. The legacy LangSmith variables have
+been replaced by Logfire's settings.
+
 | Variable             | Description                               | Default                                  |
 | -------------------- | ----------------------------------------- | ---------------------------------------- |
 | `OPENAI_API_KEY`     | API key for OpenAI                        | (required)                               |
