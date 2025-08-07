@@ -19,7 +19,7 @@ from pydantic_ai.providers.openai import OpenAIProvider
 
 import config
 
-# Cache of initialized chat models keyed by model name.
+# Cache of initialized chat models keyed by provider:model identifier.
 _MODEL_CACHE: Dict[str, "PydanticAIChatModel"] = {}
 
 
@@ -74,13 +74,14 @@ def init_chat_model(**overrides: Any) -> Optional[PydanticAIChatModel]:
     """Instantiate or retrieve a cached Pydantic AI model."""
 
     settings = config.load_settings()
-    model_name: str = overrides.pop("model", settings.model_name)
+    model_id: str = overrides.pop("model", settings.model)
+    provider_name, model_name = model_id.split(":", 1)
 
-    if model_name in _MODEL_CACHE:
-        return _MODEL_CACHE[model_name]
+    if model_id in _MODEL_CACHE:
+        return _MODEL_CACHE[model_id]
 
     try:
-        if model_name.startswith("sonar"):
+        if provider_name == "perplexity":
             pplx_api_key = overrides.pop("pplx_api_key", settings.perplexity_api_key)
             provider = OpenAIProvider(
                 base_url="https://api.perplexity.ai", api_key=pplx_api_key
@@ -89,7 +90,7 @@ def init_chat_model(**overrides: Any) -> Optional[PydanticAIChatModel]:
             provider = OpenAIProvider()
 
         model = PydanticAIChatModel(model_name, provider)
-        _MODEL_CACHE[model_name] = model
+        _MODEL_CACHE[model_id] = model
         return model
     except Exception:  # pragma: no cover - optional dependencies
         logging.exception("Failed to initialize chat model")

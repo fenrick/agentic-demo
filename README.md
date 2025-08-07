@@ -131,7 +131,7 @@ cp .env.example .env
 # SEARCH_PROVIDER=perplexity  # or 'tavily'
 # LOGFIRE_API_KEY=...
 # LOGFIRE_PROJECT=...
-# MODEL_NAME=o4-mini
+# MODEL=openai:o4-mini
 # DATA_DIR=./workspace
 # OFFLINE_MODE=false
 # ENABLE_TRACING=true
@@ -247,7 +247,7 @@ The command reads `alembic.ini` and writes migration scripts to
 | `SEARCH_PROVIDER`    | `perplexity` or `tavily`           | `perplexity`                             |
 | `LOGFIRE_API_KEY`    | API key for Logfire                |                                          |
 | `LOGFIRE_PROJECT`    | Logfire project identifier         |                                          |
-| `MODEL_NAME`         | Model to use (`o4-mini` or `o3`)   | `o4-mini`                                |
+| `MODEL`              | LLM provider and model (`openai:o4-mini`) | `openai:o4-mini`                        |
 | `DATA_DIR`           | Path for SQLite DB, cache, logs    | (required)                               |
 | `OFFLINE_MODE`       | Run without external network calls | `false`                                  |
 

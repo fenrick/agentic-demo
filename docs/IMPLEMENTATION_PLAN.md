@@ -61,7 +61,7 @@
   - `SEARCH_PROVIDER` (default: `perplexity`)
   - `LOGFIRE_API_KEY` (optional)
   - `LOGFIRE_PROJECT` (optional)
-  - `MODEL_NAME` (default: `o4-mini`)
+  - `MODEL` (default: `openai:o4-mini`)
   - `DATA_DIR` (default: `./workspace`)
   - `OFFLINE_MODE` (default: `false`)
   - `ENABLE_TRACING` (default: `true`)
@@ -981,7 +981,7 @@ def from_schema(weave: WeaveResult) -> str:
 #### 2. `src/config.py`
 
 - **`load_settings()`**
-  - Read environment variables (`OPENAI_API_KEY`, `PERPLEXITY_API_KEY`, `MODEL_NAME`, `DATA_DIR`, `OFFLINE_MODE`).
+  - Read environment variables (`OPENAI_API_KEY`, `PERPLEXITY_API_KEY`, `MODEL`, `DATA_DIR`, `OFFLINE_MODE`).
   - Validate types/defaults via Pydantic.
   - Expose a global `Settings` object.
 
@@ -1214,16 +1214,16 @@ def from_schema(weave: WeaveResult) -> str:
 > **Objective:** Guarantee every LLM call uses `o4-mini` by default.
 
 1. **`src/config.py`**
-   - **Field:** `MODEL_NAME: str = "o4-mini"`
+   - **Field:** `MODEL: str = "openai:o4-mini"`
      _Default model string; never null._
 
 2. **`src/core/orchestrator.py`**
    - **Method:** `validate_model_configuration()`
-     _Runs at startup to assert `config.MODEL_NAME == "o4-mini"`, or raise a clear error._
+     _Runs at startup to assert `config.MODEL == "openai:o4-mini"`, or raise a clear error._
 
 3. **`src/agents/agent_wrapper.py`**
    - **Method:** `get_llm_params()` removed in favor of direct Pydantic AI configuration.
-     _Reads `config.MODEL_NAME` and injects into every OpenAI API call payload._
+     _Reads `settings.model` and injects provider/model into every API call payload._
 
 4. **Acceptance:**
    - Startup log prints “Using LLM engine o4-mini”

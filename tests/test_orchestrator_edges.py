@@ -1,5 +1,8 @@
 """Unit tests for edge registration in the orchestrator."""
+
 # mypy: ignore-errors
+from __future__ import annotations
+
 import sys
 import types
 from pathlib import Path
@@ -17,11 +20,12 @@ config_stub = types.ModuleType("config")
 
 
 class _Settings:
-    model_name = "gpt"
+    model = "openai:gpt"
     data_dir = Path(".")
 
 
-config_stub.MODEL_NAME = "gpt"
+config_stub.MODEL = "openai:gpt"
+config_stub.DEFAULT_MODEL_NAME = "gpt"
 config_stub.load_settings = lambda: _Settings()
 sys.modules["config"] = config_stub
 
@@ -84,11 +88,8 @@ sys.modules["logfire"] = logfire_stub
 async def _dummy_async(*_args, **_kwargs):
     return None
 
-from __future__ import annotations
 
-from pathlib import Path
-
-from core.orchestrator import GraphOrchestrator
+from core.orchestrator import GraphOrchestrator  # noqa: E402
 
 
 def dummy_cond(prev, state):

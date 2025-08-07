@@ -21,7 +21,7 @@ from persistence.logs import compute_hash, log_action
 logger = get_logger()
 
 try:
-    _ENCODING = tiktoken.encoding_for_model(config.MODEL_NAME)
+    _ENCODING = tiktoken.encoding_for_model(config.DEFAULT_MODEL_NAME)
 except KeyError:
     _ENCODING = tiktoken.get_encoding("cl100k_base")
 
@@ -40,13 +40,12 @@ def validate_model_configuration() -> None:
     variables at import time.
     """
 
-    configured = config.load_settings().model_name
-    if configured != config.MODEL_NAME:
+    configured = config.load_settings().model
+    if configured != config.MODEL:
         raise ValueError(
-            f"MODEL_NAME misconfigured: expected '{config.MODEL_NAME}', got"
-            f" '{configured}'"
+            f"MODEL misconfigured: expected '{config.MODEL}', got '{configured}'"
         )
-    logger.info("Using LLM engine %s", config.MODEL_NAME)
+    logger.info("Using LLM engine %s", config.MODEL)
 
 
 validate_model_configuration()

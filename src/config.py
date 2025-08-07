@@ -27,8 +27,9 @@ load_dotenv = _load_dotenv
 # Load environment variables from a `.env` file if present.
 load_dotenv()
 
-# Default OpenAI model enforced across the application.
-MODEL_NAME: str = "o4-mini"
+# Default LLM provider and model enforced across the application.
+MODEL: str = "openai:o4-mini"
+DEFAULT_MODEL_NAME = MODEL.split(":", 1)[1]
 
 
 class Settings(BaseSettings):
@@ -43,7 +44,7 @@ class Settings(BaseSettings):
     data_dir: Path = Path("./workspace")
     tavily_api_key: str | None = None
     search_provider: str = "perplexity"
-    model_name: str = MODEL_NAME
+    model: str = MODEL
     offline_mode: bool = False
     enable_tracing: bool = True
     logfire_api_key: str | None = None
@@ -52,6 +53,14 @@ class Settings(BaseSettings):
     alert_webhook_url: str | None = None
 
     model_config = SettingsConfigDict(env_prefix="", case_sensitive=False)
+
+    @field_validator("model", mode="before")
+    @classmethod
+    def _validate_model(cls, value: str) -> str:
+        """Ensure ``MODEL`` follows ``<provider>:<name>`` format."""
+        if ":" not in value:
+            raise ValueError("MODEL must be in '<provider>:<model_name>' format")
+        return value
 
     @field_validator("data_dir", mode="before")
     @classmethod
@@ -69,6 +78,16 @@ class Settings(BaseSettings):
             except json.JSONDecodeError as exc:  # pragma: no cover - invalid input
                 raise ValueError("ALLOWLIST_DOMAINS must be valid JSON") from exc
         return value
+
+    @property
+    def model_provider(self) -> str:
+        """Return the configured model provider."""
+        return self.model.split(":", 1)[0]
+
+    @property
+    def model_name(self) -> str:
+        """Return the configured model name."""
+        return self.model.split(":", 1)[1]
 
 
 def load_env(env_file: Path) -> Settings:
@@ -89,4 +108,11 @@ def load_settings() -> Settings:
 settings = load_settings()
 
 
-__all__ = ["Settings", "settings", "load_settings", "load_env", "MODEL_NAME"]
+__all__ = [
+    "Settings",
+    "settings",
+    "load_settings",
+    "load_env",
+    "MODEL",
+    "DEFAULT_MODEL_NAME",
+]
