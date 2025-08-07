@@ -33,7 +33,10 @@ async def call_planner_llm(topic: str) -> str:
     """
 
     try:  # pragma: no cover - exercised via monkeypatch in tests
-        from langchain_core.messages import HumanMessage, SystemMessage
+        from pydantic_ai.messages import (
+            SystemPromptPart as SystemMessage,
+            UserPromptPart as HumanMessage,
+        )
     except Exception:  # dependency missing
         logging.exception("Planner dependencies unavailable")
         return ""

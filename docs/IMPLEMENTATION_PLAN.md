@@ -1220,7 +1220,7 @@ def from_schema(weave: WeaveResult) -> str:
      _Runs at startup to assert `config.MODEL_NAME == "o4-mini"`, or raise a clear error._
 
 3. **`src/agents/agent_wrapper.py`**
-   - **Method:** `get_llm_params()`
+   - **Method:** `get_llm_params()` removed in favor of direct Pydantic AI configuration.
      _Reads `config.MODEL_NAME` and injects into every OpenAI API call payload._
 
 4. **Acceptance:**
