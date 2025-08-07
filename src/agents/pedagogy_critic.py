@@ -13,7 +13,7 @@ from typing import Callable, Dict, List, cast
 
 from pydantic import BaseModel, ValidationError
 
-from agents.agent_wrapper import init_chat_model
+import config
 from agents.models import Activity
 from core.state import State
 from models import (
@@ -60,8 +60,8 @@ class Outline:
     activities: List[Activity]
 
 
-class _LevelResponse(BaseModel):
-    """Schema for Bloom level classification responses."""
+class BloomResult(BaseModel):
+    """Parsed Bloom level returned by the language model."""
 
     level: str
 
@@ -83,20 +83,23 @@ def classify_bloom_level(text: str) -> str:
     produces an unexpected result.
     """
 
-    prompt = get_prompt("pedagogy_critic_classify") + "\n\n" + text
+    instructions = get_prompt("pedagogy_critic_classify")
     try:  # pragma: no cover - network dependency
-        model = init_chat_model()
-        if model is not None:
-            response = model.invoke(prompt)
-            content = response.content or ""
-            try:
-                data = _LevelResponse.model_validate_json(content)
-            except ValidationError:
-                logging.warning("LLM response not valid schema: %s", content)
-            else:
-                level = data.level.strip().lower()
-                if level in BLOOM_LEVELS:
-                    return level
+        from pydantic_ai import Agent
+        from pydantic_ai.models.openai import OpenAIModel
+        from pydantic_ai.providers.openai import OpenAIProvider
+
+        settings = config.load_settings()
+        provider = OpenAIProvider()
+        model = OpenAIModel(settings.model_name, provider=provider)
+        agent = Agent(model=model, result_type=BloomResult, instructions=instructions)
+        result = agent.run_sync(text)
+        level = result.data.level.strip().lower()
+        if level in BLOOM_LEVELS:
+            return level
+    except ValidationError:
+        logging.warning("LLM response failed validation; falling back to keywords")
+        return _keyword_classify(text)
     except Exception:
         logging.exception("Bloom level classification failed")
     return _keyword_classify(text)
