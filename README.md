@@ -24,6 +24,9 @@ A local-first, multi-agent system that generates high‑quality, university‑gr
     - [Persistence \& Versioning](#persistence--versioning)
     - [Frontend UX](#frontend-ux)
     - [Exporters](#exporters)
+  - [Examples](#examples)
+    - [Invoking the Orchestrator](#invoking-the-orchestrator)
+    - [Working with Pydantic Models](#working-with-pydantic-models)
   - [Storage Options](#storage-options)
     - [Database Migrations](#database-migrations)
   - [Configuration \& Environment Variables](#configuration--environment-variables)
@@ -210,6 +213,32 @@ cp .env.example .env
 - DOCX: generated via `src/export/docx_exporter.py`.
 - PDF: headless WeasyPrint configured in `src/export/pdf_exporter.py`.
 
+## Examples
+
+### Invoking the Orchestrator
+
+```python
+from core.orchestrator import GraphOrchestrator, build_main_flow
+from core.state import State
+
+state = State(prompt="Explain quantum computing basics")
+orch = GraphOrchestrator(build_main_flow())
+await orch.run(state)
+```
+
+### Working with Pydantic Models
+
+```python
+from agents.models import Activity, WeaveResult
+
+model = WeaveResult(
+    title="Intro to AI",
+    learning_objectives=["Define artificial intelligence"],
+    activities=[Activity(type="lecture", description="Overview", duration_min=30)],
+    duration_min=60,
+)
+```
+
 ---
 
 ## Storage Options
@@ -317,3 +346,4 @@ This project is licensed under the [MIT License](./LICENSE).
 - **TEST_PLAN.md** — Test cases, performance benchmarks, and QA checklist
 - **GOVERNANCE.md** — SLOs, metrics dashboard configuration, and audit procedures
 - [**CLI_REFERENCE.md**](./docs/CLI_REFERENCE.md) — Commands for running, testing, and maintenance tasks
+- [**MIGRATION_GUIDE.md**](./docs/MIGRATION_GUIDE.md) — Rationale and API changes for the new orchestrator and models
