@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import asdict
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional
 
@@ -35,7 +34,7 @@ def load_cached_results(query: str) -> Optional[List["RawSearchResult"]]:
     if not path.exists():
         return None
     data = json.loads(path.read_text())
-    return [RawSearchResult(**item) for item in data]
+    return [RawSearchResult.model_validate(item) for item in data]
 
 
 def save_cached_results(query: str, results: List["RawSearchResult"]) -> None:
@@ -43,5 +42,5 @@ def save_cached_results(query: str, results: List["RawSearchResult"]) -> None:
     cache_dir = _cache_dir()
     cache_dir.mkdir(parents=True, exist_ok=True)
     path = cache_dir / _cache_file(query).name
-    data = [asdict(result) for result in results]
+    data = [result.model_dump() for result in results]
     path.write_text(json.dumps(data))

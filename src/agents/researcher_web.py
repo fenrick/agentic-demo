@@ -1,24 +1,25 @@
-"""Client for the Perplexity Sonar API with offline fallback."""
+"""HTTP clients and utilities for researcher web search."""
 
 from __future__ import annotations
 
 import asyncio
 import logging
-from dataclasses import asdict, dataclass
-from typing import Any, List, Optional, Protocol
+from dataclasses import dataclass
+from typing import List, Optional, Protocol
 from urllib.parse import urlparse
+
+import httpx
+from pydantic import BaseModel
 
 from persistence import get_db_session
 from persistence.repositories.retrieval_cache_repo import RetrievalCacheRepo
 
-from .agent_wrapper import init_chat_model
 from .dense_retriever import DenseRetriever
 from .offline_cache import load_cached_results, save_cached_results
 from .streaming import stream_debug, stream_messages
 
 
-@dataclass(slots=True)
-class RawSearchResult:
+class RawSearchResult(BaseModel):
     """Minimal search result returned by a search provider."""
 
     url: str
@@ -43,28 +44,26 @@ class SearchClient(Protocol):
 
 
 class PerplexityClient(SearchClient):
-    """Wrapper around the Perplexity Sonar model via LangChain."""
+    """Lightweight HTTPX client for the Perplexity Sonar API."""
 
-    def __init__(self, api_key: str, llm: Optional[Any] = None) -> None:
-        model = llm or init_chat_model(model="sonar", pplx_api_key=api_key)
-        if model is None:  # pragma: no cover - dependency missing
-            raise RuntimeError("Perplexity chat model unavailable")
-        self.llm = model
+    _URL = "https://api.perplexity.ai/search"
+
+    def __init__(self, api_key: str, http: Optional[httpx.Client] = None) -> None:
+        self._api_key = api_key
+        self._http = http or httpx.Client(timeout=30)
 
     def search(self, query: str) -> List[RawSearchResult]:
-        """Call the Sonar model and cache its cited search results."""
+        """Call the Perplexity API and cache cited search results."""
 
         stream_debug(f"perplexity search: {query}")
-        response = self.llm.invoke(query)
-        items = response.additional_kwargs.get("search_results", [])
-        results = [
-            RawSearchResult(
-                url=item.get("url", ""),
-                snippet=item.get("snippet", ""),
-                title=item.get("title", ""),
-            )
-            for item in items
-        ]
+        response = self._http.post(
+            self._URL,
+            json={"query": query},
+            headers={"Authorization": f"Bearer {self._api_key}"},
+        )
+        response.raise_for_status()
+        items = response.json().get("search_results", [])
+        results = [RawSearchResult.model_validate(item) for item in items]
         for res in results:
             stream_messages(res.snippet)
         save_cached_results(query, results)
@@ -81,30 +80,31 @@ class PerplexityClient(SearchClient):
 
 
 class TavilyClient(SearchClient):
-    """Client using Tavily web search via ``langchain_community``."""
+    """HTTPX client for the Tavily search API."""
 
-    def __init__(self, api_key: str, wrapper: Optional[Any] = None) -> None:
-        if wrapper is None:
-            try:  # pragma: no cover - optional dependency
-                from langchain_community.utilities.tavily_search import (
-                    TavilySearchAPIWrapper,
-                )
-            except Exception as exc:  # pragma: no cover - dependency missing
-                raise RuntimeError("Tavily search unavailable") from exc
-            self.wrapper = TavilySearchAPIWrapper(tavily_api_key=api_key)
-        else:
-            self.wrapper = wrapper
+    _URL = "https://api.tavily.com/search"
+
+    def __init__(self, api_key: str, http: Optional[httpx.Client] = None) -> None:
+        self._api_key = api_key
+        self._http = http or httpx.Client(timeout=30)
 
     def search(self, query: str) -> List[RawSearchResult]:
         """Call the Tavily API and cache search results."""
 
         stream_debug(f"tavily search: {query}")
-        items = self.wrapper.results(query)
+        response = self._http.post(
+            self._URL,
+            json={"api_key": self._api_key, "query": query},
+        )
+        response.raise_for_status()
+        items = response.json().get("results", [])
         results = [
-            RawSearchResult(
-                url=item.get("url", ""),
-                snippet=item.get("content", ""),
-                title=item.get("title", ""),
+            RawSearchResult.model_validate(
+                {
+                    "url": item.get("url", ""),
+                    "snippet": item.get("content", ""),
+                    "title": item.get("title", ""),
+                }
             )
             for item in items
         ]
@@ -126,7 +126,7 @@ async def _cached_search_async(
         cached = await repo.get(query)
         if cached is not None:
             stream_debug(f"cache hit: {query}")
-            return [RawSearchResult(**item) for item in cached]
+            return [RawSearchResult.model_validate(item) for item in cached]
 
     try:
         results = client.search(query)
@@ -143,7 +143,7 @@ async def _cached_search_async(
 
     async with get_db_session() as conn:
         repo = RetrievalCacheRepo(conn)
-        await repo.set(query, [asdict(r) for r in results])
+        await repo.set(query, [r.model_dump() for r in results])
 
     return results
 
