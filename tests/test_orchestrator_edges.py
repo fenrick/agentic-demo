@@ -1,5 +1,4 @@
 # mypy: ignore-errors
-import contextlib
 import sys
 import types
 from pathlib import Path
@@ -61,51 +60,23 @@ class _CompiledStateGraph:
 langgraph_state_stub.CompiledStateGraph = _CompiledStateGraph
 sys.modules["langgraph.graph.state"] = langgraph_state_stub
 
-langsmith_stub = types.ModuleType("langsmith")
+logfire_stub = types.ModuleType("logfire")
 
 
-class _Client:
-    def trace(self, *_, **__):
-        class _Ctx:
-            def __enter__(self):
-                return None
+class _Span:
+    def __enter__(self):
+        return self
 
-            def __exit__(self, *exc):
-                pass
+    def __exit__(self, *exc):
+        pass
 
-            def log_metrics(self, *a, **k):
-                pass
-
-            def end(self, *a, **k):
-                pass
-
-        return _Ctx()
+    def set_attributes(self, *a, **k):
+        pass
 
 
-langsmith_stub.Client = _Client
-sys.modules["langsmith"] = langsmith_stub
-
-langsmith_run_stub = types.ModuleType("langsmith.run_helpers")
-langsmith_run_stub.trace = lambda *a, **k: contextlib.nullcontext()
-sys.modules["langsmith.run_helpers"] = langsmith_run_stub
-
-opentelemetry_stub = types.ModuleType("opentelemetry")
-
-
-class _Tracer:
-    def start_as_current_span(self, _name):
-        class _Span:
-            def __enter__(self):
-                return None
-
-            def __exit__(self, *exc):
-                pass
-
-        return _Span()
-
-
-opentelemetry_stub.trace = types.SimpleNamespace(get_tracer=lambda _name: _Tracer())
-sys.modules["opentelemetry"] = opentelemetry_stub
+logfire_stub.span = lambda *a, **k: _Span()
+logfire_stub.trace = lambda *a, **k: None
+sys.modules["logfire"] = logfire_stub
 
 
 # Additional stubs for orchestrator dependencies

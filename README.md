@@ -245,8 +245,8 @@ The command reads `alembic.ini` and writes migration scripts to
 | `PERPLEXITY_API_KEY` | API key for Perplexity Sonar       | Required if `SEARCH_PROVIDER=perplexity` |
 | `TAVILY_API_KEY`     | API key for Tavily search          | Required if `SEARCH_PROVIDER=tavily`     |
 | `SEARCH_PROVIDER`    | `perplexity` or `tavily`           | `perplexity`                             |
-| `LANGCHAIN_API_KEY`  | API key for LangSmith tracing      |                                          |
-| `LANGCHAIN_ENDPOINT` | LangSmith API endpoint             | `https://api.smith.langchain.com`        |
+| `LOGFIRE_API_KEY`    | API key for Logfire                |                                          |
+| `LOGFIRE_PROJECT`    | Logfire project identifier         |                                          |
 | `MODEL_NAME`         | Model to use (`o4-mini` or `o3`)   | `o4-mini`                                |
 | `DATA_DIR`           | Path for SQLite DB, cache, logs    | (required)                               |
 | `OFFLINE_MODE`       | Run without external network calls | `false`                                  |
@@ -258,9 +258,9 @@ The command reads `alembic.ini` and writes migration scripts to
 - **Logging:** JSON-formatted logs are emitted via Loguru. The helper
   `core.logging.get_logger(job_id, user_id)` binds contextual identifiers so
   downstream systems can correlate events.
-- **Tracing:** OpenTelemetry is initialized at startup, instrumenting FastAPI
-  and outbound HTTP requests. Spans propagate through all agent nodes and can
-  be exported using any standard OpenTelemetry exporter.
+- **Tracing:** Logfire spans capture node execution details, including token
+  counts. OpenTelemetry instrumentation remains enabled for FastAPI and
+  outbound HTTP requests.
 
 ---
 

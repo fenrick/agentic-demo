@@ -11,6 +11,8 @@ from typing import Any, Dict
 from agents.streaming import stream_messages
 from core.orchestrator import graph
 from core.state import State
+from config import load_settings
+import logfire
 
 
 def parse_args() -> argparse.Namespace:
@@ -38,6 +40,12 @@ async def _generate(topic: str) -> Dict[str, Any]:
 def main() -> None:
     """Entry point for console scripts."""
     args = parse_args()
+    settings = load_settings()
+    if settings.enable_tracing:
+        logfire.configure(
+            token=settings.logfire_api_key,
+            service_name=settings.logfire_project,
+        )
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
         stream_messages("LLM response stream start")

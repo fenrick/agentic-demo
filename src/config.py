@@ -46,6 +46,8 @@ class Settings(BaseSettings):
     model_name: str = MODEL_NAME
     offline_mode: bool = False
     enable_tracing: bool = True
+    logfire_api_key: str | None = None
+    logfire_project: str | None = None
     allowlist_domains: list[str] = ["wikipedia.org", ".edu", ".gov"]
     alert_webhook_url: str | None = None
 
