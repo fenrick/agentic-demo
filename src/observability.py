@@ -14,17 +14,17 @@ if TYPE_CHECKING:  # pragma: no cover - import for type checking only
     from fastapi import FastAPI
 
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+REPO_ROOT = Path(__file__).resolve().parents[1]
+# Only trace modules that live under the repository's ``src`` directory.
+SRC_DIR = REPO_ROOT / "src"
 
 
 def install_auto_tracing() -> None:
-    """Install Logfire auto-tracing for project modules."""
+    """Install Logfire auto-tracing restricted to repository modules."""
 
     def _in_project(module: logfire.AutoTraceModule) -> bool:
         filename = module.filename
-        return filename is not None and Path(filename).resolve().is_relative_to(
-            PROJECT_ROOT
-        )
+        return filename is not None and Path(filename).resolve().is_relative_to(SRC_DIR)
 
     logfire.install_auto_tracing(
         modules=_in_project,
