@@ -8,7 +8,7 @@ from typing import Any
 
 from fastapi import Request  # type: ignore[import-not-found]
 
-from core.orchestrator import Graph
+from core.orchestrator import GraphOrchestrator
 from core.state import State
 from web.schemas.sse import SseEvent  # type: ignore[import-not-found]
 
@@ -16,7 +16,7 @@ from web.schemas.sse import SseEvent  # type: ignore[import-not-found]
 async def stream_workspace_events(
     workspace_id: str,
     event_type: str,
-    graph: Graph | None = None,
+    graph: GraphOrchestrator | None = None,
     request: Request | None = None,
 ) -> AsyncGenerator[dict[str, Any], None]:
     """Yield filtered graph updates as SSE events."""

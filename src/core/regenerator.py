@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import List
 
-from core.orchestrator import Graph
+from agents.content_weaver import run_content_weaver
+from core.orchestrator import GraphOrchestrator, build_main_flow
 from core.state import State
 from models.critique_report import CritiqueReport
 from models.fact_check_report import FactCheckReport
@@ -42,38 +43,28 @@ def has_exceeded_max_retries(state: State, section_id: SectionIdentifier) -> boo
     return state.retry_counts.get(section_id, 0) >= MAX_RETRIES
 
 
-async def apply_regeneration(
-    graph: Graph, state: State, sections: List[SectionIdentifier]
-) -> None:
-    """Invoke the Content Weaver node for the specified sections."""
+async def apply_regeneration(state: State, sections: List[SectionIdentifier]) -> None:
+    """Invoke ``run_content_weaver`` for the specified sections."""
     for section_id in sections:
         try:
             idx = int(section_id)
         except ValueError:
             continue
-        await graph.invoke("Content-Weaver", state, section_id=idx)
+        await run_content_weaver(state, section_id=idx)
 
 
 async def orchestrate_regeneration(
-    state: State,
-    report: CritiqueReport | FactCheckReport,
-    graph: Graph | None = None,
+    state: State, report: CritiqueReport | FactCheckReport
 ) -> State:
     """Select sections for rewriting and trigger regeneration.
 
     Args:
         state: Current application state.
         report: Critic or fact-checker output used to choose sections.
-        graph: Optional graph instance; if ``None`` the global orchestrator graph is used.
 
     Returns:
         Updated state after any regeneration triggers.
     """
-    if graph is None:
-        from core.orchestrator import graph as orchestrator_graph
-
-        graph = orchestrator_graph
-
     sections = get_sections_to_regenerate(report)
     to_regenerate: List[SectionIdentifier] = []
     for section in sections:
@@ -81,6 +72,17 @@ async def orchestrate_regeneration(
             continue
         increment_retry_count(state, section)
         to_regenerate.append(section)
-    if to_regenerate:
-        await apply_regeneration(graph, state, to_regenerate)
+    if not to_regenerate:
+        return state
+
+    await apply_regeneration(state, to_regenerate)
+
+    flow = build_main_flow()
+    start_idx = next(
+        (i for i, node in enumerate(flow) if node.name == "Pedagogy-Critic"),
+        None,
+    )
+    if start_idx is not None:
+        regen_flow = flow[start_idx:]
+        await GraphOrchestrator(regen_flow).run(state)
     return state
