@@ -807,8 +807,8 @@ def from_schema(weave: WeaveResult) -> str:
 ### H1. SSE Backend
 
 1. **`src/web/sse.py`**
-   - `stream_workspace_events(workspace_id: str) -> AsyncGenerator[SseEvent]`
-     • **What**: connect to the orchestrator's async event stream for the given workspace, wrap each update in an `SseEvent` namedtuple/dict (`type`, `payload`, `timestamp`).
+   - `stream_workspace_events(workspace_id: str, event_type: str) -> AsyncGenerator[SseEvent]`
+     • **What**: iterate over the main workflow and emit filtered `SseEvent` messages (`type`, `payload`, `timestamp`).
      • **Why**: centralises SSE logic so routes stay thin.
 
 1. **`src/web/schemas/sse.py`**
@@ -822,8 +822,8 @@ def from_schema(weave: WeaveResult) -> str:
 
      ```python
      @app.get("/stream/{workspace}", response_model=None)
-     async def stream_events(workspace: str):
-         return EventSourceResponse(stream_workspace_events(workspace))
+    async def stream_events(workspace: str):
+        return EventSourceResponse(stream_workspace_events(workspace, "state"))
      ```
 
      • **Why**: binds SSE generator to HTTP endpoint.
