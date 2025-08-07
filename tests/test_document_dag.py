@@ -8,45 +8,24 @@ import os
 os.environ.setdefault("OPENAI_API_KEY", "test")
 os.environ.setdefault("PERPLEXITY_API_KEY", "test")
 
-# Stub langgraph modules before importing document_dag
-langgraph_graph = types.ModuleType("langgraph.graph")
+# Stub core.orchestrator before importing document_dag
+orchestrator = types.ModuleType("core.orchestrator")
 
 
-class _CompiledGraph:
-    def __init__(self, nodes):
+class _Graph:
+    def __init__(self, nodes, edges, conditionals):
         self.nodes = nodes
 
-    async def ainvoke(self, state):
+    async def run(self, state):
         await self.nodes["Researcher-Web"](state)
         await self.nodes["Content-Weaver"](state)
         await self.nodes["Pedagogy-Critic"](state)
 
 
-class _StateGraph:
-    def __init__(self, _state):
-        self.nodes: dict[str, callable] = {}
-
-    def add_node(self, name, fn, streams=None):  # noqa: D401 - stub
-        self.nodes[name] = fn
-
-    def add_edge(self, *_args, **_kwargs):
-        pass
-
-    def add_conditional_edges(self, *_args, **_kwargs):
-        pass
-
-    def compile(self):
-        return _CompiledGraph(self.nodes)
-
-
-langgraph_graph.StateGraph = _StateGraph
-langgraph_graph.START = "START"
-langgraph_graph.END = "END"
-langgraph_state = types.ModuleType("langgraph.graph.state")
-langgraph_state.CompiledStateGraph = _CompiledGraph
-sys.modules["langgraph"] = types.ModuleType("langgraph")
-sys.modules["langgraph.graph"] = langgraph_graph
-sys.modules["langgraph.graph.state"] = langgraph_state
+orchestrator.Graph = _Graph
+orchestrator.START = "START"
+orchestrator.END = "END"
+sys.modules["core.orchestrator"] = orchestrator
 
 
 # Stub policy

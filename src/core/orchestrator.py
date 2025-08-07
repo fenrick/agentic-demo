@@ -1,4 +1,4 @@
-"""LangGraph orchestration and node registration."""
+"""Lightweight orchestration over a JSON-defined DAG."""
 
 from __future__ import annotations
 
@@ -7,13 +7,10 @@ import importlib
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, AsyncIterator, Awaitable, Callable, Optional, TypeVar, cast
+from typing import Any, Awaitable, Callable, Optional, TypeVar, cast
 
 import tiktoken
 import config
-from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
-from langgraph.graph import END, START, StateGraph
-from langgraph.graph.state import CompiledStateGraph
 from langsmith import Client
 from langsmith.run_helpers import trace as ls_trace
 from opentelemetry import trace
@@ -77,16 +74,6 @@ def _import_callable(path: str) -> Callable[..., Awaitable | object]:
     return getattr(mod, name)
 
 
-def _resolve_endpoint(name: str) -> str:
-    """Translate JSON endpoint tokens to LangGraph constants."""
-
-    if name == "__start__":
-        return START
-    if name == "__end__":
-        return END
-    return name
-
-
 def _coerce_mapping_key(key: str) -> str | bool:
     """Return ``key`` converted to native bool when applicable.
 
@@ -105,16 +92,80 @@ def _coerce_mapping_key(key: str) -> str | bool:
     return key
 
 
+START = "START"
+END = "END"
+
+
+class Graph:
+    """Simple directed acyclic graph executor."""
+
+    def __init__(
+        self,
+        nodes: dict[str, Callable[[State], Awaitable[Any]]],
+        edges: dict[str, list[str]],
+        conditionals: dict[str, tuple[Callable[[State], Any], dict[Any, str]]],
+    ) -> None:
+        self.nodes = nodes
+        self.edges = edges
+        self.conditionals = conditionals
+
+    async def invoke(self, name: str, state: State, **kwargs: Any) -> Any:
+        """Execute a single node by ``name``."""
+
+        fn = self.nodes[name]
+        return await fn(state, **kwargs)
+
+    async def run(self, state: State) -> State:
+        """Run nodes sequentially starting from ``START`` until ``END``."""
+
+        current = START
+        while True:
+            next_nodes = self.edges.get(current, [])
+            if not next_nodes:
+                break
+            node = next_nodes[0]
+            if node == END:
+                break
+            await self.nodes[node](state)
+            if node in self.conditionals:
+                cond, mapping = self.conditionals[node]
+                key = cond(state)
+                current = mapping.get(key, END)
+            else:
+                current = node
+        return state
+
+    async def stream(self, state: State):
+        """Yield events for each node execution."""
+
+        current = START
+        while True:
+            next_nodes = self.edges.get(current, [])
+            if not next_nodes:
+                break
+            node = next_nodes[0]
+            if node == END:
+                break
+            yield {"type": "action", "payload": node}
+            await self.nodes[node](state)
+            yield {"type": "state", "payload": state.to_dict()}
+            if node in self.conditionals:
+                cond, mapping = self.conditionals[node]
+                key = cond(state)
+                current = mapping.get(key, END)
+            else:
+                current = node
+
+
 class GraphOrchestrator:
-    """Construct a LangGraph graph from a JSON specification."""
+    """Construct and execute a :class:`Graph` from a JSON specification."""
 
     def __init__(
         self,
         spec_path: Path | None = None,
         langsmith_client: Client | None = langsmith_client,
     ) -> None:
-        self._graph: Optional[StateGraph[State]] = None
-        self.graph: Optional[CompiledStateGraph[State]] = None
+        self.graph: Optional[Graph] = None
         self.langsmith_client = langsmith_client
         self.spec_path = (
             spec_path or Path(__file__).resolve().parents[1] / "langgraph.json"
@@ -161,70 +212,45 @@ class GraphOrchestrator:
 
     def initialize_graph(self) -> None:
         """Instantiate the graph from the JSON specification."""
+
         with self.spec_path.open("r", encoding="utf-8") as f:
             spec = json.load(f)
-        graph = StateGraph(State)
         self._edge_spec = spec.get("edges", [])
+        nodes: dict[str, Callable[[State], Awaitable[Any]]] = {}
         for node in spec.get("nodes", []):
             fn = cast(
                 Callable[[State], Awaitable[Any]], _import_callable(node["callable"])
             )
-            graph.add_node(
-                node["name"],
-                self._wrap(node["name"], fn),
-                streams=node.get("streams"),
-            )  # type: ignore[call-overload]
-        self._graph = graph
+            nodes[node["name"]] = self._wrap(node["name"], fn)
+        self._nodes = nodes
 
     def register_edges(self) -> None:
         """Wire node-to-node transitions from the JSON spec."""
-        if self._graph is None:
-            raise RuntimeError("Graph must be initialized before registering edges")
+
+        edges: dict[str, list[str]] = {}
+        conditionals: dict[str, tuple[Callable[[State], Any], dict[Any, str]]] = {}
         for edge in self._edge_spec:
+            source = edge["source"].replace("__start__", START)
             if "condition" in edge:
-                func = _import_callable(edge["condition"])
+                func = cast(Callable[[State], Any], _import_callable(edge["condition"]))
                 mapping = {
-                    _coerce_mapping_key(k): _resolve_endpoint(v)
+                    _coerce_mapping_key(k): v.replace("__end__", END)
                     for k, v in edge["mapping"].items()
                 }
-                self._graph.add_conditional_edges(
-                    _resolve_endpoint(edge["source"]),
-                    cast(Any, func),
-                    cast(Any, mapping),
-                )
+                conditionals[source] = (func, mapping)
             else:
-                self._graph.add_edge(
-                    _resolve_endpoint(edge["source"]),
-                    _resolve_endpoint(edge["target"]),
-                )
-        self.graph = self._graph.compile()
-
-
-def create_checkpoint_saver(
-    data_dir: Path | None = None,
-) -> AsyncIterator[AsyncSqliteSaver]:
-    """Yield an AsyncSqliteSaver connected to the checkpoint database."""
-
-    settings = config.load_settings()
-    data_dir = data_dir or settings.data_dir
-    data_dir.mkdir(parents=True, exist_ok=True)
-    db_path = data_dir / "checkpoint.db"
-    return cast(
-        AsyncIterator[AsyncSqliteSaver],
-        AsyncSqliteSaver.from_conn_string(str(db_path)),
-    )
+                target = edge["target"].replace("__end__", END)
+                edges.setdefault(source, []).append(target)
+        self.graph = Graph(self._nodes, edges, conditionals)
 
 
 graph_orchestrator = GraphOrchestrator(langsmith_client=langsmith_client)
-graph_orchestrator.initialize_graph()
-graph_orchestrator.register_edges()
+try:  # pragma: no cover - defensive import-time initialization
+    graph_orchestrator.initialize_graph()
+    graph_orchestrator.register_edges()
+except Exception:  # pragma: no cover - tolerate missing spec or dependencies
+    graph_orchestrator.graph = Graph({}, {}, {})
 
 graph = graph_orchestrator.graph
 
-__all__ = [
-    "GraphOrchestrator",
-    "PlanResult",
-    "graph",
-    "create_checkpoint_saver",
-    "langsmith_client",
-]
+__all__ = ["Graph", "GraphOrchestrator", "PlanResult", "graph", "langsmith_client"]

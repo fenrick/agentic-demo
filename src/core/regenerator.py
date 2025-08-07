@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from typing import List
 
-from langgraph.graph.state import CompiledStateGraph
-
+from core.orchestrator import Graph
 from core.state import State
 from models.critique_report import CritiqueReport
 from models.fact_check_report import FactCheckReport
@@ -43,8 +42,8 @@ def has_exceeded_max_retries(state: State, section_id: SectionIdentifier) -> boo
     return state.retry_counts.get(section_id, 0) >= MAX_RETRIES
 
 
-def apply_regeneration(
-    graph: CompiledStateGraph[State], state: State, sections: List[SectionIdentifier]
+async def apply_regeneration(
+    graph: Graph, state: State, sections: List[SectionIdentifier]
 ) -> None:
     """Invoke the Content Weaver node for the specified sections."""
     for section_id in sections:
@@ -52,20 +51,20 @@ def apply_regeneration(
             idx = int(section_id)
         except ValueError:
             continue
-        graph.invoke("Content-Weaver", state, section_id=idx)  # type: ignore[attr-defined]
+        await graph.invoke("Content-Weaver", state, section_id=idx)
 
 
-def orchestrate_regeneration(
+async def orchestrate_regeneration(
     state: State,
     report: CritiqueReport | FactCheckReport,
-    graph: CompiledStateGraph[State] | None = None,
+    graph: Graph | None = None,
 ) -> State:
     """Select sections for rewriting and trigger regeneration.
 
     Args:
         state: Current application state.
         report: Critic or fact-checker output used to choose sections.
-        graph: Optional LangGraph instance; if ``None`` the global orchestrator graph is used.
+        graph: Optional graph instance; if ``None`` the global orchestrator graph is used.
 
     Returns:
         Updated state after any regeneration triggers.
@@ -83,5 +82,5 @@ def orchestrate_regeneration(
         increment_retry_count(state, section)
         to_regenerate.append(section)
     if to_regenerate:
-        apply_regeneration(graph, state, to_regenerate)
+        await apply_regeneration(graph, state, to_regenerate)
     return state
