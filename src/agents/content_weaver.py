@@ -83,7 +83,10 @@ async def call_openai_function(prompt: str) -> AsyncGenerator[str, None]:
     """
 
     try:
-        from langchain_core.messages import HumanMessage, SystemMessage
+        from pydantic_ai.messages import (
+            SystemPromptPart as SystemMessage,
+            UserPromptPart as HumanMessage,
+        )
         from .agent_wrapper import init_chat_model
     except Exception:  # pragma: no cover - dependency not installed
         logging.exception("Content weaver dependencies unavailable")

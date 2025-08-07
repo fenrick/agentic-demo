@@ -36,7 +36,7 @@ def test_call_openai_function_supplies_schema(monkeypatch: Any) -> None:
     fake_messages = types.SimpleNamespace(
         HumanMessage=FakeMessage, SystemMessage=FakeMessage
     )
-    monkeypatch.setitem(sys.modules, "langchain_core.messages", fake_messages)
+    monkeypatch.setitem(sys.modules, "pydantic_ai.messages", fake_messages)
 
     captured: dict[str, Any] = {}
 

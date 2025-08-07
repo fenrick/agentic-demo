@@ -2,77 +2,93 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
+from types import SimpleNamespace
 from typing import Any, Dict, Optional
+
+from pydantic_ai.messages import (
+    ModelRequest,
+    PartDeltaEvent,
+    TextPartDelta,
+    UserPromptPart,
+)
+from pydantic_ai.models import ModelRequestParameters
+from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.providers.openai import OpenAIProvider
 
 import config
 
 # Cache of initialized chat models keyed by model name.
-_MODEL_CACHE: Dict[str, Any] = {}
+_MODEL_CACHE: Dict[str, "PydanticAIChatModel"] = {}
+
+
+class PydanticAIChatModel:
+    """Minimal wrapper providing LangChain-like interfaces."""
+
+    def __init__(self, model_name: str, provider: OpenAIProvider) -> None:
+        self._model = OpenAIModel(model_name, provider=provider)
+
+    def invoke(self, prompt: str) -> SimpleNamespace:
+        """Synchronously request a completion."""
+
+        async def _run() -> SimpleNamespace:
+            request = ModelRequest(parts=[UserPromptPart(prompt)])
+            resp = await self._model.request([request], None, ModelRequestParameters())
+            text = "".join(
+                part.content for part in resp.parts if hasattr(part, "content")
+            )
+            return SimpleNamespace(content=text, additional_kwargs=resp.vendor_details)
+
+        return asyncio.run(_run())
+
+    async def ainvoke(self, messages: list[Any]) -> SimpleNamespace:
+        """Asynchronously request a completion."""
+
+        request = ModelRequest(parts=list(messages))
+        resp = await self._model.request([request], None, ModelRequestParameters())
+        text = "".join(part.content for part in resp.parts if hasattr(part, "content"))
+        return SimpleNamespace(content=text, additional_kwargs=resp.vendor_details)
+
+    async def astream(self, messages: list[Any]):
+        """Yield streamed text deltas from the model."""
+
+        request = ModelRequest(parts=list(messages))
+        async with self._model.request_stream(
+            [request], None, ModelRequestParameters()
+        ) as stream:
+            async for event in stream:
+                if isinstance(event, PartDeltaEvent) and isinstance(
+                    event.delta, TextPartDelta
+                ):
+                    yield event.delta.content_delta
 
 
 def clear_model_cache() -> None:
-    """Clear cached chat model instances.
-
-    Primarily intended for use in unit tests to ensure a clean slate between
-    test cases.
-    """
+    """Clear cached chat model instances."""
 
     _MODEL_CACHE.clear()
 
 
-def get_llm_params(**overrides: Any) -> Dict[str, Any]:
-    """Return default parameters for LangChain LLM calls.
-
-    Reads the configured model name and merges any ``overrides`` provided,
-    ensuring every request specifies the enforced model.
-    """
+def init_chat_model(**overrides: Any) -> Optional[PydanticAIChatModel]:
+    """Instantiate or retrieve a cached Pydantic AI model."""
 
     settings = config.load_settings()
-    params: Dict[str, Any] = {"model": settings.model_name}
-    params.update(overrides)
-    return params
-
-
-def init_chat_model(**overrides: Any) -> Optional[Any]:
-    """Instantiate or retrieve a cached chat model instance.
-
-    The function inspects the configured model name (or an override) and
-    returns an appropriate LangChain chat model instance. Instances are cached
-    by model name to avoid repeated construction. If the required dependency is
-    not available, ``None`` is returned.
-
-    Parameters
-    ----------
-    **overrides:
-        Optional keyword arguments merged with the default LLM parameters.
-
-    Returns
-    -------
-    Optional[Any]
-        The instantiated chat model or ``None`` if construction failed.
-    """
-
-    params = get_llm_params(**overrides)
-    model_name = params.pop("model", "")
+    model_name: str = overrides.pop("model", settings.model_name)
 
     if model_name in _MODEL_CACHE:
         return _MODEL_CACHE[model_name]
 
     try:
         if model_name.startswith("sonar"):
-            from langchain_perplexity import ChatPerplexity  # type: ignore
-
-            settings = config.load_settings()
-            pplx_api_key = params.pop("pplx_api_key", settings.perplexity_api_key)
-            model = ChatPerplexity(
-                model=model_name, pplx_api_key=pplx_api_key, **params
+            pplx_api_key = overrides.pop("pplx_api_key", settings.perplexity_api_key)
+            provider = OpenAIProvider(
+                base_url="https://api.perplexity.ai", api_key=pplx_api_key
             )
         else:
-            from langchain_openai import ChatOpenAI  # type: ignore
+            provider = OpenAIProvider()
 
-            model = ChatOpenAI(model=model_name, **params)
-
+        model = PydanticAIChatModel(model_name, provider)
         _MODEL_CACHE[model_name] = model
         return model
     except Exception:  # pragma: no cover - optional dependencies
@@ -80,4 +96,4 @@ def init_chat_model(**overrides: Any) -> Optional[Any]:
         return None
 
 
-__all__ = ["get_llm_params", "init_chat_model", "clear_model_cache"]
+__all__ = ["init_chat_model", "clear_model_cache"]

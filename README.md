@@ -1,6 +1,6 @@
 # Lecture Builder Agent
 
-A local-first, multi-agent system that generates high‑quality, university‑grade lecture and workshop outlines (with supporting materials) from a single topic prompt. Orchestrated by LangGraph and implemented in Python, the system integrates OpenAI o4‑mini/o3 models, pluggable web search (Perplexity Sonar or Tavily) via LangChain, and a React‑based UX. Full state, citations, logs, and intermediates persist in SQLite (with optional Postgres fallback). Exports include Markdown, DOCX, and PDF.
+A local-first, multi-agent system that generates high‑quality, university‑grade lecture and workshop outlines (with supporting materials) from a single topic prompt. Orchestrated by LangGraph and implemented in Python, the system integrates OpenAI o4‑mini/o3 models, pluggable web search (Perplexity Sonar or Tavily) via Pydantic AI, and a React‑based UX. Full state, citations, logs, and intermediates persist in SQLite (with optional Postgres fallback). Exports include Markdown, DOCX, and PDF.
 
 ---
 
