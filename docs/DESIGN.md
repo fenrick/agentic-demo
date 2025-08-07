@@ -259,7 +259,7 @@ Further ER diagrams in ARCHITECTURE.md.
 | `PERPLEXITY_API_KEY` | Perplexity Sonar authentication            | No (if using Tavily)      |
 | `TAVILY_API_KEY`     | Tavily search authentication               | No (if using Perplexity)  |
 | `SEARCH_PROVIDER`    | `perplexity` or `tavily`                   | No (default `perplexity`) |
-| `MODEL_NAME`         | `o4-mini` or `o3`                          | No (default `o4-mini`)    |
+| `MODEL`              | Provider and model (`openai:o4-mini`)      | No (default `openai:o4-mini`) |
 | `DATA_DIR`           | Path for SQLite DB, cache, workspace files | No (default `./data`)     |
 | `DATABASE_URL`       | Postgres connection string (optional)      | No                        |
 | `LOGFIRE_API_KEY`    | Logfire authentication token              | No                        |

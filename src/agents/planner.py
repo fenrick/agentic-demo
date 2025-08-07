@@ -50,8 +50,9 @@ async def call_planner_llm(topic: str) -> str:
         return ""
 
     settings = config.load_settings()
+    provider_name = settings.model_provider
     model_name = settings.model_name
-    if model_name.startswith("sonar"):
+    if provider_name == "perplexity":
         provider = OpenAIProvider(
             base_url="https://api.perplexity.ai",
             api_key=settings.perplexity_api_key,
@@ -60,7 +61,8 @@ async def call_planner_llm(topic: str) -> str:
         agent = Agent(model, system_prompt=get_prompt("planner_system"))
     else:
         agent = Agent(
-            f"openai:{model_name}", system_prompt=get_prompt("planner_system")
+            f"{provider_name}:{model_name}",
+            system_prompt=get_prompt("planner_system"),
         )
     response = await agent.run(topic)
     return response.output or ""
