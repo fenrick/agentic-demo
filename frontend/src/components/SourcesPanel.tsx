@@ -7,7 +7,7 @@ interface Props {
 // Stub component showing sources related to the workspace.
 const SourcesPanel: React.FC<Props> = ({ sources }) => {
   return (
-    <ul className="list-disc pl-5 text-sm space-y-1">
+    <ul className="list-disc space-y-1 pl-5 text-sm">
       {sources.map((s, idx) => (
         <li key={idx}>{String(s)}</li>
       ))}

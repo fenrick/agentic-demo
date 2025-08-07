@@ -19,7 +19,7 @@
 
 @layer components {
   .card {
-    @apply bg-white dark:bg-gray-800 rounded-lg px-6 py-8 ring shadow-xl ring-gray-900/5;
+    @apply rounded-lg bg-white px-6 py-8 shadow-xl ring ring-gray-900/5 dark:bg-gray-800;
   }
 
   .btn {

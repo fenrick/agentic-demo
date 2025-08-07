@@ -239,17 +239,17 @@ The command reads `alembic.ini` and writes migration scripts to
 
 ## Configuration & Environment Variables
 
-| Variable             | Description                        | Default                                  |
-| -------------------- | ---------------------------------- | ---------------------------------------- |
-| `OPENAI_API_KEY`     | API key for OpenAI                 | (required)                               |
-| `PERPLEXITY_API_KEY` | API key for Perplexity Sonar       | Required if `SEARCH_PROVIDER=perplexity` |
-| `TAVILY_API_KEY`     | API key for Tavily search          | Required if `SEARCH_PROVIDER=tavily`     |
-| `SEARCH_PROVIDER`    | `perplexity` or `tavily`           | `perplexity`                             |
-| `LOGFIRE_API_KEY`    | API key for Logfire                |                                          |
-| `LOGFIRE_PROJECT`    | Logfire project identifier         |                                          |
-| `MODEL`              | LLM provider and model (`openai:o4-mini`) | `openai:o4-mini`                        |
-| `DATA_DIR`           | Path for SQLite DB, cache, logs    | (required)                               |
-| `OFFLINE_MODE`       | Run without external network calls | `false`                                  |
+| Variable             | Description                               | Default                                  |
+| -------------------- | ----------------------------------------- | ---------------------------------------- |
+| `OPENAI_API_KEY`     | API key for OpenAI                        | (required)                               |
+| `PERPLEXITY_API_KEY` | API key for Perplexity Sonar              | Required if `SEARCH_PROVIDER=perplexity` |
+| `TAVILY_API_KEY`     | API key for Tavily search                 | Required if `SEARCH_PROVIDER=tavily`     |
+| `SEARCH_PROVIDER`    | `perplexity` or `tavily`                  | `perplexity`                             |
+| `LOGFIRE_API_KEY`    | API key for Logfire                       |                                          |
+| `LOGFIRE_PROJECT`    | Logfire project identifier                |                                          |
+| `MODEL`              | LLM provider and model (`openai:o4-mini`) | `openai:o4-mini`                         |
+| `DATA_DIR`           | Path for SQLite DB, cache, logs           | (required)                               |
+| `OFFLINE_MODE`       | Run without external network calls        | `false`                                  |
 
 ---
 

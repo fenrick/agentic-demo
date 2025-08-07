@@ -420,7 +420,7 @@ Once `researcher_pipeline` returns `List[Citation]`, the orchestrator will:
    2.1. Implement `async def content_weaver(state: State) -> WeaveResult:` that:
 
 - Calls OpenAI via function-calling API, passing system + user prompts and schema.
- - Streams partial tokens back via the orchestrator's `messages` channel.
+- Streams partial tokens back via the orchestrator's `messages` channel.
   2.2. On completion, parse function output into Python model and validate against schema.
   2.3. Write unit tests mocking OpenAI responses (correct and schema-violating).
 

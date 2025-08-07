@@ -8,7 +8,7 @@ interface Props {
 // Stub component rendering log events.
 const LogPanel: React.FC<Props> = ({ logs }) => {
   return (
-    <ul className="text-sm space-y-1">
+    <ul className="space-y-1 text-sm">
       {logs.map((log, idx) => (
         <li key={idx}>{log.type}</li>
       ))}

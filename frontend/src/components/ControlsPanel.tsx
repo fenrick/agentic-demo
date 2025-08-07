@@ -69,7 +69,7 @@ const ControlsPanel: React.FC<Props> = ({ workspaceId }) => {
       <select
         value={model}
         onChange={onModelChange}
-        className="border rounded px-2 py-1"
+        className="rounded border px-2 py-1"
       >
         <option value="o4-mini">o4-mini</option>
         <option value="o3">o3</option>

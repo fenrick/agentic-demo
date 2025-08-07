@@ -22,7 +22,7 @@ const App: React.FC = () => {
   }, [connect]);
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6 p-6">
       <div className="card">
         <DataEntryForm />
       </div>

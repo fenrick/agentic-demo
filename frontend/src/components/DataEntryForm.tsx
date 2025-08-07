@@ -63,13 +63,13 @@ const DataEntryForm: React.FC = () => {
     <div className="my-4">
       <form
         onSubmit={onSubmit}
-        className="flex flex-col items-center gap-2 mb-4"
+        className="mb-4 flex flex-col items-center gap-2"
       >
         <textarea
           ref={textareaRef}
           value={topic}
           onChange={handleChange}
-          className="w-full max-w-md p-2 border border-gray-300 rounded resize-none overflow-hidden"
+          className="w-full max-w-md resize-none overflow-hidden rounded border border-gray-300 p-2"
           placeholder="Enter topic"
           rows={1}
         />
@@ -81,7 +81,7 @@ const DataEntryForm: React.FC = () => {
         <table className="w-full border-collapse">
           <thead>
             <tr>
-              <th className="border border-gray-300 p-2 text-left bg-gray-100">
+              <th className="border border-gray-300 bg-gray-100 p-2 text-left">
                 Topic
               </th>
             </tr>
