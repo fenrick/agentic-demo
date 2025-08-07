@@ -5,26 +5,20 @@ from __future__ import annotations
 import asyncio
 import sys
 import types
-from contextlib import asynccontextmanager
 
 
 def test_generate(monkeypatch):
     """_generate returns final graph state."""
 
-    async def fake_ainvoke(payload, config=None):  # type: ignore[unused-argument]
-        assert payload["prompt"] == "topic"
-        return {"title": "Test"}
+    async def fake_run(state):  # type: ignore[unused-argument]
+        state.title = "Test"
 
-    fake_graph = types.SimpleNamespace(ainvoke=fake_ainvoke)
-
-    @asynccontextmanager
-    async def fake_saver():
-        yield object()
+    fake_graph = types.SimpleNamespace(run=fake_run)
 
     monkeypatch.setitem(
         sys.modules,
         "core.orchestrator",
-        types.SimpleNamespace(graph=fake_graph, create_checkpoint_saver=fake_saver),
+        types.SimpleNamespace(graph=fake_graph),
     )
 
     from cli.generate_lecture import _generate

@@ -1,6 +1,5 @@
 import logging
 import sys
-from contextlib import asynccontextmanager
 from types import ModuleType, SimpleNamespace
 
 
@@ -14,15 +13,7 @@ def test_main_logs_stream_boundaries(monkeypatch, caplog):
     sys.modules["agents.streaming"] = fake_streaming
 
     fake_orchestrator = ModuleType("core.orchestrator")
-    fake_orchestrator.graph = SimpleNamespace(
-        ainvoke=lambda *_a, **_k: {"result": "ok"}
-    )
-
-    @asynccontextmanager
-    async def fake_saver():
-        yield object()
-
-    fake_orchestrator.create_checkpoint_saver = fake_saver
+    fake_orchestrator.graph = SimpleNamespace(run=lambda *_a, **_k: {"result": "ok"})
     sys.modules["core.orchestrator"] = fake_orchestrator
 
     from cli import generate_lecture

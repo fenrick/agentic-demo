@@ -1,4 +1,5 @@
 # mypy: ignore-errors
+import contextlib
 import sys
 import types
 from pathlib import Path
@@ -83,6 +84,10 @@ class _Client:
 
 langsmith_stub.Client = _Client
 sys.modules["langsmith"] = langsmith_stub
+
+langsmith_run_stub = types.ModuleType("langsmith.run_helpers")
+langsmith_run_stub.trace = lambda *a, **k: contextlib.nullcontext()
+sys.modules["langsmith.run_helpers"] = langsmith_run_stub
 
 opentelemetry_stub = types.ModuleType("opentelemetry")
 
@@ -217,22 +222,6 @@ sys.modules["persistence.logs"] = persistence_logs_stub
 from core.orchestrator import GraphOrchestrator  # noqa: E402
 
 
-class DummyGraph:
-    """Minimal stand-in for :class:`StateGraph` to capture mappings."""
-
-    def __init__(self) -> None:
-        self.conditional_mappings: list[dict[object, str]] = []
-
-    def add_conditional_edges(self, source, func, mapping):  # type: ignore[no-untyped-def]
-        self.conditional_mappings.append(mapping)
-
-    def add_edge(self, source, target):  # type: ignore[no-untyped-def]
-        pass
-
-    def compile(self):  # type: ignore[no-untyped-def]
-        return self
-
-
 def dummy_cond(prev, state):  # type: ignore[no-untyped-def]
     return True
 
@@ -243,7 +232,7 @@ def cond_str(prev, state):  # type: ignore[no-untyped-def]
 
 def test_register_edges_coerces_boolean_keys():
     orchestrator = GraphOrchestrator(spec_path=Path("spec"))
-    orchestrator._graph = DummyGraph()
+    orchestrator._nodes = {}
     orchestrator._edge_spec = [
         {
             "source": "A",
@@ -252,14 +241,14 @@ def test_register_edges_coerces_boolean_keys():
         }
     ]
     orchestrator.register_edges()
-    mapping = orchestrator._graph.conditional_mappings[0]
+    mapping = orchestrator.graph.conditionals["A"][1]
     assert mapping[True] == "B"
     assert mapping[False] == "C"
 
 
 def test_register_edges_preserves_non_boolean_keys():
     orchestrator = GraphOrchestrator(spec_path=Path("spec"))
-    orchestrator._graph = DummyGraph()
+    orchestrator._nodes = {}
     orchestrator._edge_spec = [
         {
             "source": "A",
@@ -268,6 +257,6 @@ def test_register_edges_preserves_non_boolean_keys():
         }
     ]
     orchestrator.register_edges()
-    mapping = orchestrator._graph.conditional_mappings[0]
+    mapping = orchestrator.graph.conditionals["A"][1]
     assert mapping["loop"] == "B"
     assert mapping["continue"] == "C"
