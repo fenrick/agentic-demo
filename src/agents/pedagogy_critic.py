@@ -6,13 +6,13 @@ keyword heuristics only when necessary.
 
 from __future__ import annotations
 
+import json
 import logging
 from collections import Counter
 from dataclasses import dataclass
 from typing import Callable, Dict, List, cast
 
 from agents.agent_wrapper import init_chat_model
-from agents.json_utils import load_json
 from agents.models import Activity
 from core.state import State
 from models import (
@@ -82,8 +82,9 @@ def classify_bloom_level(text: str) -> str:
         if model is not None:
             response = model.invoke(prompt)
             content = response.content or ""
-            data = load_json(content)
-            if data is None:
+            try:
+                data = json.loads(content)
+            except json.JSONDecodeError:
                 logging.warning("LLM response not valid JSON: %s", content)
             else:
                 level = str(data.get("level", "")).strip().lower()
