@@ -120,7 +120,7 @@ def test_call_openai_function_emits_logfire_trace(monkeypatch: Any) -> None:
         def run_stream(self, prompt: str) -> Any:  # pragma: no cover - used in test
             import logfire
 
-            span = logfire.trace("agent")
+            span: Any = logfire.trace("agent")
 
             class Resp:
                 async def __aenter__(self) -> "Resp":
