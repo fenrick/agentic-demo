@@ -24,7 +24,7 @@ async def call_openai_function(prompt: str) -> AsyncGenerator[str, None]:
 
     try:
         from pydantic_ai import Agent
-        from .agent_wrapper import init_chat_model
+        from .model_utils import init_model
     except Exception:  # pragma: no cover - dependency not installed
         logging.exception("Content weaver dependencies unavailable")
 
@@ -34,8 +34,8 @@ async def call_openai_function(prompt: str) -> AsyncGenerator[str, None]:
 
         return empty()
 
-    wrapper = init_chat_model()
-    if wrapper is None:
+    model = init_model()
+    if model is None:
 
         async def empty() -> AsyncGenerator[str, None]:
             if False:
@@ -48,7 +48,7 @@ async def call_openai_function(prompt: str) -> AsyncGenerator[str, None]:
         get_prompt("content_weaver_system"),
         f"Output must conform to this JSON schema:\n{schema}",
     ]
-    agent = Agent(model=wrapper._model, instructions=instructions)  # type: ignore[attr-defined]
+    agent = Agent(model=model, instructions=instructions)
 
     async def generator() -> AsyncGenerator[str, None]:
         async with agent.run_stream(prompt) as response:  # pragma: no cover - streaming

@@ -1,4 +1,4 @@
-"""Utilities for emitting LangGraph stream events."""
+"""Utilities for emitting orchestrator stream events."""
 
 from __future__ import annotations
 

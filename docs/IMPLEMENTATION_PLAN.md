@@ -28,7 +28,7 @@
 - **Purpose**: Define project metadata, Python version, and dependencies stub.
 - **Sections**:
   - `[tool.poetry]`: `name`, `version`, `description`, `authors`.
-  - `[tool.poetry.dependencies]`: placeholder entries for `python>=3.11`, `langgraph`, `openai`, etc.
+  - `[tool.poetry.dependencies]`: placeholder entries for `python>=3.11`, `pydantic-ai`, `openai`, etc.
   - `[tool.poetry.dev-dependencies]`: `pytest`, `black`, `flake8`, `isort`, `pre-commit`.
 
 1. **`.pre-commit-config.yaml`**
@@ -215,7 +215,7 @@ Each node module defines a single `async` handler function and its input/output 
 - **Class `GraphOrchestrator`**
 
 - **Method `initialize_graph()`**
-  - Load `langgraph.json` and register all nodes with their stream channels (`values`, `updates`, `messages`, `debug`).
+  - Register all nodes with their stream channels (`values`, `updates`, `messages`, `debug`).
 
 - **Method `register_edges()`**
   - Wire node-to-node transitions, referencing policies (see B.3).
@@ -1221,9 +1221,9 @@ def from_schema(weave: WeaveResult) -> str:
    - **Method:** `validate_model_configuration()`
      _Runs at startup to assert `config.MODEL == "openai:o4-mini"`, or raise a clear error._
 
-3. **`src/agents/agent_wrapper.py`**
-   - **Method:** `get_llm_params()` removed in favor of direct Pydantic AI configuration.
-     _Reads `settings.model` and injects provider/model into every API call payload._
+3. **`src/agents/model_utils.py`**
+   - **Function:** `init_model()` centralizes Pydantic AI model creation.
+     _Reads `settings.model` and constructs the provider/model for API calls._
 
 4. **Acceptance:**
    - Startup log prints “Using LLM engine o4-mini”

@@ -76,7 +76,7 @@ async def setup_database(app: FastAPI) -> None:
 
 
 def setup_graph(app: FastAPI) -> None:
-    """Initialize the LangGraph graph."""
+    """Initialize the application graph."""
 
     orchestrator = GraphOrchestrator()
     orchestrator.initialize_graph()

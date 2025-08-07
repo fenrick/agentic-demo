@@ -46,10 +46,8 @@ def test_call_openai_function_supplies_schema(monkeypatch: Any) -> None:
 
     monkeypatch.setitem(
         sys.modules,
-        "agents.agent_wrapper",
-        types.SimpleNamespace(
-            init_chat_model=lambda **_: types.SimpleNamespace(_model=None)
-        ),
+        "agents.model_utils",
+        types.SimpleNamespace(init_model=lambda **_: object()),
     )
 
     schema_marker = {"marker": "value"}
@@ -143,10 +141,8 @@ def test_call_openai_function_emits_logfire_trace(monkeypatch: Any) -> None:
     )
     monkeypatch.setitem(
         sys.modules,
-        "agents.agent_wrapper",
-        types.SimpleNamespace(
-            init_chat_model=lambda **_: types.SimpleNamespace(_model=None)
-        ),
+        "agents.model_utils",
+        types.SimpleNamespace(init_model=lambda **_: object()),
     )
 
     async def run() -> None:

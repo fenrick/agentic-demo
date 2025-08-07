@@ -22,7 +22,7 @@ This document defines a **comprehensive**, **explicit** Test Plan for the Lectur
 | Level                          | Description                                                   | Tools                                     | Ownership       |
 | ------------------------------ | ------------------------------------------------------------- | ----------------------------------------- | --------------- |
 | **Unit Testing**               | Component-level tests for functions, classes, schemas         | Pytest, Jest                              | Devs            |
-| **Integration Testing**        | Interaction between backend services, LangGraph workflows, DB | Pytest, Postman, Docker Compose           | Devs            |
+| **Integration Testing**        | Interaction between backend services, orchestrator workflows, DB | Pytest, Postman, Docker Compose           | Devs            |
 | **End-to-End (E2E)**           | Simulate user flows from prompt to download                   | Playwright, Cypress                       | QA              |
 | **Performance Testing**        | Throughput, latency, resource utilization under load          | k6, Locust                                | SRE/QoS Team    |
 | **Security Testing**           | SAST, DAST, dependency scans, penetration tests               | Bandit, OWASP ZAP, Trivy, custom pen-test | DevSecOps       |
@@ -170,7 +170,7 @@ All test data stored in `tests/fixtures/` with version control.
 
 ### 9.2 Integration Points
 
-- **LangGraph Nodes**: Unit test each node and mock downstream calls.
+- **Orchestrator nodes**: unit test each node and mock downstream calls.
 - **DB Integration**: Use ephemeral Postgres for SQL queries, checkpoint writes and reads.
 - **External APIs**: Mock ChatPerplexity and OpenAI via local stub server in tests.
 

@@ -9,21 +9,21 @@ This document provides a **comprehensive** and **explicit** description of the L
 ```plaintext
 ┌──────────────────┐        ┌─────────────────────────┐        ┌─────────────────┐
 │  User Browser    │  SSE   │       FastAPI Server     │  OpenAI API │ Citation Cache  │
-│ (React + Tailwind)│◀──────▶│ (LangGraph Orchestrator) │◀──────────▶│ (SQLite or PG)   │
+│ (React + Tailwind)│◀──────▶│ (Graph Orchestrator)     │◀──────────▶│ (SQLite or PG)   │
 └──────────────────┘        └─────────────────────────┘        └─────────────────┘
          │                             │                                    │
          │ HTTP Websocket / REST       │ HTTP / gRPC                        │ HTTP
          ▼                             ▼                                    ▼
 ┌──────────────────┐        ┌─────────────────────────┐        ┌─────────────────┐
 │ Downloads API    │        │ Perplexity Sonar LLM    │        │ Local Dense     │
-│ (Markdown/DOCX/PDF)│        │ (LangChain)            │        │ Retrieval Index │
+│ (Markdown/DOCX/PDF)│        │ (LLM Client)           │        │ Retrieval Index │
 └──────────────────┘        └─────────────────────────┘        └─────────────────┘
 ```
 
-- **FastAPI Server**: exposes REST endpoints, SSE streams, websocket connections. Hosts LangGraph orchestrator.
-- **LangGraph**: coordinates multi-agent workflows as a directed graph of nodes and edges. Maintains in-memory and persisted `State` snapshots.
+- **FastAPI Server**: exposes REST endpoints, SSE streams, websocket connections. Hosts the graph orchestrator.
+- **Graph Orchestrator**: coordinates multi-agent workflows as a directed graph of nodes and edges. Maintains in-memory and persisted `State` snapshots.
 - **SQLite/Postgres**: checkpoint storage for graph state, citations, logs, and document versions.
-- **Perplexity Sonar LLM (LangChain)**: external source for research; fallback to local dense retrieval index.
+- **Perplexity Sonar LLM**: external source for research; fallback to local dense retrieval index.
 - **Downloads API**: on-demand generation of final outputs in Markdown, DOCX, PDF.
 - **Browser Client**: subscribes to SSE streams for document updates, citations, and action logs.
 
@@ -42,21 +42,21 @@ This document provides a **comprehensive** and **explicit** description of the L
    - `SSE /stream/{workspace_id}/citations` — new citations
    - `GET /download/{job_id}/{format}` — retrieve final artifact
 
-2. **LangGraph Orchestrator**
+2. **Graph Orchestrator**
    - **Graph Definition**: `src/core/orchestrator.py`
    - **Nodes**: Planner, Researcher-Web, Content Weaver, Pedagogy Critic, Fact Checker, Exporter
    - **Checkpoint Saver**: `SqliteCheckpointSaver` or `PostgresCheckpointSaver`
    - **Edge Policies**: confidence thresholds, retry loops
 
 3. **Retrieval Layer**
-   - **ChatPerplexity (Sonar model)**: LangChain wrapper with API key support
+   - **ChatPerplexity (Sonar model)**: client with API key support
    - **Cache Manager**: reads/writes to `retrieval_cache` table
    - **Dense Retriever**: fallback using `faiss` index of CC-BY abstracts
 
 4. **Synthesis Layer**
-   - **LangChain ChatOpenAI**: wraps chat completions with streaming
+   - **OpenAI Chat**: wraps chat completions with streaming
    - **Schema Validator**: enforces `schemas/outline.json`
-   - **Stream Manager**: channels LangGraph streams to HTTP SSE
+   - **Stream Manager**: channels orchestrator streams to HTTP SSE
 
 5. **Quality Control**
    - **PedagogyCritic**: Bloom taxonomy coverage algorithm
@@ -97,7 +97,7 @@ This document provides a **comprehensive** and **explicit** description of the L
 
 1. **User submits topic** via `POST /run`.
 2. **FastAPI** enqueues job and returns `job_id`.
-3. **LangGraph.invoke(job_id)** triggers:
+3. **Orchestrator.invoke(job_id)** triggers:
    - **Planner** generates `learning_objectives`, `modules` → `stream(values)`.
    - **Researcher-Web** fans out N parallel queries to Perplexity Sonar → `stream(updates)`.
    - **Content Weaver** streams token messages → `stream(messages)`.
@@ -162,8 +162,8 @@ This document provides a **comprehensive** and **explicit** description of the L
 | `/run`, `/resume`            | HTTP REST                              | JSON           | Client → Server     |
 | SSE Streams                  | SSE                                    | JSON messages  | Server → Client     |
 | `/download`                  | HTTP REST                              | Binary stream  | Client ← Server     |
-| LangGraph invocations        | In-process Call                        | Python objects | Orchestrator        |
-| Perplexity Sonar (LangChain) | HTTP REST                              | JSON           | Server → Perplexity |
+| Orchestrator invocations     | In-process Call                        | Python objects | Orchestrator        |
+| Perplexity Sonar            | HTTP REST                              | JSON           | Server → Perplexity |
 | OpenAI API                   | HTTP REST                              | JSON           | Server → OpenAI     |
 | DB Access                    | SQL over TCP (PG) or File I/O (SQLite) | SQL            | Server ↔ DB        |
 
@@ -192,7 +192,7 @@ This document provides a **comprehensive** and **explicit** description of the L
 ## 8. Scalability Considerations
 
 - **Backend Scaling**: Stateless nodes; horizontal scaling behind load balancer.
-- **LangGraph**: supports sharding of job queues by `job_id`.
+- **Orchestrator**: supports sharding of job queues by `job_id`.
 - **Database**: scale Postgres with read replicas; use connection pooling.
 - **Cache**: Memcached or Redis can replace SQLite cache for high throughput.
 - **SSE**: use sticky sessions or Distributed Pub/Sub (e.g. Redis Streams) for multi-pod streaming.
@@ -202,7 +202,7 @@ This document provides a **comprehensive** and **explicit** description of the L
 ## 9. Glossary of Terms
 
 - **SSE**: Server-Sent Events, unidirectional streaming over HTTP.
-- **LangGraph**: Graph-based orchestration framework for agent workflows.
+- **Orchestrator**: graph-based orchestration framework for agent workflows.
 - **State**: Typed object representing the current job snapshot.
 - **Module**: A lecture segment with duration and activities.
 - **OutlineSchema**: JSON schema dictating lecture content structure.

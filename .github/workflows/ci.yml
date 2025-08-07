@@ -17,7 +17,8 @@ jobs:
           cache: "poetry"
           cache-dependency-path: poetry.lock
       - run: poetry install --with dev --extras test --no-interaction --no-ansi
-      - run: poetry run pre-commit run --all-files
+      - run: poetry run black --check .
+      - run: poetry run ruff .
 
   test:
     runs-on: ubuntu-latest
