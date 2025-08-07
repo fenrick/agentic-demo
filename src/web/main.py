@@ -1,22 +1,20 @@
 """Application entrypoint for the FastAPI server."""
 
+# ruff: noqa: E402
 from __future__ import annotations
 
 import argparse
 import os
 from pathlib import Path
 
+from observability import init_observability, instrument_app
+
+init_observability()
+
 import uvicorn
-import logfire
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from opentelemetry import trace
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.instrumentation.requests import RequestsInstrumentor
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
 
 from agents.cache_backed_researcher import CacheBackedResearcher
 from agents.researcher_web import PerplexityClient, TavilyClient
@@ -32,12 +30,7 @@ def create_app() -> FastAPI:
     app = FastAPI()
     app.state.settings = settings
 
-    if settings.enable_tracing:
-        logfire.configure(
-            token=settings.logfire_api_key,
-            service_name=settings.logfire_project,
-        )
-        _configure_tracing(app)
+    instrument_app(app)
 
     # Bind search and fact-checking behaviour depending on offline mode.
     if settings.offline_mode:
@@ -66,17 +59,6 @@ def create_app() -> FastAPI:
     register_routes(app)
     mount_frontend(app)
     return app
-
-
-def _configure_tracing(app: FastAPI) -> None:
-    """Initialize OpenTelemetry providers and instrument FastAPI and requests."""
-
-    resource = Resource.create({"service.name": "lecture-builder-agent"})
-    provider = TracerProvider(resource=resource)
-    provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
-    trace.set_tracer_provider(provider)
-    FastAPIInstrumentor.instrument_app(app)
-    RequestsInstrumentor().instrument()
 
 
 async def setup_database(app: FastAPI) -> None:
