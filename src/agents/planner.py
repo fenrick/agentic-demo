@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 from dataclasses import dataclass
 
+from pydantic import BaseModel, ValidationError
+
 from core.state import Outline, State
 from prompts import get_prompt
 
-from .agent_wrapper import init_chat_model
-from .json_utils import load_json
 from .streaming import stream_debug, stream_messages
 
 
@@ -21,9 +22,17 @@ class PlanResult:
     Attributes:
         confidence: Heuristic score between 0 and 1 indicating planning
             certainty.
+        outline: Structured outline derived from the planner's response.
     """
 
     confidence: float
+    outline: Outline | None = None
+
+
+class PlannerOutput(BaseModel):
+    """Structured schema expected from the planner model."""
+
+    steps: list[str]
 
 
 async def call_planner_llm(topic: str) -> str:
@@ -33,23 +42,29 @@ async def call_planner_llm(topic: str) -> str:
     """
 
     try:  # pragma: no cover - exercised via monkeypatch in tests
-        from pydantic_ai.messages import (
-            SystemPromptPart as SystemMessage,
-            UserPromptPart as HumanMessage,
-        )
+        from pydantic_ai import Agent
+        from pydantic_ai.models.openai import OpenAIModel
+        from pydantic_ai.providers.openai import OpenAIProvider
+        import config
     except Exception:  # dependency missing
         logging.exception("Planner dependencies unavailable")
         return ""
 
-    model = init_chat_model()
-    if model is None:
-        return ""
-    messages = [
-        SystemMessage(content=get_prompt("planner_system")),
-        HumanMessage(content=topic),
-    ]
-    response = await model.ainvoke(messages)
-    return response.content or ""
+    settings = config.load_settings()
+    model_name = settings.model_name
+    if model_name.startswith("sonar"):
+        provider = OpenAIProvider(
+            base_url="https://api.perplexity.ai",
+            api_key=settings.perplexity_api_key,
+        )
+        model = OpenAIModel(model_name, provider=provider)
+        agent = Agent(model, system_prompt=get_prompt("planner_system"))
+    else:
+        agent = Agent(
+            f"openai:{model_name}", system_prompt=get_prompt("planner_system")
+        )
+    response = await agent.run(topic)
+    return response.output or ""
 
 
 _LINE_RE = re.compile(r"^\s*(?:[-*]|\d+\.)\s+(.*)")
@@ -76,12 +91,10 @@ async def run_planner(state: State) -> PlanResult:
     raw = await call_planner_llm(state.prompt)
     stream_messages(raw)
     outline = Outline(steps=[])
-    data = load_json(raw)
-    if data is not None:
-        steps = data.get("steps", [])
-        if isinstance(steps, list):
-            outline = Outline(steps=[str(step).strip() for step in steps])
-    if not outline.steps:
+    try:
+        data = PlannerOutput.model_validate_json(raw)
+        outline = Outline(steps=[step.strip() for step in data.steps])
+    except (ValidationError, json.JSONDecodeError):
         outline = extract_outline(raw)
     state.outline = outline
     confidence = 0.0
@@ -89,7 +102,7 @@ async def run_planner(state: State) -> PlanResult:
         confidence = min(1.0, round(0.5 + 0.1 * len(outline.steps), 2))
     else:
         stream_debug("planner produced empty outline")
-    return PlanResult(confidence=confidence)
+    return PlanResult(confidence=confidence, outline=outline)
 
 
 __all__ = [
