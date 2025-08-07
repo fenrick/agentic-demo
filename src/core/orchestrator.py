@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import importlib
 import json
 from datetime import datetime
@@ -11,9 +10,7 @@ from typing import Any, Awaitable, Callable, Optional, TypeVar, cast
 
 import tiktoken
 import config
-from langsmith import Client
-from langsmith.run_helpers import trace as ls_trace
-from opentelemetry import trace
+import logfire
 
 from agents.planner import PlanResult  # noqa: F401
 from core.logging import get_logger
@@ -22,19 +19,11 @@ from persistence import get_db_session
 from persistence.logs import compute_hash, log_action
 
 logger = get_logger()
-tracer = trace.get_tracer(__name__)
 
 try:
     _ENCODING = tiktoken.encoding_for_model(config.MODEL_NAME)
 except KeyError:
     _ENCODING = tiktoken.get_encoding("cl100k_base")
-
-
-try:
-    langsmith_client: Client | None = Client()
-except Exception:  # pragma: no cover - optional client
-    logger.exception("LangSmith client disabled")
-    langsmith_client = None
 
 
 def _token_count(payload: object) -> int:
@@ -163,10 +152,8 @@ class GraphOrchestrator:
     def __init__(
         self,
         spec_path: Path | None = None,
-        langsmith_client: Client | None = langsmith_client,
     ) -> None:
         self.graph: Optional[Graph] = None
-        self.langsmith_client = langsmith_client
         self.spec_path = (
             spec_path or Path(__file__).resolve().parents[1] / "langgraph.json"
         )
@@ -177,35 +164,27 @@ class GraphOrchestrator:
         async def wrapped(state: State) -> T:
             input_dict = state.to_dict()
             input_hash = compute_hash(input_dict)
-            trace_ctx = (
-                ls_trace(name, inputs=input_dict, client=self.langsmith_client)
-                if self.langsmith_client is not None
-                else contextlib.nullcontext()
-            )
-            async with trace_ctx as run:
-                with tracer.start_as_current_span(name):
-                    result = await node(state)
-                    output_hash = compute_hash(result)
-                    tokens = _token_count(input_dict) + _token_count(result)
-                    workspace_id = getattr(state, "workspace_id", "default")
-                    async with get_db_session() as conn:
-                        await log_action(
-                            conn,
-                            workspace_id,
-                            name,
-                            input_hash,
-                            output_hash,
-                            tokens,
-                            0.0,
-                            datetime.utcnow(),
-                        )
-                    if run is not None:
-                        run.add_metadata({"token_count": tokens})
-                        if isinstance(result, dict):
-                            run.end(outputs=result)
-                        else:
-                            run.end()
-                    return result
+            with logfire.span(name, inputs=input_dict) as span:
+                result = await node(state)
+                output_hash = compute_hash(result)
+                tokens = _token_count(input_dict) + _token_count(result)
+                workspace_id = getattr(state, "workspace_id", "default")
+                async with get_db_session() as conn:
+                    await log_action(
+                        conn,
+                        workspace_id,
+                        name,
+                        input_hash,
+                        output_hash,
+                        tokens,
+                        0.0,
+                        datetime.utcnow(),
+                    )
+                span.set_attributes({"token_count": tokens})
+                if isinstance(result, dict):
+                    span.set_attributes({"outputs": result})
+                logfire.trace("completed node {node}", node=name, token_count=tokens)
+                return result
 
         wrapped.__name__ = name
         return wrapped
@@ -244,7 +223,7 @@ class GraphOrchestrator:
         self.graph = Graph(self._nodes, edges, conditionals)
 
 
-graph_orchestrator = GraphOrchestrator(langsmith_client=langsmith_client)
+graph_orchestrator = GraphOrchestrator()
 try:  # pragma: no cover - defensive import-time initialization
     graph_orchestrator.initialize_graph()
     graph_orchestrator.register_edges()
@@ -253,4 +232,4 @@ except Exception:  # pragma: no cover - tolerate missing spec or dependencies
 
 graph = graph_orchestrator.graph
 
-__all__ = ["Graph", "GraphOrchestrator", "PlanResult", "graph", "langsmith_client"]
+__all__ = ["Graph", "GraphOrchestrator", "PlanResult", "graph"]

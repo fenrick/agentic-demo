@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 
 import uvicorn
+import logfire
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -32,6 +33,10 @@ def create_app() -> FastAPI:
     app.state.settings = settings
 
     if settings.enable_tracing:
+        logfire.configure(
+            token=settings.logfire_api_key,
+            service_name=settings.logfire_project,
+        )
         _configure_tracing(app)
 
     # Bind search and fact-checking behaviour depending on offline mode.
