@@ -6,9 +6,10 @@ import logging
 import re
 from dataclasses import dataclass
 
+from pydantic import BaseModel, ValidationError
+
 from core.state import Outline, State
 from prompts import get_prompt
-from pydantic import BaseModel, ValidationError
 
 from .streaming import stream_debug, stream_messages
 

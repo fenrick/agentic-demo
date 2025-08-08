@@ -9,10 +9,10 @@ from typing import List, Optional, Protocol
 from urllib.parse import urlparse
 
 import httpx
+from pydantic import BaseModel
 
 from persistence import get_db_session
 from persistence.repositories.retrieval_cache_repo import RetrievalCacheRepo
-from pydantic import BaseModel
 
 from .dense_retriever import DenseRetriever
 from .offline_cache import load_cached_results, save_cached_results
