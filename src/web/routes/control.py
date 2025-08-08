@@ -6,11 +6,13 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Body
 
+TopicBody = Body(..., embed=True)
+ModelBody = Body(..., embed=True)
 router = APIRouter(prefix="/workspaces/{workspace_id}")
 
 
 @router.post("/run", status_code=201)
-async def run(workspace_id: str, topic: str = Body(..., embed=True)) -> dict[str, str]:
+async def run(workspace_id: str, topic: str = TopicBody) -> dict[str, str]:
     """Start a new lecture generation job.
 
     This endpoint is a stub used for testing the HTTP interface.
@@ -41,9 +43,7 @@ async def resume(workspace_id: str) -> dict[str, str]:
 
 
 @router.post("/model")
-async def model(
-    workspace_id: str, model: str = Body(..., embed=True)
-) -> dict[str, str]:
+async def model(workspace_id: str, model: str = ModelBody) -> dict[str, str]:
     """Select the model to run subsequent operations against."""
 
     return {"workspace_id": workspace_id, "model": model}

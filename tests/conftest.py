@@ -11,7 +11,12 @@ import importlib
 import os
 import sys
 import types
+from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
+from typing import Any, List
+
+import agents  # type: ignore  # noqa: E402,F401
 
 # Compute the absolute path to the project root and ``src`` directory.
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -20,6 +25,7 @@ SRC_DIR = PROJECT_ROOT / "src"
 # Prepend ``src`` to ``sys.path`` if it's not already present.
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
+
 
 # ---------------------------------------------------------------------------
 # Lightweight stubs for third-party dependencies
@@ -31,16 +37,12 @@ os.environ.setdefault("PERPLEXITY_API_KEY", "test")
 
 # Minimal ``tiktoken`` replacement used by the orchestrator token counter.
 tiktoken_stub = types.ModuleType("tiktoken")
-setattr(
-    tiktoken_stub,
-    "encoding_for_model",
-    lambda _name: types.SimpleNamespace(encode=lambda s: []),
-)  # type: ignore[attr-defined]
-setattr(
-    tiktoken_stub,
-    "get_encoding",
-    lambda _name: types.SimpleNamespace(encode=lambda s: []),
-)  # type: ignore[attr-defined]
+tiktoken_stub.encoding_for_model = (  # type: ignore[attr-defined]
+    lambda _name: types.SimpleNamespace(encode=lambda s: [])
+)
+tiktoken_stub.get_encoding = (  # type: ignore[attr-defined]
+    lambda _name: types.SimpleNamespace(encode=lambda s: [])
+)
 sys.modules.setdefault("tiktoken", tiktoken_stub)
 
 
@@ -60,12 +62,35 @@ class _Tracer:
 
 
 opentelemetry_stub = types.ModuleType("opentelemetry")
-setattr(
-    opentelemetry_stub,
-    "trace",
-    types.SimpleNamespace(get_tracer=lambda _name: _Tracer()),
-)  # type: ignore[attr-defined]
+opentelemetry_stub.trace = types.SimpleNamespace(  # type: ignore[attr-defined]
+    get_tracer=lambda _name: _Tracer()
+)
 sys.modules.setdefault("opentelemetry", opentelemetry_stub)
+
+# Minimal critic stubs to avoid heavy imports in policy tests.
+
+
+@dataclass
+class DummyCritiqueReport:  # pragma: no cover - simple container
+    recommendations: List[str] = field(default_factory=list)
+
+
+@dataclass
+class DummyFactCheckReport:  # pragma: no cover - simple container
+    hallucination_count: int = 0
+    unsupported_claims_count: int = 0
+
+
+async def run_fact_checker(*_a, **_k):  # pragma: no cover - helper for tests
+    return DummyFactCheckReport()
+
+
+critics_stub = types.ModuleType("agents.critics")
+critics_stub.CritiqueReport = DummyCritiqueReport  # type: ignore[attr-defined]
+critics_stub.FactCheckReport = DummyFactCheckReport  # type: ignore[attr-defined]
+critics_stub.run_fact_checker = run_fact_checker  # type: ignore[attr-defined]
+agents.critics = critics_stub  # type: ignore[attr-defined]
+sys.modules["agents.critics"] = critics_stub
 
 # Simplified persistence layer used by the orchestrator when logging actions.
 
@@ -83,7 +108,51 @@ async def get_db_session():  # pragma: no cover - helper for tests
 
 persistence_stub = types.ModuleType("persistence")
 persistence_stub.get_db_session = get_db_session  # type: ignore[attr-defined]
+# Lightweight models and repositories used by research components.
+
+
+@dataclass
+class Citation:  # pragma: no cover - simple container
+    url: str
+    title: str
+    retrieved_at: datetime = datetime.utcnow()
+    licence: str = ""
+
+
+class CitationRepo:  # pragma: no cover - minimal stub
+    def __init__(self, *_a, **_k):
+        pass
+
+    async def insert(self, *_a, **_k):
+        pass
+
+
+class RetrievalCacheRepo:  # pragma: no cover - minimal cache
+    def __init__(self, *_a, **_k):
+        pass
+
+    async def get(self, _query: str):
+        return None
+
+    async def set(self, _query: str, _results: List[Any]):
+        pass
+
+
+persistence_stub.Citation = Citation  # type: ignore[attr-defined]
+persistence_stub.CitationRepo = CitationRepo  # type: ignore[attr-defined]
+persistence_stub.RetrievalCacheRepo = RetrievalCacheRepo  # type: ignore[attr-defined]
 sys.modules.setdefault("persistence", persistence_stub)
+
+persistence_repos_stub = types.ModuleType("persistence.repositories")
+retrieval_cache_repo_stub = types.ModuleType(
+    "persistence.repositories.retrieval_cache_repo"
+)
+retrieval_cache_repo_stub.RetrievalCacheRepo = RetrievalCacheRepo  # type: ignore[attr-defined]
+persistence_repos_stub.retrieval_cache_repo = retrieval_cache_repo_stub  # type: ignore[attr-defined]
+sys.modules.setdefault("persistence.repositories", persistence_repos_stub)
+sys.modules.setdefault(
+    "persistence.repositories.retrieval_cache_repo", retrieval_cache_repo_stub
+)
 
 persistence_logs_stub = types.ModuleType("persistence.logs")
 persistence_logs_stub.compute_hash = lambda _: "hash"  # type: ignore[attr-defined]
