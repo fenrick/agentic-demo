@@ -6,10 +6,10 @@ from dataclasses import field as dc_field
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
+from pydantic import BaseModel, Field, HttpUrl
 from pydantic.dataclasses import dataclass
 
 from models import CritiqueReport, FactCheckReport
-from pydantic import BaseModel, Field, HttpUrl
 
 
 class Citation(BaseModel):

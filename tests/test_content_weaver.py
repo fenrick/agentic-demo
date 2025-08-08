@@ -9,10 +9,10 @@ import types
 from typing import Any
 
 import pytest
+from pydantic import ValidationError
 
 from agents import content_weaver
 from agents.content_weaver import RetryableError, WeaveResult
-from pydantic import ValidationError
 
 
 def test_call_openai_function_supplies_schema(monkeypatch: Any) -> None:

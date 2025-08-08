@@ -10,9 +10,8 @@ from functools import lru_cache
 from pathlib import Path
 
 from dotenv import load_dotenv
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
 from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Load environment variables from a `.env` file if present.
 load_dotenv()

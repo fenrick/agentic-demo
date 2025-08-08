@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import pytest
+from pydantic import ValidationError
 
 from core.state import (
     ActionLog,
@@ -11,7 +12,6 @@ from core.state import (
     increment_version,
     validate_state,
 )
-from pydantic import ValidationError
 
 
 def test_increment_version():

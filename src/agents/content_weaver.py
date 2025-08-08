@@ -6,9 +6,10 @@ import json
 import logging
 from typing import AsyncGenerator
 
+from pydantic import ValidationError
+
 from core.state import Module, State
 from prompts import get_prompt
-from pydantic import ValidationError
 
 from .models import WeaveResult
 from .streaming import stream_debug, stream_messages

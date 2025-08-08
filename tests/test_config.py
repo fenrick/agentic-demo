@@ -1,10 +1,10 @@
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 from pydantic_settings import SettingsError
 
 from config import Settings, load_env
-from pydantic import ValidationError
 
 
 def test_settings_loads_env(monkeypatch, tmp_path):
