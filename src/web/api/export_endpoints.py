@@ -5,13 +5,13 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import FastAPI, Request, Response
-from pydantic import BaseModel
 
 from export.docx_exporter import DocxExporter
 from export.markdown_exporter import MarkdownExporter
 from export.metadata_exporter import export_citations_json
 from export.pdf_exporter import PdfExporter
 from export.zip_exporter import ZipExporter
+from pydantic import BaseModel
 
 
 class ExportStatus(BaseModel):

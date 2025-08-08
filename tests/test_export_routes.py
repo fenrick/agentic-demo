@@ -1,18 +1,19 @@
 """Tests for export API routes."""
 
-from pathlib import Path
+import importlib.util  # noqa: E402
 import sys
+from pathlib import Path
 from types import SimpleNamespace
+
+from fastapi import FastAPI  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
 
 repo_src = Path(__file__).resolve().parents[1] / "src"
 if str(repo_src) in sys.path:
     sys.path.remove(str(repo_src))
-from fastapi import FastAPI  # noqa: E402
-from fastapi.testclient import TestClient  # noqa: E402
 
 sys.path.insert(0, str(repo_src))
 
-import importlib.util  # noqa: E402
 
 spec = importlib.util.spec_from_file_location(
     "export", repo_src / "web" / "routes" / "export.py"

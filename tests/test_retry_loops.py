@@ -6,6 +6,11 @@ from dataclasses import dataclass, field
 from itertools import cycle
 
 import pytest
+
+from core.policies import (  # noqa: E402
+    policy_retry_on_critic_failure,
+    policy_retry_on_low_confidence,
+)
 from core.state import Outline, State
 
 # Stub modules so core.policies can be imported without heavy dependencies
@@ -45,11 +50,6 @@ planner_stub.PlanResult = DummyPlanResult  # type: ignore[attr-defined]
 sys.modules.setdefault("agents", types.ModuleType("agents"))
 sys.modules["agents.critics"] = critics_stub
 sys.modules["agents.planner"] = planner_stub
-
-from core.policies import (  # noqa: E402
-    policy_retry_on_critic_failure,
-    policy_retry_on_low_confidence,
-)
 
 
 @pytest.mark.asyncio

@@ -6,10 +6,9 @@ import logging
 import re
 from dataclasses import dataclass
 
-from pydantic import BaseModel, ValidationError
-
 from core.state import Outline, State
 from prompts import get_prompt
+from pydantic import BaseModel, ValidationError
 
 from .streaming import stream_debug, stream_messages
 
@@ -44,6 +43,7 @@ async def call_planner_llm(topic: str) -> str:
         from pydantic_ai import Agent
         from pydantic_ai.models.openai import OpenAIModel
         from pydantic_ai.providers.openai import OpenAIProvider
+
         import config
     except Exception:  # dependency missing
         logging.exception("Planner dependencies unavailable")

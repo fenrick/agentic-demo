@@ -11,7 +11,6 @@ from agents.researcher_web_node import run_researcher_web
 from core.policies import policy_retry_on_critic_failure
 from core.state import State
 
-
 NodeCallable = Callable[[State], Awaitable[object]]
 
 

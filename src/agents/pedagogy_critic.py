@@ -11,8 +11,6 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import Callable, Dict, List, cast
 
-from pydantic import BaseModel, ValidationError
-
 import config
 from agents.models import Activity
 from core.state import State
@@ -23,6 +21,7 @@ from models import (
     CritiqueReport,
 )
 from prompts import get_prompt
+from pydantic import BaseModel, ValidationError
 
 # Bloom's taxonomy levels used for coverage analysis
 BLOOM_LEVELS: List[str] = [

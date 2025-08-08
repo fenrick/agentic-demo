@@ -8,17 +8,17 @@ from pathlib import Path
 
 import pytest
 
-os.environ.setdefault("OPENAI_API_KEY", "test")
-os.environ.setdefault("PERPLEXITY_API_KEY", "test")
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-
-from agents.models import Activity, AssessmentItem, Citation, SlideBullet, WeaveResult
 from agents.exporter import run_exporter
+from agents.models import Activity, AssessmentItem, Citation, SlideBullet, WeaveResult
 from config import settings
 from core.state import State
 from export.markdown import embed_citations, from_weave_result, render_section
 from export.markdown_exporter import MarkdownExporter
+
+os.environ.setdefault("OPENAI_API_KEY", "test")
+os.environ.setdefault("PERPLEXITY_API_KEY", "test")
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 
 def test_render_section_handles_strings_and_iterables() -> None:

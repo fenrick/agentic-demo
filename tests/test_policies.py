@@ -5,6 +5,11 @@ import types
 from dataclasses import dataclass, field
 
 import pytest
+
+from core.policies import (  # noqa: E402
+    policy_retry_on_critic_failure,
+    policy_retry_on_low_confidence,
+)
 from core.state import State
 
 # Stub modules to avoid heavy dependencies during import of core.policies
@@ -42,11 +47,6 @@ class DummyPlanResult:
 planner_stub = types.ModuleType("agents.planner")
 planner_stub.PlanResult = DummyPlanResult  # type: ignore[attr-defined]
 sys.modules["agents.planner"] = planner_stub
-
-from core.policies import (  # noqa: E402
-    policy_retry_on_critic_failure,
-    policy_retry_on_low_confidence,
-)
 
 
 def test_policy_retry_on_low_confidence_retries_until_limit() -> None:

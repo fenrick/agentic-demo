@@ -6,6 +6,7 @@ import asyncio
 import sys
 import types
 
+import core.document_dag as document_dag  # noqa: E402
 from core.state import Module, Outline, State
 
 # ---------------------------------------------------------------------------
@@ -46,8 +47,6 @@ sys.modules["agents.pedagogy_critic"] = a_critic
 policies = types.ModuleType("core.policies")
 policies.policy_retry_on_critic_failure = lambda *a, **k: False  # type: ignore[attr-defined]
 sys.modules["core.policies"] = policies
-
-import core.document_dag as document_dag  # noqa: E402
 
 
 def test_run_document_dag_processes_sections() -> None:

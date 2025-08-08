@@ -12,18 +12,18 @@ from datetime import datetime
 from time import perf_counter
 from typing import Any, Awaitable, Callable, Dict, List, Optional, TypeVar
 
-import config
 import logfire
 import tiktoken
 
+import config
+from agents.approver import run_approver
+from agents.content_weaver import run_content_weaver
+from agents.exporter import run_exporter
+from agents.fact_checker import run_fact_checker
+from agents.pedagogy_critic import run_pedagogy_critic
 from agents.planner import PlanResult  # noqa: F401
 from agents.planner import run_planner
 from agents.researcher_web_node import run_researcher_web
-from agents.content_weaver import run_content_weaver
-from agents.pedagogy_critic import run_pedagogy_critic
-from agents.fact_checker import run_fact_checker
-from agents.approver import run_approver
-from agents.exporter import run_exporter
 from core.logging import get_logger
 from core.policies import (
     policy_retry_on_critic_failure,

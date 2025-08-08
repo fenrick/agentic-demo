@@ -6,10 +6,9 @@ import json
 import logging
 from typing import AsyncGenerator
 
-from pydantic import ValidationError
-
 from core.state import Module, State
 from prompts import get_prompt
+from pydantic import ValidationError
 
 from .models import WeaveResult
 from .streaming import stream_debug, stream_messages
@@ -24,6 +23,7 @@ async def call_openai_function(prompt: str) -> AsyncGenerator[str, None]:
 
     try:
         from pydantic_ai import Agent
+
         from .model_utils import init_model
     except Exception:  # pragma: no cover - dependency not installed
         logging.exception("Content weaver dependencies unavailable")

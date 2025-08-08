@@ -10,14 +10,14 @@ import logging
 from typing import Any, Dict
 
 import logfire
+
+from agents.streaming import stream_messages
+from config import load_settings
+from core.orchestrator import graph_orchestrator
+from core.state import State
 from observability import install_auto_tracing
 
 install_auto_tracing()
-
-from agents.streaming import stream_messages
-from core.orchestrator import graph_orchestrator
-from core.state import State
-from config import load_settings
 
 
 def parse_args() -> argparse.Namespace:

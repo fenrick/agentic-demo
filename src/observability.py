@@ -6,10 +6,10 @@ import logging
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
-from starlette.types import ASGIApp
 
 import logfire
 from loguru import logger as loguru_logger
+from starlette.types import ASGIApp
 
 if TYPE_CHECKING:  # pragma: no cover - import for type checking only
     from fastapi import FastAPI

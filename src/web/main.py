@@ -7,10 +7,6 @@ import argparse
 import os
 from pathlib import Path
 
-from observability import init_observability, instrument_app
-
-init_observability()
-
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,7 +16,10 @@ from agents.cache_backed_researcher import CacheBackedResearcher
 from agents.researcher_web import PerplexityClient, TavilyClient
 from config import Settings, load_settings
 from core.orchestrator import graph_orchestrator
+from observability import init_observability, instrument_app
 from persistence.database import get_db_session, init_db
+
+init_observability()
 
 
 def create_app() -> FastAPI:

@@ -6,6 +6,9 @@ import asyncio
 import sys
 import types
 
+from core.orchestrator import GraphOrchestrator, Node  # noqa: E402
+from core.state import ActionLog, State  # noqa: E402
+
 # Stubs required before importing orchestrator
 
 # Minimal logfire replacement
@@ -54,9 +57,6 @@ for name in [
     mod = types.ModuleType(name)
     mod.__dict__["run_" + name.split(".")[-1]] = _noop
     sys.modules[name] = mod
-
-from core.orchestrator import GraphOrchestrator, Node  # noqa: E402
-from core.state import ActionLog, State  # noqa: E402
 
 
 async def _first(state: State) -> str:

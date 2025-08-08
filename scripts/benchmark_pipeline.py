@@ -29,7 +29,8 @@ async def main() -> None:
     instrumented = await _run(wrap_with_tracing(_dummy_node))
     overhead = instrumented - baseline
     print(
-        f"baseline={baseline:.3f}ms instrumented={instrumented:.3f}ms overhead={overhead:.3f}ms"
+        f"baseline={baseline:.3f}ms instrumented={instrumented:.3f}ms"
+        f" overhead={overhead:.3f}ms"
     )
 
 

@@ -1,7 +1,7 @@
 import pytest
 
 try:  # pragma: no cover - skip if orchestrator dependencies missing
-    from core.orchestrator import wrap_with_tracing, metrics
+    from core.orchestrator import metrics, wrap_with_tracing
     from core.state import State
 except Exception as exc:  # noqa: BLE001 - allow broad except for optional import
     pytest.skip(f"orchestrator import failed: {exc}", allow_module_level=True)
