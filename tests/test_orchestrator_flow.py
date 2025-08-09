@@ -56,6 +56,12 @@ for name in [
 ]:
     mod = types.ModuleType(name)
     mod.__dict__["run_" + name.split(".")[-1]] = _noop
+    if name == "agents.content_weaver":
+
+        class _RetryableError(RuntimeError):
+            """Stubbed RetryableError to satisfy downstream imports."""
+
+        mod.RetryableError = _RetryableError
     sys.modules[name] = mod
 
 
