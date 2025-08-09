@@ -99,6 +99,7 @@ def register_routes(app: FastAPI) -> None:
     """Include API routers."""
 
     from .alert_endpoint import post_alerts
+    from .health_endpoint import healthz, readyz
     from .metrics_endpoint import get_metrics
     from .routes import citation, control, entries, export, stream
 
@@ -109,6 +110,8 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(entries.router)
     app.add_api_route("/metrics", get_metrics, methods=["GET"])
     app.add_api_route("/alerts/{workspace_id}", post_alerts, methods=["POST"])
+    app.add_api_route("/healthz", healthz, methods=["GET"], include_in_schema=False)
+    app.add_api_route("/readyz", readyz, methods=["GET"], include_in_schema=False)
 
 
 def main() -> None:
