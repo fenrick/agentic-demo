@@ -4,8 +4,10 @@ import importlib.util  # noqa: E402
 import sys
 from pathlib import Path
 
-from fastapi import FastAPI  # noqa: E402
+from fastapi import APIRouter, Depends, FastAPI  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
+
+from web.auth import verify_jwt  # noqa: E402
 
 repo_src = Path(__file__).resolve().parents[1] / "src"
 if str(repo_src) in sys.path:
@@ -26,7 +28,10 @@ def create_app() -> FastAPI:
     """Create a FastAPI app with the entries router."""
 
     app = FastAPI()
-    app.include_router(entries_routes.router)
+    api = APIRouter(prefix="/api", dependencies=[Depends(verify_jwt)])
+    api.include_router(entries_routes.router)
+    app.include_router(api)
+    app.dependency_overrides[verify_jwt] = lambda: {"role": "user"}
     return app
 
 
@@ -35,11 +40,11 @@ def test_create_and_list_entries() -> None:
 
     entries_routes._entries.clear()
     client = TestClient(create_app())
-    resp = client.post("/entries", json={"topic": "Graph Theory"})
+    resp = client.post("/api/entries", json={"topic": "Graph Theory"})
     assert resp.status_code == 200
     data = resp.json()
     assert data["topic"] == "Graph Theory"
-    resp = client.get("/entries")
+    resp = client.get("/api/entries")
     assert resp.status_code == 200
     entries = resp.json()
     assert entries[0]["topic"] == "Graph Theory"

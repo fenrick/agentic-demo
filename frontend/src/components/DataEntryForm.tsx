@@ -16,7 +16,7 @@ const DataEntryForm: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/entries");
+        const res = await fetch("/api/entries");
         if (res.ok) {
           const data: Entry[] = await res.json();
           setEntries(data);
@@ -31,7 +31,7 @@ const DataEntryForm: React.FC = () => {
     e.preventDefault();
     if (!topic) return;
     try {
-      const res = await fetch("/entries", {
+      const res = await fetch("/api/entries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic }),

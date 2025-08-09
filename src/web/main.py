@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -99,17 +99,20 @@ def register_routes(app: FastAPI) -> None:
     """Include API routers."""
 
     from .alert_endpoint import post_alerts
+    from .auth import verify_jwt
     from .health_endpoint import healthz, readyz
     from .metrics_endpoint import get_metrics
     from .routes import citation, control, entries, export, stream
 
-    app.include_router(stream.router)
-    app.include_router(control.router)
-    app.include_router(export.router)
-    app.include_router(citation.router)
-    app.include_router(entries.router)
-    app.add_api_route("/metrics", get_metrics, methods=["GET"])
-    app.add_api_route("/alerts/{workspace_id}", post_alerts, methods=["POST"])
+    api_router = APIRouter(prefix="/api", dependencies=[Depends(verify_jwt)])
+    api_router.include_router(stream.router)
+    api_router.include_router(control.router)
+    api_router.include_router(export.router)
+    api_router.include_router(citation.router)
+    api_router.include_router(entries.router)
+    api_router.add_api_route("/metrics", get_metrics, methods=["GET"])
+    api_router.add_api_route("/alerts/{workspace_id}", post_alerts, methods=["POST"])
+    app.include_router(api_router)
     app.add_api_route("/healthz", healthz, methods=["GET"], include_in_schema=False)
     app.add_api_route("/readyz", readyz, methods=["GET"], include_in_schema=False)
 

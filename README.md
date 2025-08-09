@@ -213,6 +213,17 @@ cp .env.example .env
 - DOCX: generated via `src/export/docx_exporter.py`.
 - PDF: headless WeasyPrint configured in `src/export/pdf_exporter.py`.
 
+## API
+
+All endpoints, except `/healthz` and `/readyz`, are namespaced under `/api` and
+require a JWT via the `Authorization: Bearer <token>` header. Tokens are signed
+using `JWT_SECRET` and validated with the `HS256` algorithm by default.
+
+| Code | Description                                 |
+| ---- | ------------------------------------------- |
+| 401  | Missing token or failed signature check     |
+| 403  | Token valid but caller lacks required role  |
+
 ## Examples
 
 ### Invoking the Orchestrator
@@ -285,6 +296,8 @@ been replaced by Logfire's settings.
 | `DATA_DIR`           | Path for SQLite DB, cache, logs           | (required)                               |
 | `DATABASE_URL`       | SQLAlchemy connection string              | `sqlite:///${DATA_DIR}/workspace.db`     |
 | `OFFLINE_MODE`       | Run without external network calls        | `false`                                  |
+| `JWT_SECRET`         | HMAC secret for signing JWTs               | (required)                               |
+| `JWT_ALGORITHM`      | JWT signing algorithm                      | `HS256`                                  |
 
 ---
 
@@ -318,7 +331,7 @@ been replaced by Logfire's settings.
 
 ## Roadmap & Next Steps
 
-Authentication and authorization support is planned for v2.
+Basic JWT authentication is in place; role-based authorization is planned for v2.
 
 Refer to [ROADMAP.md](./docs/ROADMAP.md) for sprint plans and milestones.
 
