@@ -1,8 +1,13 @@
-"""Utilities for emitting orchestrator stream events."""
+"""Utilities for emitting and subscribing to orchestrator stream events."""
 
 from __future__ import annotations
 
-from typing import Any, Callable
+import asyncio
+from collections import defaultdict
+from collections.abc import AsyncIterator
+from typing import Any, Callable, DefaultDict, List
+
+_SUBSCRIBERS: DefaultDict[str, List[asyncio.Queue[Any]]] = defaultdict(list)
 
 
 def stream(
@@ -11,10 +16,34 @@ def stream(
     *,
     fallback: Callable[[str, Any], None] | None = None,
 ) -> None:
-    """Send ``payload`` to ``channel`` using ``fallback`` if provided."""
+    """Send ``payload`` to ``channel``.
 
+    Parameters
+    ----------
+    channel:
+        Destination channel name.
+    payload:
+        Payload to broadcast to subscribers.
+    fallback:
+        Optional callable invoked with ``channel`` and ``payload`` if provided.
+    """
+
+    for queue in list(_SUBSCRIBERS.get(channel, [])):
+        queue.put_nowait(payload)
     if fallback:
         fallback(channel, payload)
+
+
+async def subscribe(channel: str) -> AsyncIterator[Any]:
+    """Yield payloads published to ``channel`` until cancelled."""
+
+    queue: asyncio.Queue[Any] = asyncio.Queue()
+    _SUBSCRIBERS[channel].append(queue)
+    try:
+        while True:
+            yield await queue.get()
+    finally:
+        _SUBSCRIBERS[channel].remove(queue)
 
 
 def stream_messages(token: str) -> None:
@@ -29,4 +58,4 @@ def stream_debug(message: str) -> None:
     stream("debug", message)
 
 
-__all__ = ["stream", "stream_messages", "stream_debug"]
+__all__ = ["stream", "subscribe", "stream_messages", "stream_debug"]

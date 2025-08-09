@@ -24,6 +24,7 @@ from agents.pedagogy_critic import run_pedagogy_critic
 from agents.planner import PlanResult  # noqa: F401
 from agents.planner import run_planner
 from agents.researcher_web_node import run_researcher_web
+from agents.streaming import stream as publish
 from core.logging import get_logger
 from core.policies import (
     policy_retry_on_critic_failure,
@@ -213,17 +214,25 @@ class GraphOrchestrator:
         return state
 
     async def stream(self, state: State):
-        """Yield progress events for each executed node."""
+        """Yield progress events for each executed node.
+
+        Events are also published to the in-process streaming broker so that
+        subscribers receive real-time updates.
+        """
 
         current = self.flow[0]
+        workspace = getattr(state, "workspace_id", "default")
         while current:
+            publish(f"{workspace}:action", current.name)
             yield {"type": "action", "payload": current.name}
             try:
                 result = await current.fn(state)
             except Exception:
                 logger.exception("Node %s failed", current.name)
                 raise
-            yield {"type": "state", "payload": state.to_dict()}
+            snapshot = state.to_dict()
+            publish(f"{workspace}:state", snapshot)
+            yield {"type": "state", "payload": snapshot}
             next_name = current.next
             if current.condition is not None:
                 try:
