@@ -32,4 +32,5 @@ jobs:
           cache: "poetry"
           cache-dependency-path: poetry.lock
       - run: poetry install --with dev --extras test --no-interaction --no-ansi
+      - run: poetry run alembic upgrade head
       - run: poetry run pytest --maxfail=1 --disable-warnings -q
