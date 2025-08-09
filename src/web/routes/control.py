@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from uuid import uuid4
+import asyncio
 
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, Request
+
+from core.orchestrator import GraphOrchestrator
+from core.state import State
 
 TopicBody = Body(..., embed=True)
 ModelBody = Body(..., embed=True)
@@ -12,13 +15,25 @@ router = APIRouter(prefix="/workspaces/{workspace_id}")
 
 
 @router.post("/run", status_code=201)
-async def run(workspace_id: str, topic: str = TopicBody) -> dict[str, str]:
+async def run(
+    request: Request, workspace_id: str, topic: str = TopicBody
+) -> dict[str, str]:
     """Start a new lecture generation job.
 
-    This endpoint is a stub used for testing the HTTP interface.
+    Args:
+        request: Incoming HTTP request providing access to application state.
+        workspace_id: Identifier for the current workspace/job.
+        topic: Lecture topic that seeds orchestration.
+
+    Returns:
+        dict[str, str]: Mapping containing the ``job_id`` and ``workspace_id``.
     """
 
-    return {"job_id": str(uuid4())}
+    state = State(prompt=topic)
+    state.workspace_id = workspace_id
+    graph: GraphOrchestrator = request.app.state.graph
+    asyncio.create_task(graph.run(state))
+    return {"job_id": workspace_id, "workspace_id": workspace_id}
 
 
 @router.post("/pause")
