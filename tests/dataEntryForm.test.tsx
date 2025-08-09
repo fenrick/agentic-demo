@@ -26,7 +26,7 @@ describe("DataEntryForm", () => {
       expect(screen.getByText("Graph Theory")).toBeInTheDocument();
     });
     expect(global.fetch).toHaveBeenCalledWith(
-      "/entries",
+      "/api/entries",
       expect.objectContaining({ method: "POST" }),
     );
   });

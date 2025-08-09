@@ -5,8 +5,10 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace
 
-from fastapi import FastAPI  # noqa: E402
+from fastapi import APIRouter, Depends, FastAPI  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
+
+from web.auth import verify_jwt  # noqa: E402
 
 repo_src = Path(__file__).resolve().parents[1] / "src"
 if str(repo_src) in sys.path:
@@ -28,7 +30,10 @@ def create_app(tmp_path: Path) -> FastAPI:
 
     app = FastAPI()
     app.state.settings = SimpleNamespace(data_dir=tmp_path)
-    app.include_router(export_routes.router)
+    api = APIRouter(prefix="/api", dependencies=[Depends(verify_jwt)])
+    api.include_router(export_routes.router)
+    app.include_router(api)
+    app.dependency_overrides[verify_jwt] = lambda: {"role": "user"}
     return app
 
 
@@ -37,7 +42,7 @@ def test_export_status_and_urls(tmp_path: Path) -> None:
 
     client = TestClient(create_app(tmp_path))
 
-    resp = client.get("/workspaces/ws/export/status")
+    resp = client.get("/api/workspaces/ws/export/status")
     assert resp.status_code == 200
     assert resp.json() == {"ready": False}
 
@@ -47,11 +52,11 @@ def test_export_status_and_urls(tmp_path: Path) -> None:
     (export_dir / "lecture.docx").write_bytes(b"x")
     (export_dir / "lecture.pdf").write_bytes(b"x")
 
-    resp = client.get("/workspaces/ws/export/status")
+    resp = client.get("/api/workspaces/ws/export/status")
     assert resp.status_code == 200
     assert resp.json() == {"ready": True}
 
-    resp = client.get("/workspaces/ws/export/urls")
+    resp = client.get("/api/workspaces/ws/export/urls")
     assert resp.status_code == 200
     assert resp.json() == {
         "md": "/export/ws/md",

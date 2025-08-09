@@ -4,8 +4,10 @@ import importlib.util  # noqa: E402
 import sys
 from pathlib import Path
 
-from fastapi import FastAPI  # noqa: E402
+from fastapi import APIRouter, Depends, FastAPI  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
+
+from web.auth import verify_jwt  # noqa: E402
 
 repo_src = Path(__file__).resolve().parents[1] / "src"
 if str(repo_src) in sys.path:
@@ -31,7 +33,10 @@ def create_app() -> FastAPI:
 
     app = FastAPI()
     app.state.graph = DummyGraph()
-    app.include_router(control_routes.router)
+    api = APIRouter(prefix="/api", dependencies=[Depends(verify_jwt)])
+    api.include_router(control_routes.router)
+    app.include_router(api)
+    app.dependency_overrides[verify_jwt] = lambda: {"role": "user"}
     return app
 
 
@@ -40,22 +45,22 @@ def test_control_endpoints() -> None:
 
     client = TestClient(create_app())
 
-    resp = client.post("/workspaces/abc/run", json={"topic": "unit"})
+    resp = client.post("/api/workspaces/abc/run", json={"topic": "unit"})
     assert resp.status_code == 201
     assert resp.json() == {"job_id": "abc", "workspace_id": "abc"}
 
-    resp = client.post("/workspaces/abc/pause")
+    resp = client.post("/api/workspaces/abc/pause")
     assert resp.status_code == 200
     assert resp.json() == {"workspace_id": "abc", "status": "paused"}
 
-    resp = client.post("/workspaces/abc/retry")
+    resp = client.post("/api/workspaces/abc/retry")
     assert resp.status_code == 200
     assert resp.json() == {"workspace_id": "abc", "status": "retried"}
 
-    resp = client.post("/workspaces/abc/resume")
+    resp = client.post("/api/workspaces/abc/resume")
     assert resp.status_code == 200
     assert resp.json() == {"workspace_id": "abc", "status": "resumed"}
 
-    resp = client.post("/workspaces/abc/model", json={"model": "gpt"})
+    resp = client.post("/api/workspaces/abc/model", json={"model": "gpt"})
     assert resp.status_code == 200
     assert resp.json() == {"workspace_id": "abc", "model": "gpt"}

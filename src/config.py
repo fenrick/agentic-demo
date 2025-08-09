@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     logfire_project: str | None = None
     allowlist_domains: list[str] = ["wikipedia.org", ".edu", ".gov"]
     alert_webhook_url: str | None = None
+    jwt_secret: str
+    jwt_algorithm: str = "HS256"
 
     model_config = SettingsConfigDict(env_prefix="", case_sensitive=False)
 
@@ -87,7 +89,7 @@ class Settings(BaseSettings):
     ) -> bool:  # pragma: no cover - simple mapping
         """Parse common truthy/falsey strings for boolean settings."""
         if value in (None, "") or value is PydanticUndefined:
-            return cls.model_fields[info.field_name].default  # type: ignore[return-value]
+            return cls.model_fields[info.field_name].default  # type: ignore[return-value, index]
         if isinstance(value, bool):
             return value
         return str(value).strip().lower() in {"1", "true", "yes", "on"}

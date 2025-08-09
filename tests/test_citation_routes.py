@@ -4,8 +4,10 @@ import importlib.util  # noqa: E402
 import sys
 from pathlib import Path
 
-from fastapi import FastAPI  # noqa: E402
+from fastapi import APIRouter, Depends, FastAPI  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
+
+from web.auth import verify_jwt  # noqa: E402
 
 repo_src = Path(__file__).resolve().parents[1] / "src"
 if str(repo_src) in sys.path:
@@ -26,7 +28,10 @@ def create_app() -> FastAPI:
     """Create a FastAPI app with the citation router."""
 
     app = FastAPI()
-    app.include_router(citation_routes.router)
+    api = APIRouter(prefix="/api", dependencies=[Depends(verify_jwt)])
+    api.include_router(citation_routes.router)
+    app.include_router(api)
+    app.dependency_overrides[verify_jwt] = lambda: {"role": "user"}
     return app
 
 
@@ -34,11 +39,11 @@ def test_list_and_get_citation() -> None:
     """Ensure citation routes respond with placeholders."""
 
     client = TestClient(create_app())
-    resp = client.get("/workspaces/abc/citations")
+    resp = client.get("/api/workspaces/abc/citations")
     assert resp.status_code == 200
     assert resp.json() == []
 
-    resp = client.get("/workspaces/abc/citations/123")
+    resp = client.get("/api/workspaces/abc/citations/123")
     assert resp.status_code == 200
     data = resp.json()
     assert data["url"].endswith("/123")

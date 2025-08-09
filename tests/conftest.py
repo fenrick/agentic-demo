@@ -11,6 +11,7 @@ import importlib
 import os
 import sys
 import types
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -34,6 +35,7 @@ if str(SRC_DIR) not in sys.path:
 # Provide dummy environment keys expected by the settings module.
 os.environ.setdefault("OPENAI_API_KEY", "test")
 os.environ.setdefault("PERPLEXITY_API_KEY", "test")
+os.environ.setdefault("JWT_SECRET", "test-secret")
 
 # Minimal ``tiktoken`` replacement used by the orchestrator token counter.
 tiktoken_stub = types.ModuleType("tiktoken")
@@ -66,6 +68,50 @@ opentelemetry_stub.trace = types.SimpleNamespace(  # type: ignore[attr-defined]
     get_tracer=lambda _name: _Tracer()
 )
 sys.modules.setdefault("opentelemetry", opentelemetry_stub)
+
+# Minimal logfire replacement
+logfire_stub = types.ModuleType("logfire")
+
+
+@contextmanager
+def _span(*_a, **_k):  # pragma: no cover - simple stub
+    yield None
+
+
+logfire_stub.span = _span  # type: ignore[attr-defined]
+logfire_stub.trace = lambda *a, **k: None  # type: ignore[attr-defined]
+logfire_stub.get_logger = lambda *a, **k: None  # type: ignore[attr-defined]
+logfire_stub.install_auto_tracing = lambda *a, **k: None  # type: ignore[attr-defined]
+logfire_stub.configure = lambda *a, **k: None  # type: ignore[attr-defined]
+logfire_stub.instrument_pydantic = lambda *a, **k: None  # type: ignore[attr-defined]
+logfire_stub.instrument_httpx = lambda *a, **k: None  # type: ignore[attr-defined]
+logfire_stub.instrument_sqlalchemy = lambda *a, **k: None  # type: ignore[attr-defined]
+logfire_stub.instrument_sqlite3 = lambda *a, **k: None  # type: ignore[attr-defined]
+logfire_stub.instrument_system_metrics = lambda *a, **k: None  # type: ignore[attr-defined]
+
+
+class LogfireLoggingHandler:  # pragma: no cover - simple placeholder
+    def __init__(self, *_a, **_k):
+        pass
+
+
+logfire_stub.LogfireLoggingHandler = LogfireLoggingHandler  # type: ignore[attr-defined]
+logfire_stub.loguru_handler = LogfireLoggingHandler  # type: ignore[attr-defined]
+sys.modules.setdefault("logfire", logfire_stub)
+
+# Minimal loguru replacement
+loguru_stub = types.ModuleType("loguru")
+
+
+class _Logger(types.SimpleNamespace):  # pragma: no cover - simple logger stub
+    def bind(self, *a, **k):  # type: ignore[override]
+        return self
+
+
+loguru_stub.logger = _Logger(  # type: ignore[attr-defined]
+    info=lambda *a, **k: None, add=lambda *a, **k: None, remove=lambda *a, **k: None
+)
+sys.modules.setdefault("loguru", loguru_stub)
 
 # Minimal critic stubs to avoid heavy imports in policy tests.
 
@@ -143,6 +189,11 @@ persistence_stub.CitationRepo = CitationRepo  # type: ignore[attr-defined]
 persistence_stub.RetrievalCacheRepo = RetrievalCacheRepo  # type: ignore[attr-defined]
 sys.modules.setdefault("persistence", persistence_stub)
 
+persistence_db_stub = types.ModuleType("persistence.database")
+persistence_db_stub.get_db_session = get_db_session  # type: ignore[attr-defined]
+persistence_db_stub.init_db = lambda settings: settings.data_dir / "db.sqlite"  # type: ignore[attr-defined]
+sys.modules.setdefault("persistence.database", persistence_db_stub)
+
 persistence_repos_stub = types.ModuleType("persistence.repositories")
 retrieval_cache_repo_stub = types.ModuleType(
     "persistence.repositories.retrieval_cache_repo"
@@ -164,6 +215,55 @@ async def log_action(*_a, **_k):  # pragma: no cover - helper for tests
 
 persistence_logs_stub.log_action = log_action  # type: ignore[attr-defined]
 sys.modules.setdefault("persistence.logs", persistence_logs_stub)
+
+# Lightweight weasyprint stub
+weasyprint_stub = types.ModuleType("weasyprint")
+
+
+class _HTML:  # pragma: no cover - simple placeholder
+    def __init__(self, *_a, **_k):
+        pass
+
+    def write_pdf(self, *_a, **_k) -> bytes:
+        return b""
+
+
+weasyprint_stub.HTML = _HTML  # type: ignore[attr-defined]
+sys.modules.setdefault("weasyprint", weasyprint_stub)
+
+# Minimal docx stub
+docx_stub = types.ModuleType("docx")
+docx_document_stub = types.ModuleType("docx.document")
+
+
+class _Document:  # pragma: no cover - simple placeholder
+    def __init__(self, *_a, **_k):
+        pass
+
+
+docx_stub.Document = _Document  # type: ignore[attr-defined]
+docx_document_stub.Document = _Document  # type: ignore[attr-defined]
+sys.modules.setdefault("docx", docx_stub)
+sys.modules.setdefault("docx.document", docx_document_stub)
+
+# Minimal SQLAlchemy stub
+sqlalchemy_stub = types.ModuleType("sqlalchemy")
+sqlalchemy_stub.text = lambda *_a, **_k: None  # type: ignore[attr-defined]
+sys.modules.setdefault("sqlalchemy", sqlalchemy_stub)
+
+# Stub for web.researcher_web
+researcher_stub = types.ModuleType("web.researcher_web")
+
+
+@dataclass
+class CitationResult:  # pragma: no cover - simple container
+    url: str
+    title: str
+
+
+researcher_stub.CitationResult = CitationResult  # type: ignore[attr-defined]
+researcher_stub.researcher_web = object()  # type: ignore[attr-defined]
+sys.modules.setdefault("web.researcher_web", researcher_stub)
 
 # Planner stub to satisfy imports without pulling heavy dependencies.
 
