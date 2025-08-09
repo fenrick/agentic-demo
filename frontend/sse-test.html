@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>SSE Test</title>
+  </head>
+  <body>
+    <h1>SSE Test</h1>
+    <label>
+      Channel:
+      <select id="channel">
+        <option value="messages">messages</option>
+        <option value="updates">updates</option>
+        <option value="values">values</option>
+        <option value="debug">debug</option>
+      </select>
+    </label>
+    <button id="connect">Connect</button>
+    <pre id="log"></pre>
+    <script>
+      document.getElementById('connect').onclick = function () {
+        var chan = document.getElementById('channel').value;
+        var log = document.getElementById('log');
+        var source = new EventSource('/stream/' + chan);
+        source.onmessage = function (e) {
+          log.textContent += e.data + '\n';
+        };
+        source.onerror = function () {
+          log.textContent += 'error\n';
+          source.close();
+        };
+      };
+    </script>
+  </body>
+</html>

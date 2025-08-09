@@ -95,57 +95,42 @@ This document provides a **detailed**, **explicit** reference for all backend HT
 
 ## 4. Server-Sent Events (SSE)
 
-Clients subscribe to three SSE endpoints to receive real-time updates. Each SSE
+Clients subscribe to four SSE endpoints to receive real-time updates. Each
 stream sends newline-delimited JSON messages where the `event` field indicates
-the channel and the payload conforms to the `SseEvent` schema
-(`type`, `payload`, `timestamp`).
+the channel and the payload conforms to the `SseEvent` schema (`type`,
+`payload`, `timestamp`).
 
-### 4.1 State Snapshots
+### 4.1 Token Messages
 
-#### GET `/api/stream/{workspace_id}/state`
+#### GET `/api/stream/messages`
 
-- **Purpose**: Stream structured state snapshots as each agent completes.
+- **Purpose**: Stream token-level diff messages from LLMs.
 - **Authentication**: Required (`viewer`, `editor`, or `admin`).
-- **Path Parameter**:
+- **Event Format**: `event: messages` followed by a serialized `SseEvent`.
 
-  | Parameter      | Type   | Description                          |
-  | -------------- | ------ | ------------------------------------ |
-  | `workspace_id` | String | Identifier of the workspace/job run. |
+### 4.2 Updates
 
-- **Event Format**: `event: state` followed by a serialized `SseEvent`.
+#### GET `/api/stream/updates`
 
-  ```plaintext
-  event: state
-  data: { "type": "state", "payload": { "version": 1, "modules": [...] }, "timestamp": "2025-08-04T10:15:30Z" }
-  ```
-
-### 4.2 Action Log
-
-#### GET `/api/stream/{workspace_id}/actions`
-
-- **Purpose**: Stream chronological action records from agents.
+- **Purpose**: Stream citation additions and workflow progress updates.
 - **Authentication**: Required (`viewer`, `editor`, or `admin`).
-- **Path Parameter**: Same as `/state` above.
-- **Event Format**: `event: action` and an `SseEvent` payload.
+- **Event Format**: `event: updates` with an `SseEvent` payload.
 
-  ```plaintext
-  event: action
-  data: { "type": "action", "payload": { "agent": "Researcher-Web", "message": "Fetched 5 citations" }, "timestamp": "2025-08-04T10:15:30Z" }
-  ```
+### 4.3 Values
 
-### 4.3 New Citations
+#### GET `/api/stream/values`
 
-#### GET `/api/stream/{workspace_id}/citations`
-
-- **Purpose**: Stream citation objects as they are added.
+- **Purpose**: Stream structured state values as they change.
 - **Authentication**: Required (`viewer`, `editor`, or `admin`).
-- **Path Parameter**: Same as `/state` above.
-- **Event Format**: `event: citation` and an `SseEvent` payload.
+- **Event Format**: `event: values` followed by an `SseEvent`.
 
-  ```plaintext
-  event: citation
-  data: { "type": "citation", "payload": { "citation_id": "c1", "url": "https://example.edu/paper" }, "timestamp": "2025-08-04T10:15:30Z" }
-  ```
+### 4.4 Debug
+
+#### GET `/api/stream/debug`
+
+- **Purpose**: Stream diagnostic or debug messages.
+- **Authentication**: Required (`viewer`, `editor`, or `admin`).
+- **Event Format**: `event: debug` followed by an `SseEvent`.
 
 ---
 
