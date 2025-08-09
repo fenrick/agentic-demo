@@ -25,7 +25,12 @@ spec.loader.exec_module(control_routes)
 def create_app() -> FastAPI:
     """Create a FastAPI app with the control router."""
 
+    class DummyGraph:
+        async def run(self, _state):
+            return _state
+
     app = FastAPI()
+    app.state.graph = DummyGraph()
     app.include_router(control_routes.router)
     return app
 
@@ -37,7 +42,7 @@ def test_control_endpoints() -> None:
 
     resp = client.post("/workspaces/abc/run", json={"topic": "unit"})
     assert resp.status_code == 201
-    assert "job_id" in resp.json()
+    assert resp.json() == {"job_id": "abc", "workspace_id": "abc"}
 
     resp = client.post("/workspaces/abc/pause")
     assert resp.status_code == 200
