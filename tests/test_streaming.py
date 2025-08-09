@@ -1,4 +1,7 @@
+import asyncio
 import logging
+
+import pytest
 
 from agents import streaming
 
@@ -18,3 +21,16 @@ def test_stream_uses_fallback(caplog):
         streaming.stream("messages", "hi", fallback=fallback)
 
     assert "[messages] hi" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_stream_broadcasts_to_subscribers() -> None:
+    async def reader():
+        async for payload in streaming.subscribe("test"):
+            return payload
+
+    task = asyncio.create_task(reader())
+    await asyncio.sleep(0)
+    streaming.stream("test", "payload")
+    result = await asyncio.wait_for(task, 1)
+    assert result == "payload"
