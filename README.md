@@ -289,14 +289,10 @@ been replaced by Logfire's settings.
 
 ## Logging & Tracing
 
-- **Logging:** JSON-formatted logs are emitted via Loguru. The helper
-  `core.logging.get_logger(job_id, user_id)` binds contextual identifiers so
-  downstream systems can correlate events.
-- **Tracing:** Logfire spans capture node execution details, including token
-  counts. OpenTelemetry instrumentation remains enabled for FastAPI and
+- **Logfire:** Handles structured JSON logs, spans, and metrics. Use
+  `core.logging.get_logger(job_id, user_id)` to bind contextual identifiers for
+  correlation. OpenTelemetry instrumentation remains enabled for FastAPI and
   outbound HTTP requests.
-- **Metrics:** High-volume nodes record token usage and latency through
-  Logfire and the in-memory metrics collector for proactive monitoring.
 
 ---
 
