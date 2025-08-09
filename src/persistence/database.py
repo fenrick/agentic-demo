@@ -33,7 +33,10 @@ async def init_db(settings: Settings | None = None) -> Path:
     """
 
     settings = settings or load_settings()
-    db_path = settings.data_dir / "workspace.db"
+    db_url = settings.database_url or f"sqlite:///{settings.data_dir / 'workspace.db'}"
+    if not db_url.startswith("sqlite:///"):
+        raise ValueError("Only SQLite URLs are supported.")
+    db_path = Path(db_url.replace("sqlite:///", ""))
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Ensure the database file exists before running migrations.
@@ -42,7 +45,7 @@ async def init_db(settings: Settings | None = None) -> Path:
 
     # Configure Alembic to target this database path and apply migrations.
     alembic_cfg = Config(str(Path(__file__).resolve().parents[2] / "alembic.ini"))
-    alembic_cfg.set_main_option("sqlalchemy.url", f"sqlite:///{db_path}")
+    alembic_cfg.set_main_option("sqlalchemy.url", db_url)
     command.upgrade(alembic_cfg, "head")
     return db_path
 
@@ -55,7 +58,12 @@ async def get_db_session(
 
     if db_path is None:
         settings = load_settings()
-        db_path = settings.data_dir / "workspace.db"
+        db_url = (
+            settings.database_url or f"sqlite:///{settings.data_dir / 'workspace.db'}"
+        )
+        if not db_url.startswith("sqlite:///"):
+            raise ValueError("Only SQLite URLs are supported.")
+        db_path = Path(db_url.replace("sqlite:///", ""))
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = await aiosqlite.connect(db_path)
     try:

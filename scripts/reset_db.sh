@@ -18,11 +18,14 @@ if [ -f .env ]; then
   set +a
 fi
 
-DB_PATH="${DATA_DIR}/workspace.db"
+DB_URL="${DATABASE_URL:-sqlite://${DATA_DIR}/workspace.db}"
 
-# Remove existing database file
-if [ -f "$DB_PATH" ]; then
-  rm "$DB_PATH"
+# Remove existing database file if using SQLite
+if [[ "$DB_URL" == sqlite:///* ]]; then
+  DB_PATH="${DB_URL#sqlite:///}"
+  if [ -f "$DB_PATH" ]; then
+    rm "$DB_PATH"
+  fi
 fi
 
 # Rebuild database schema

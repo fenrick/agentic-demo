@@ -61,7 +61,7 @@ for name in [
         class _RetryableError(RuntimeError):
             """Stubbed RetryableError to satisfy downstream imports."""
 
-        mod.RetryableError = _RetryableError
+        mod.RetryableError = _RetryableError  # type: ignore[attr-defined]
     sys.modules[name] = mod
 
 

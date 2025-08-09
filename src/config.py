@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     openai_api_key: str
     perplexity_api_key: str
     data_dir: Path = Path("./workspace")
+    database_url: str | None = None
     tavily_api_key: str | None = None
     search_provider: str = "perplexity"
     model: str = MODEL
