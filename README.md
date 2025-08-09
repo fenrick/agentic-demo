@@ -321,6 +321,8 @@ been replaced by Logfire's settings.
 
 ## Roadmap & Next Steps
 
+Authentication and authorization support is planned for v2.
+
 Refer to [ROADMAP.md](./docs/ROADMAP.md) for sprint plans and milestones.
 
 ---

@@ -48,6 +48,8 @@ Risk assessment assumes default deployment in a secure network.
 
 ## 3. Authentication & Authorization
 
+_These controls will be implemented in version 2._
+
 ### 3.1 API Authentication
 
 - **Mechanism:** JSON Web Tokens (JWT) signed with RS256
