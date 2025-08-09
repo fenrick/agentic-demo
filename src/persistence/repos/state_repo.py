@@ -53,7 +53,8 @@ class StateRepo:
     async def get_state_by_version(self, version: int) -> State:
         """Load a specific state version."""
         cur = await self._conn.execute(
-            "SELECT payload_json FROM state WHERE id = ?", (version,)
+            "SELECT payload_json FROM state WHERE version = ?",
+            (version,),
         )
         row = await cur.fetchone()
         await cur.close()
@@ -61,3 +62,10 @@ class StateRepo:
             raise ValueError(f"state version {version} not found")
         data = json.loads(row[0])
         return State.from_dict(data)
+
+    async def list_versions(self) -> list[int]:
+        """Return all persisted state versions sorted ascending."""
+        cur = await self._conn.execute("SELECT version FROM state ORDER BY version")
+        rows = await cur.fetchall()
+        await cur.close()
+        return [row[0] for row in rows]
