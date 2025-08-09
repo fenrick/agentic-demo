@@ -36,6 +36,13 @@ a_research.run_researcher_web = _run_researcher_web  # type: ignore[attr-defined
 sys.modules["agents.researcher_web_node"] = a_research
 
 a_weaver = types.ModuleType("agents.content_weaver")
+
+
+class _RetryableError(RuntimeError):
+    """Lightweight stand-in for the real RetryableError class."""
+
+
+a_weaver.RetryableError = _RetryableError
 a_weaver.run_content_weaver = _run_content_weaver  # type: ignore[attr-defined]
 sys.modules["agents.content_weaver"] = a_weaver
 
