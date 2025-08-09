@@ -37,9 +37,10 @@ This document provides a **comprehensive** and **explicit** description of the L
    - **Endpoints**:
    - `POST /run` — start new lecture build job
    - `POST /resume/{job_id}` — resume after crash
-   - `SSE /stream/{workspace_id}/state` — state snapshots
-   - `SSE /stream/{workspace_id}/actions` — action log
-   - `SSE /stream/{workspace_id}/citations` — new citations
+   - `SSE /stream/messages` — token diff messages
+   - `SSE /stream/updates` — citation and progress updates
+   - `SSE /stream/values` — state values
+   - `SSE /stream/debug` — diagnostics
    - `GET /download/{job_id}/{format}` — retrieve final artifact
 
 2. **Graph Orchestrator**

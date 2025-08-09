@@ -42,7 +42,7 @@ class _RetryableError(RuntimeError):
     """Lightweight stand-in for the real RetryableError class."""
 
 
-a_weaver.RetryableError = _RetryableError
+a_weaver.RetryableError = _RetryableError  # type: ignore[attr-defined]
 a_weaver.run_content_weaver = _run_content_weaver  # type: ignore[attr-defined]
 sys.modules["agents.content_weaver"] = a_weaver
 

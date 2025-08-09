@@ -29,15 +29,31 @@ def stream(
     """
 
     for queue in list(_SUBSCRIBERS.get(channel, [])):
-        queue.put_nowait(payload)
+        try:
+            queue.put_nowait(payload)
+        except asyncio.QueueFull:
+            try:
+                queue.get_nowait()
+            except asyncio.QueueEmpty:  # pragma: no cover - race condition
+                pass
+            queue.put_nowait(payload)
     if fallback:
         fallback(channel, payload)
 
 
-async def subscribe(channel: str) -> AsyncIterator[Any]:
-    """Yield payloads published to ``channel`` until cancelled."""
+async def subscribe(channel: str, *, max_queue: int = 100) -> AsyncIterator[Any]:
+    """Yield payloads published to ``channel`` until cancelled.
 
-    queue: asyncio.Queue[Any] = asyncio.Queue()
+    Parameters
+    ----------
+    channel:
+        Name of the channel to subscribe to.
+    max_queue:
+        Maximum number of pending messages to retain before older messages are
+        discarded. Defaults to ``100``.
+    """
+
+    queue: asyncio.Queue[Any] = asyncio.Queue(max_queue)
     _SUBSCRIBERS[channel].append(queue)
     try:
         while True:
