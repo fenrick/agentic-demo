@@ -4,7 +4,7 @@ import pytest
 from pydantic import ValidationError
 from pydantic_settings import SettingsError
 
-from config import Settings, load_env
+from config import MODEL, Settings, load_env
 
 
 def test_settings_loads_env(monkeypatch, tmp_path):
@@ -55,6 +55,35 @@ def test_settings_defaults_allowlist(monkeypatch):
     monkeypatch.delenv("ALLOWLIST_DOMAINS", raising=False)
     settings = Settings()
     assert settings.allowlist_domains == ["wikipedia.org", ".edu", ".gov"]
+
+
+def test_model_falls_back_to_default(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "key1")
+    monkeypatch.setenv("PERPLEXITY_API_KEY", "key2")
+    monkeypatch.delenv("MODEL", raising=False)
+    settings = Settings()
+    assert settings.model == MODEL
+    monkeypatch.setenv("MODEL", "")
+    settings = Settings()
+    assert settings.model == MODEL
+
+
+def test_offline_mode_toggle(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "key1")
+    monkeypatch.setenv("PERPLEXITY_API_KEY", "key2")
+    monkeypatch.setenv("OFFLINE_MODE", "1")
+    assert Settings().offline_mode is True
+    monkeypatch.setenv("OFFLINE_MODE", "false")
+    assert Settings().offline_mode is False
+
+
+def test_tracing_toggle(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "key1")
+    monkeypatch.setenv("PERPLEXITY_API_KEY", "key2")
+    monkeypatch.setenv("ENABLE_TRACING", "0")
+    assert Settings().enable_tracing is False
+    monkeypatch.setenv("ENABLE_TRACING", "true")
+    assert Settings().enable_tracing is True
 
 
 def test_load_env_reads_file(tmp_path):

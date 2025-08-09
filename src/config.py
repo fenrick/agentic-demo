@@ -10,8 +10,9 @@ from functools import lru_cache
 from pathlib import Path
 
 from dotenv import load_dotenv
-from pydantic import field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import ValidationInfo, field_validator
+from pydantic_core import PydanticUndefined
+from pydantic_settings import BaseSettings, SettingsConfigDict, SettingsError
 
 # Load environment variables from a `.env` file if present.
 load_dotenv()
@@ -45,8 +46,13 @@ class Settings(BaseSettings):
 
     @field_validator("model", mode="before")
     @classmethod
-    def _validate_model(cls, value: str) -> str:
-        """Ensure ``MODEL`` follows ``<provider>:<name>`` format."""
+    def _validate_model(cls, value: str | None) -> str:
+        """Ensure ``MODEL`` follows ``<provider>:<name>`` format.
+
+        If ``MODEL`` is unset or empty, fall back to the global ``MODEL`` default.
+        """
+        if not value:
+            return MODEL
         if ":" not in value:
             raise ValueError("MODEL must be in '<provider>:<model_name>' format")
         return value
@@ -59,14 +65,32 @@ class Settings(BaseSettings):
     @field_validator("allowlist_domains", mode="before")
     @classmethod
     def _parse_allowlist(cls, value: list[str] | str | None) -> list[str]:
-        if value is None:
+        """Parse ``ALLOWLIST_DOMAINS`` from JSON or return defaults."""
+        if value is None or value == "":
             return ["wikipedia.org", ".edu", ".gov"]
         if isinstance(value, str):
             try:
-                return json.loads(value)
+                parsed = json.loads(value)
             except json.JSONDecodeError as exc:  # pragma: no cover - invalid input
-                raise ValueError("ALLOWLIST_DOMAINS must be valid JSON") from exc
+                raise SettingsError("ALLOWLIST_DOMAINS must be valid JSON") from exc
+            if not isinstance(parsed, list) or not all(
+                isinstance(v, str) for v in parsed
+            ):
+                raise SettingsError("ALLOWLIST_DOMAINS must be a JSON list of strings")
+            return parsed
         return value
+
+    @field_validator("offline_mode", "enable_tracing", mode="before")
+    @classmethod
+    def _parse_bool(
+        cls, value: bool | str | None, info: ValidationInfo
+    ) -> bool:  # pragma: no cover - simple mapping
+        """Parse common truthy/falsey strings for boolean settings."""
+        if value in (None, "") or value is PydanticUndefined:
+            return cls.model_fields[info.field_name].default  # type: ignore[return-value]
+        if isinstance(value, bool):
+            return value
+        return str(value).strip().lower() in {"1", "true", "yes", "on"}
 
     @property
     def model_provider(self) -> str:
