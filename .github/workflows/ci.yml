@@ -20,7 +20,7 @@ jobs:
       - run: poetry run black --check .
       - run: poetry run ruff .
 
-  test:
+  migrations:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,5 +32,33 @@ jobs:
           cache: "poetry"
           cache-dependency-path: poetry.lock
       - run: poetry install --with dev --extras test --no-interaction --no-ansi
-      - run: poetry run alembic upgrade head
-      - run: poetry run pytest --maxfail=1 --disable-warnings -q
+      - name: Verify migrations
+        env:
+          DATABASE_URL: sqlite:///${{ github.workspace }}/workspace/migration.db
+          OPENAI_API_KEY: test
+          PERPLEXITY_API_KEY: test
+        run: |
+          rm -f workspace/migration.db || true
+          poetry run alembic upgrade head
+
+  test:
+    runs-on: ubuntu-latest
+    needs: migrations
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Poetry
+        run: pipx install poetry==2.1.3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "poetry"
+          cache-dependency-path: poetry.lock
+      - run: poetry install --with dev --extras test --no-interaction --no-ansi
+      - env:
+          DATABASE_URL: sqlite:///${{ github.workspace }}/workspace/test.db
+          OPENAI_API_KEY: test
+          PERPLEXITY_API_KEY: test
+        run: |
+          rm -f workspace/test.db || true
+          poetry run alembic upgrade head
+          poetry run pytest --maxfail=1 --disable-warnings -q

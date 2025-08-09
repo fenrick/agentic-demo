@@ -20,9 +20,12 @@ target_metadata = None
 
 
 def get_url() -> str:
-    """Construct database URL from project settings."""
+    """Return the database URL from environment settings."""
+
     settings = Settings()
-    db_path = settings.data_dir / "checkpoint.db"
+    if settings.database_url:
+        return settings.database_url
+    db_path = settings.data_dir / "workspace.db"
     return f"sqlite:///{db_path}"
 
 

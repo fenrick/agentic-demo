@@ -24,6 +24,15 @@ def upgrade() -> None:
     )
 
     op.create_table(
+        "retrieval_cache",
+        sa.Column("id", sa.Integer, primary_key=True),
+        sa.Column("query", sa.String, nullable=False, unique=True),
+        sa.Column("results", sa.Text, nullable=False),
+        sa.Column("hit_count", sa.Integer, nullable=False, server_default="0"),
+        sa.Column("created_at", sa.DateTime, nullable=False),
+    )
+
+    op.create_table(
         "action_logs",
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column("workspace_id", sa.String, nullable=False),
@@ -69,4 +78,5 @@ def downgrade() -> None:
     op.drop_table("critique_report")
     op.drop_table("metrics")
     op.drop_table("action_logs")
+    op.drop_table("retrieval_cache")
     op.drop_table("citations")

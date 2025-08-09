@@ -20,7 +20,12 @@ class PersistenceManager:
 
     def __init__(self) -> None:
         settings = Settings()
-        self._db_path: Path = settings.data_dir / "checkpoint.db"
+        db_url = (
+            settings.database_url or f"sqlite:///{settings.data_dir / 'workspace.db'}"
+        )
+        if not db_url.startswith("sqlite:///"):
+            raise ValueError("PersistenceManager supports only SQLite.")
+        self._db_path: Path = Path(db_url.replace("sqlite:///", ""))
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
 
     async def checkpoint(self, state: State, outline: Outline) -> None:

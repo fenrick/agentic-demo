@@ -314,7 +314,7 @@ Each node module defines a single `async` handler function and its input/output 
 
 #### 2. Database Schema
 
-##### `src/persistence/migrations/XXXX_create_citations_table.py`
+##### `migrations/versions/20250805_create_citations_action_logs_metrics_tables.py`
 
 - Alembic migration to create table `citations` with columns matching `Citation` fields plus a workspace identifier.
 
@@ -333,10 +333,10 @@ Each node module defines a single `async` handler function and its input/output 
 
 #### 4. Database Connector
 
-##### `src/persistence/db.py`
+##### `src/persistence/database.py`
 
 - **`get_db_session() → AsyncGenerator[Connection, None]`**
-  Yields an `aiosqlite` connection configured to the workspace’s SQLite file.
+  Yields an `aiosqlite` connection configured to the workspace database.
 
 ---
 
@@ -551,7 +551,7 @@ def from_schema(weave: WeaveResult) -> str:
 - **File:** `migrations/env.py`
   _Bootstraps Alembic with your project’s SQLAlchemy (or `aiosqlite`) settings._
 - **File:** `alembic.ini`
-  _Points Alembic at your SQLite file (`DATA_DIR/checkpoint.db`)._
+  _Points Alembic at your SQLite file (`DATA_DIR/workspace.db`)._
 
 1. **Create State Table Migration**
 
