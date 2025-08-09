@@ -19,29 +19,49 @@ class AsyncSqliteSaver:
     _MIGRATIONS: tuple[str, ...] = (
         """
         CREATE TABLE IF NOT EXISTS state (
-            id TEXT PRIMARY KEY,
-            value TEXT NOT NULL
+            id INTEGER PRIMARY KEY,
+            payload_json TEXT NOT NULL,
+            version INTEGER NOT NULL,
+            updated_at TEXT NOT NULL
         );
         """,
         """
         CREATE TABLE IF NOT EXISTS documents (
-            id TEXT PRIMARY KEY,
-            content TEXT NOT NULL
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            state_id INTEGER NOT NULL,
+            parquet_blob BLOB NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY(state_id) REFERENCES state(id)
         );
         """,
         """
         CREATE TABLE IF NOT EXISTS citations (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            document_id TEXT NOT NULL,
-            citation TEXT NOT NULL,
-            FOREIGN KEY(document_id) REFERENCES documents(id)
+            workspace_id TEXT NOT NULL,
+            url TEXT NOT NULL,
+            title TEXT NOT NULL,
+            retrieved_at TEXT NOT NULL,
+            licence TEXT NOT NULL,
+            PRIMARY KEY (workspace_id, url)
         );
         """,
         """
-        CREATE TABLE IF NOT EXISTS logs (
+        CREATE TABLE IF NOT EXISTS retrieval_cache (
+            query TEXT PRIMARY KEY,
+            results TEXT NOT NULL,
+            hit_count INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL
+        );
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS action_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            message TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            workspace_id TEXT NOT NULL,
+            agent_name TEXT NOT NULL,
+            input_hash TEXT NOT NULL,
+            output_hash TEXT NOT NULL,
+            tokens INTEGER NOT NULL,
+            cost REAL NOT NULL,
+            timestamp TEXT NOT NULL
         );
         """,
     )
