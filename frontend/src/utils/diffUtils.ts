@@ -3,6 +3,15 @@
  * The diff is used to animate live document updates in the DocumentPanel.
  */
 
+import {
+  diff_match_patch,
+  DIFF_DELETE,
+  DIFF_EQUAL,
+  DIFF_INSERT,
+} from "diff-match-patch";
+const dmp = new diff_match_patch();
+const SEP = "\u0000";
+
 /**
  * Represents a single change in the diff sequence.
  * - `type` describes how the token was changed.
@@ -24,8 +33,8 @@ export function tokenize(text: string): string[] {
 }
 
 /**
- * Computes a diff between two strings at the token level using a
- * longest-common-subsequence approach.
+ * Computes a diff between two strings at the token level using
+ * Google's `diff-match-patch` algorithm.
  *
  * @param oldText - Previous document text.
  * @param newText - Incoming document text.
@@ -34,46 +43,21 @@ export function tokenize(text: string): string[] {
 export function computeDiff(oldText: string, newText: string): DiffPatch[] {
   const oldTokens = tokenize(oldText);
   const newTokens = tokenize(newText);
-  const m = oldTokens.length;
-  const n = newTokens.length;
+  const diffs = dmp.diff_main(oldTokens.join(SEP), newTokens.join(SEP), false);
+  dmp.diff_cleanupEfficiency(diffs);
 
-  // Dynamic programming table for LCS lengths.
-  const dp: number[][] = Array.from({ length: m + 1 }, () =>
-    Array(n + 1).fill(0),
-  );
-  for (let i = m - 1; i >= 0; i -= 1) {
-    for (let j = n - 1; j >= 0; j -= 1) {
-      dp[i][j] =
-        oldTokens[i] === newTokens[j]
-          ? dp[i + 1][j + 1] + 1
-          : Math.max(dp[i + 1][j], dp[i][j + 1]);
-    }
-  }
-
-  // Walk the table to build the diff patches.
   const patches: DiffPatch[] = [];
-  let i = 0;
-  let j = 0;
-  while (i < m && j < n) {
-    if (oldTokens[i] === newTokens[j]) {
-      patches.push({ type: "equal", token: oldTokens[i] });
-      i += 1;
-      j += 1;
-    } else if (dp[i + 1][j] >= dp[i][j + 1]) {
-      patches.push({ type: "delete", token: oldTokens[i] });
-      i += 1;
-    } else {
-      patches.push({ type: "insert", token: newTokens[j] });
-      j += 1;
-    }
-  }
-  while (i < m) {
-    patches.push({ type: "delete", token: oldTokens[i] });
-    i += 1;
-  }
-  while (j < n) {
-    patches.push({ type: "insert", token: newTokens[j] });
-    j += 1;
+  for (const [op, data] of diffs) {
+    const tokens = data.split(SEP).filter((t) => t.length > 0);
+    tokens.forEach((token) => {
+      if (op === DIFF_EQUAL) {
+        patches.push({ type: "equal", token });
+      } else if (op === DIFF_INSERT) {
+        patches.push({ type: "insert", token });
+      } else if (op === DIFF_DELETE) {
+        patches.push({ type: "delete", token });
+      }
+    });
   }
   return patches;
 }
