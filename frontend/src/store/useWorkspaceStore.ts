@@ -7,9 +7,11 @@ export interface SseEvent {
   timestamp: string;
 }
 
+export type DocState = string;
+
 interface WorkspaceStore {
   workspaceId: string | null;
-  document: unknown;
+  document: DocState;
   logs: SseEvent[];
   sources: unknown[];
   exportStatus: string;
@@ -25,7 +27,7 @@ interface WorkspaceStore {
 // Global workspace state accessed throughout the UI.
 export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   workspaceId: null,
-  document: null,
+  document: "",
   logs: [],
   sources: [],
   exportStatus: "idle",
@@ -55,7 +57,7 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   updateState: (event: SseEvent) => {
     switch (event.type) {
       case "document":
-        set({ document: event.payload });
+        set({ document: String(event.payload) });
         break;
       case "log":
         set((state) => ({ logs: [...state.logs, event] }));
