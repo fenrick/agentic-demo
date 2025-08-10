@@ -81,11 +81,12 @@ returns `501 Not Implemented` for all requests.
 Clients subscribe to four SSE endpoints to receive real-time updates. Each
 stream sends newline-delimited JSON messages where the `event` field indicates
 the channel and the payload conforms to the `SseEvent` schema (`type`,
-`payload`, `timestamp`).
+`payload`, `timestamp`). A short-lived JWT is required on the query string and
+can be obtained from `GET /stream/token`.
 
 ### 4.1 Token Messages
 
-#### GET `/api/stream/messages`
+#### GET `/stream/messages`
 
 - **Purpose**: Stream token-level diff messages from LLMs.
 - **Authentication**: Required (`viewer`, `editor`, or `admin`).
@@ -93,7 +94,7 @@ the channel and the payload conforms to the `SseEvent` schema (`type`,
 
 ### 4.2 Updates
 
-#### GET `/api/stream/updates`
+#### GET `/stream/updates`
 
 - **Purpose**: Stream citation additions and workflow progress updates.
 - **Authentication**: Required (`viewer`, `editor`, or `admin`).
@@ -101,7 +102,7 @@ the channel and the payload conforms to the `SseEvent` schema (`type`,
 
 ### 4.3 Values
 
-#### GET `/api/stream/values`
+#### GET `/stream/values`
 
 - **Purpose**: Stream structured state values as they change.
 - **Authentication**: Required (`viewer`, `editor`, or `admin`).
@@ -109,7 +110,7 @@ the channel and the payload conforms to the `SseEvent` schema (`type`,
 
 ### 4.4 Debug
 
-#### GET `/api/stream/debug`
+#### GET `/stream/debug`
 
 - **Purpose**: Stream diagnostic or debug messages.
 - **Authentication**: Required (`viewer`, `editor`, or `admin`).
@@ -120,26 +121,26 @@ the channel and the payload conforms to the `SseEvent` schema (`type`,
 Every channel above also supports a workspace-scoped variant that isolates
 events to a single workspace.
 
-#### GET `/api/stream/{workspace_id}/messages`
+#### GET `/stream/{workspace_id}/messages`
 
 - **Purpose**: Stream token-level diff messages for a specific workspace.
 - **Authentication**: Required (`viewer`, `editor`, or `admin`).
 - **Event Format**: `event: messages` with an `SseEvent` payload.
 
-#### GET `/api/stream/{workspace_id}/updates`
+#### GET `/stream/{workspace_id}/updates`
 
 - **Purpose**: Stream citation additions and workflow progress updates for a
   workspace.
 - **Authentication**: Required (`viewer`, `editor`, or `admin`).
 - **Event Format**: `event: updates` with an `SseEvent` payload.
 
-#### GET `/api/stream/{workspace_id}/values`
+#### GET `/stream/{workspace_id}/values`
 
 - **Purpose**: Stream structured state values for a workspace.
 - **Authentication**: Required (`viewer`, `editor`, or `admin`).
 - **Event Format**: `event: values` followed by an `SseEvent`.
 
-#### GET `/api/stream/{workspace_id}/debug`
+#### GET `/stream/{workspace_id}/debug`
 
 - **Purpose**: Stream diagnostic messages for a workspace.
 - **Authentication**: Required (`viewer`, `editor`, or `admin`).

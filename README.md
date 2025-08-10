@@ -78,8 +78,9 @@ subscribe to via Server-Sent Events:
 - `values` – structured state snapshots.
 - `updates` – citation and progress updates.
 
-Connect to `/stream/<channel>` for public streams. Workspace-scoped streams
-require a token: `/stream/<channel>?token=<workspace-id>`.
+All stream connections require a short-lived JWT passed as a query parameter.
+Fetch a token from `GET /stream/token` and connect using
+`/stream/<channel>?token=<JWT>` or `/stream/<workspace>/<channel>?token=<JWT>`.
 
 ---
 
