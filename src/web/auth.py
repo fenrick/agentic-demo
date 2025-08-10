@@ -9,11 +9,12 @@ from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 security = HTTPBearer()
+security_dependency = Depends(security)
 
 
 def verify_jwt(
     request: Request,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    credentials: HTTPAuthorizationCredentials = security_dependency,
 ) -> Dict[str, Any]:
     """Validate the provided JWT and return its payload.
 
