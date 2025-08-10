@@ -37,13 +37,13 @@ const ControlsPanel: React.FC<Props> = ({ workspaceId }) => {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-3">
       <button
         onClick={onRunClick}
-        disabled={status === "running"}
-        className="btn disabled:opacity-50"
+        className="btn"
+        aria-busy={status === "running"}
       >
-        Run
+        {status === "running" ? "Running…" : "Run"}
       </button>
       <button
         onClick={onPauseClick}
@@ -66,10 +66,14 @@ const ControlsPanel: React.FC<Props> = ({ workspaceId }) => {
       >
         Resume
       </button>
+      <label className="text-sm" htmlFor="model">
+        Model
+      </label>
       <select
+        id="model"
         value={model}
         onChange={onModelChange}
-        className="rounded border px-2 py-1"
+        className="rounded-lg border border-black/10 bg-white/80 px-3 py-2 text-sm shadow-sm dark:border-white/15 dark:bg-gray-900/80"
       >
         <option value="o4-mini">o4-mini</option>
         <option value="o3">o3</option>
