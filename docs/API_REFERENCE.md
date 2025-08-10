@@ -134,6 +134,36 @@ the channel and the payload conforms to the `SseEvent` schema (`type`,
 - **Authentication**: Required (`viewer`, `editor`, or `admin`).
 - **Event Format**: `event: debug` followed by an `SseEvent`.
 
+### 4.5 Workspace-Scoped Streams
+
+Every channel above also supports a workspace-scoped variant that isolates
+events to a single workspace.
+
+#### GET `/api/stream/{workspace_id}/messages`
+
+- **Purpose**: Stream token-level diff messages for a specific workspace.
+- **Authentication**: Required (`viewer`, `editor`, or `admin`).
+- **Event Format**: `event: messages` with an `SseEvent` payload.
+
+#### GET `/api/stream/{workspace_id}/updates`
+
+- **Purpose**: Stream citation additions and workflow progress updates for a
+  workspace.
+- **Authentication**: Required (`viewer`, `editor`, or `admin`).
+- **Event Format**: `event: updates` with an `SseEvent` payload.
+
+#### GET `/api/stream/{workspace_id}/values`
+
+- **Purpose**: Stream structured state values for a workspace.
+- **Authentication**: Required (`viewer`, `editor`, or `admin`).
+- **Event Format**: `event: values` followed by an `SseEvent`.
+
+#### GET `/api/stream/{workspace_id}/debug`
+
+- **Purpose**: Stream diagnostic messages for a workspace.
+- **Authentication**: Required (`viewer`, `editor`, or `admin`).
+- **Event Format**: `event: debug` followed by an `SseEvent`.
+
 ---
 
 ## 5. Downloads

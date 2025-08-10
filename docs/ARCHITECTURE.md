@@ -41,6 +41,10 @@ This document provides a **comprehensive** and **explicit** description of the L
    - `SSE /stream/updates` — citation and progress updates
    - `SSE /stream/values` — state values
    - `SSE /stream/debug` — diagnostics
+   - `SSE /stream/{workspace_id}/messages` — workspace token messages
+   - `SSE /stream/{workspace_id}/updates` — workspace citation updates
+   - `SSE /stream/{workspace_id}/values` — workspace state values
+   - `SSE /stream/{workspace_id}/debug` — workspace diagnostics
    - `GET /download/{job_id}/{format}` — retrieve final artifact
 
 2. **Graph Orchestrator**
