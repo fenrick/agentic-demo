@@ -26,7 +26,7 @@ const DownloadsPanel: React.FC<Props> = ({ workspaceId }) => {
           }
           clearInterval(interval);
         }
-      } catch (err) {
+      } catch {
         // ignore transient errors and retry on next tick
       }
     };
