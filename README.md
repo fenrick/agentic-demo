@@ -238,6 +238,7 @@ To run the services directly on your host for development:
 - Diff highlighting via `diff-match-patch`.
 - Tailwind CSS enhanced with `@tailwindcss/forms` and `@tailwindcss/typography`; utility
   classes are auto-sorted via `prettier-plugin-tailwindcss`.
+- Command palette (Cmd/Ctrl+K) for quick Run, Retry, and Export actions.
 
 ### Exporters
 
