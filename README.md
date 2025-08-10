@@ -159,6 +159,18 @@ docker compose up --build
 
 Then open your browser at `http://localhost:8000`.
 
+The frontend seeds a development JWT (`role: user`) in `localStorage` so API
+requests work without a login flow:
+
+```js
+localStorage.setItem(
+  "jwt",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoidXNlciJ9.hM2ErG_O2e4d9YiCeVoTbiRDoo4ziDiIPfDFE40GUlg",
+);
+```
+
+Replace the token with one signed using your `JWT_SECRET` for custom setups.
+
 To run the services directly on your host for development:
 
 1. **Start the backend** (FastAPI + custom orchestrator):
