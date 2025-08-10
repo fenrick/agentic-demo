@@ -71,12 +71,15 @@ The system comprises:
 ### Stream Channels
 
 Agents emit events over several orchestrator channels that the frontend can
-subscribe to:
+subscribe to via Server-Sent Events:
 
 - `messages` – token-level content such as LLM outputs.
 - `debug` – diagnostic information and warnings.
 - `values` – structured state snapshots.
 - `updates` – citation and progress updates.
+
+Connect to `/stream/<channel>` for public streams. Workspace-scoped streams
+require a token: `/stream/<channel>?token=<workspace-id>`.
 
 ---
 
@@ -232,10 +235,10 @@ All endpoints, except `/healthz` and `/readyz`, are namespaced under `/api` and
 require a JWT via the `Authorization: Bearer <token>` header. Tokens are signed
 using `JWT_SECRET` and validated with the `HS256` algorithm by default.
 
-| Code | Description                                 |
-| ---- | ------------------------------------------- |
-| 401  | Missing token or failed signature check     |
-| 403  | Token valid but caller lacks required role  |
+| Code | Description                                |
+| ---- | ------------------------------------------ |
+| 401  | Missing token or failed signature check    |
+| 403  | Token valid but caller lacks required role |
 
 ## Examples
 
@@ -310,10 +313,10 @@ been replaced by Logfire's settings.
 | `DATABASE_URL`       | SQLAlchemy connection string              | `sqlite:///${DATA_DIR}/workspace.db`     |
 | `OFFLINE_MODE`       | Run without external network calls        | `false`                                  |
 | `ENABLE_TRACING`     | Enable Logfire tracing instrumentation    | `true`                                   |
-| `ALLOWLIST_DOMAINS`  | JSON list of citation-allowed domains     | `["wikipedia.org", ".edu", ".gov"]` |
+| `ALLOWLIST_DOMAINS`  | JSON list of citation-allowed domains     | `["wikipedia.org", ".edu", ".gov"]`      |
 | `ALERT_WEBHOOK_URL`  | Optional webhook for alert notifications  |                                          |
-| `JWT_SECRET`         | HMAC secret for signing JWTs               | (required)                               |
-| `JWT_ALGORITHM`      | JWT signing algorithm                      | `HS256`                                  |
+| `JWT_SECRET`         | HMAC secret for signing JWTs              | (required)                               |
+| `JWT_ALGORITHM`      | JWT signing algorithm                     | `HS256`                                  |
 
 ---
 

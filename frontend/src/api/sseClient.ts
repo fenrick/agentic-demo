@@ -1,16 +1,18 @@
 // Utility for connecting to server-sent event streams for a workspace.
 // Includes basic reconnect logic with a fixed backoff.
 export function connectToWorkspaceStream(
-  workspaceId: string,
+  token?: string,
   channel = "state",
 ): EventSource {
-  const url = `/stream/${workspaceId}/${channel}`;
+  const url = token
+    ? `/stream/${channel}?token=${token}`
+    : `/stream/${channel}`;
   let source = new EventSource(url);
 
   source.onerror = () => {
     source.close();
     setTimeout(() => {
-      source = connectToWorkspaceStream(workspaceId, channel);
+      source = connectToWorkspaceStream(token, channel);
     }, 1000);
   };
 
