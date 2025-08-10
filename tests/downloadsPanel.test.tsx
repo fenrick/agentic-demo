@@ -2,6 +2,8 @@ import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 
+vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
+
 vi.mock("@/api/exportClient", () => {
   const getStatus = vi.fn().mockResolvedValue({ ready: true });
   const getUrls = vi.fn().mockResolvedValue({
@@ -20,6 +22,7 @@ vi.mock("@/api/exportClient", () => {
 
 import DownloadsPanel from "@/components/DownloadsPanel";
 import exportClient from "@/api/exportClient";
+import { toast } from "sonner";
 
 describe("DownloadsPanel", () => {
   it("shows toast when export completes", async () => {
@@ -34,6 +37,6 @@ describe("DownloadsPanel", () => {
     await waitFor(() =>
       expect(screen.getByText("Markdown")).toBeInTheDocument(),
     );
-    expect(screen.getByText(/export ready/i)).toBeInTheDocument();
+    expect(vi.mocked(toast.success)).toHaveBeenCalledWith("Export ready!");
   });
 });

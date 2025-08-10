@@ -1,4 +1,5 @@
 import React from "react";
+import { toast } from "sonner";
 import controlClient from "../api/controlClient";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
 
@@ -11,13 +12,21 @@ const ControlsPanel: React.FC<Props> = ({ workspaceId }) => {
   const { status, setStatus } = useWorkspaceStore();
 
   const onRunClick = async () => {
-    await controlClient.run(workspaceId);
-    setStatus("running");
+    try {
+      await controlClient.run(workspaceId);
+      setStatus("running");
+    } catch {
+      toast.error("Run failed");
+    }
   };
 
   const onRetryClick = async () => {
-    await controlClient.retry(workspaceId);
-    setStatus("running");
+    try {
+      await controlClient.retry(workspaceId);
+      setStatus("running");
+    } catch {
+      toast.error("Retry failed");
+    }
   };
 
   return (
