@@ -2,19 +2,10 @@ version: "3.9"
 
 services:
   app:
-    # Primary FastAPI application service
     build: .
+    command: ./scripts/docker-entrypoint.sh
     ports:
       - "8000:8000"
-    volumes:
-      - ./workspace:/app/data
-    env_file: .env
-    command: uvicorn web.main:app --host 0.0.0.0 --port 8000
-
-  db-migrations:
-    # One-off service to run Alembic migrations
-    build: .
-    command: alembic upgrade head
     volumes:
       - ./workspace:/app/data
     env_file: .env
