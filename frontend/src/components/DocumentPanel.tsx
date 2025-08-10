@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { computeDiff, tokenize, type DiffPatch } from "../utils/diffUtils";
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import { computeDiff, type DiffPatch } from "../utils/diffUtils";
 
 interface Props {
   /** Current markdown text to display. */
@@ -8,58 +10,32 @@ interface Props {
   onAcceptDiff: (diffs: DiffPatch[]) => void;
 }
 
-/** Duration a token stays highlighted (ms). */
-const HIGHLIGHT_MS = 1000;
-/** Delay between token animations (ms). */
-const STEP_MS = 50;
-
 /**
- * Renders the live document with a simple typewriter diff animation.
+ * Renders the live document using a markdown renderer with diff highlights.
  */
 const DocumentPanel: React.FC<Props> = ({ text, onAcceptDiff }) => {
-  const [tokens, setTokens] = useState<string[]>(() => tokenize(text));
-  const [highlighted, setHighlighted] = useState<Set<number>>(new Set());
+  const [rendered, setRendered] = useState<string>(text);
   const prevText = useRef(text);
 
-  // React to incoming text updates from props.
   useEffect(() => {
     if (prevText.current !== text) {
-      handleIncomingText(text);
+      const diffs = computeDiff(prevText.current, text);
+      const escapeHtml = (t: string) =>
+        t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const highlighted = diffs
+        .filter((d) => d.type !== "delete")
+        .map((d) => {
+          const token = escapeHtml(d.token);
+          return d.type === "insert"
+            ? `<mark class=\"bg-yellow-200\">${token}</mark>`
+            : token;
+        })
+        .join("");
+      setRendered(highlighted);
+      prevText.current = text;
+      onAcceptDiff(diffs);
     }
-  }, [text]);
-
-  /** Compute the diff and animate inserted tokens. */
-  const handleIncomingText = (newText: string) => {
-    const diffs = computeDiff(prevText.current, newText);
-    animateDiff(diffs, newText);
-    prevText.current = newText;
-    onAcceptDiff(diffs);
-  };
-
-  /** Sequentially highlights inserted tokens to mimic a typewriter. */
-  const animateDiff = (diffs: DiffPatch[], newText: string) => {
-    const newTokens = tokenize(newText);
-    setTokens(newTokens);
-    let delay = 0;
-    let searchIndex = 0;
-    diffs.forEach((d) => {
-      if (d.type !== "insert") return;
-      const idx = newTokens.indexOf(d.token, searchIndex);
-      if (idx === -1) return;
-      searchIndex = idx + 1;
-      setTimeout(() => {
-        setHighlighted((prev) => new Set(prev).add(idx));
-        setTimeout(() => {
-          setHighlighted((prev) => {
-            const copy = new Set(prev);
-            copy.delete(idx);
-            return copy;
-          });
-        }, HIGHLIGHT_MS);
-      }, delay);
-      delay += STEP_MS;
-    });
-  };
+  }, [text, onAcceptDiff]);
 
   if (tokens.length === 0) {
     return (
@@ -76,11 +52,7 @@ const DocumentPanel: React.FC<Props> = ({ text, onAcceptDiff }) => {
 
   return (
     <div className="prose dark:prose-invert max-w-none" aria-live="polite">
-      {tokens.map((t, i) => (
-        <span key={i} className={highlighted.has(i) ? "bg-yellow-200" : ""}>
-          {t}
-        </span>
-      ))}
+      <ReactMarkdown rehypePlugins={[rehypeRaw]}>{rendered}</ReactMarkdown>
     </div>
   );
 };
