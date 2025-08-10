@@ -80,7 +80,7 @@ This document provides a **comprehensive** and **explicit** description of the L
 
 8. **Metrics & Monitoring**
    - **Prometheus Client**: instrumented in backend
-   - **Health Check Endpoint**: `GET /healthz`
+   - **Health Check Endpoint**: `GET /healthz` verifies DB and research client connectivity
 
 ### 2.2 Frontend Components
 
@@ -192,7 +192,7 @@ This document provides a **comprehensive** and **explicit** description of the L
 - **Metrics**: Prometheus counters and histograms for request latency, model-call durations, SSE throughput.
 - **Logging**: Structured JSON logs via `loguru` with correlation IDs.
 - **Tracing**: OpenTelemetry instrumentation for function calls and external HTTP requests.
-- **Health Checks**: `GET /healthz` returns 200 if DB and cache are reachable.
+- **Health Checks**: `GET /healthz` returns 200 if the database and research client are reachable.
 
 ---
 

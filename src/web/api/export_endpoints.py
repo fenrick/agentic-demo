@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from io import BytesIO
 from pathlib import Path
 from time import perf_counter
@@ -16,6 +17,15 @@ from export.metadata_exporter import export_citations_json
 from export.pdf_exporter import PdfExporter
 from export.zip_exporter import ZipExporter
 from web.telemetry import EXPORT_DURATION
+
+
+def _download_headers(filename: str, payload: bytes) -> dict[str, str]:
+    """Generate standard download headers with cache busting."""
+    return {
+        "Content-Disposition": f"attachment; filename={filename}",
+        "ETag": hashlib.sha256(payload).hexdigest(),
+        "Cache-Control": "no-store",
+    }
 
 
 class ExportStatus(BaseModel):
@@ -60,7 +70,8 @@ async def get_markdown_export(request: Request, workspace_id: str) -> Response:
     start = perf_counter()
     md = MarkdownExporter(db_path).export(workspace_id)
     EXPORT_DURATION.record((perf_counter() - start) * 1000, {"format": "md"})
-    headers = {"Content-Disposition": "attachment; filename=lecture.md"}
+    payload = md.encode("utf-8")
+    headers = _download_headers("lecture.md", payload)
     return Response(content=md, media_type="text/markdown", headers=headers)
 
 
@@ -70,7 +81,7 @@ async def get_docx_export(request: Request, workspace_id: str) -> StreamingRespo
     start = perf_counter()
     docx_bytes = DocxExporter(db_path).export(workspace_id)
     EXPORT_DURATION.record((perf_counter() - start) * 1000, {"format": "docx"})
-    headers = {"Content-Disposition": "attachment; filename=lecture.docx"}
+    headers = _download_headers("lecture.docx", docx_bytes)
     return StreamingResponse(
         BytesIO(docx_bytes),
         media_type=(
@@ -86,7 +97,7 @@ async def get_pdf_export(request: Request, workspace_id: str) -> StreamingRespon
     start = perf_counter()
     pdf_bytes = PdfExporter(db_path).export(workspace_id)
     EXPORT_DURATION.record((perf_counter() - start) * 1000, {"format": "pdf"})
-    headers = {"Content-Disposition": "attachment; filename=lecture.pdf"}
+    headers = _download_headers("lecture.pdf", pdf_bytes)
     return StreamingResponse(
         BytesIO(pdf_bytes), media_type="application/pdf", headers=headers
     )
@@ -98,7 +109,7 @@ async def get_citations_json(request: Request, workspace_id: str) -> Response:
     start = perf_counter()
     json_bytes = export_citations_json(db_path, workspace_id)
     EXPORT_DURATION.record((perf_counter() - start) * 1000, {"format": "citations"})
-    headers = {"Content-Disposition": "attachment; filename=citations.json"}
+    headers = _download_headers("citations.json", json_bytes)
     return Response(content=json_bytes, media_type="application/json", headers=headers)
 
 
@@ -109,7 +120,7 @@ async def get_all_exports(request: Request, workspace_id: str) -> StreamingRespo
     files = ZipExporter(db_path).collect_export_files(workspace_id)
     zip_bytes = ZipExporter.generate_zip(files)
     EXPORT_DURATION.record((perf_counter() - start) * 1000, {"format": "zip"})
-    headers = {"Content-Disposition": "attachment; filename=exports.zip"}
+    headers = _download_headers("exports.zip", zip_bytes)
     return StreamingResponse(
         BytesIO(zip_bytes), media_type="application/zip", headers=headers
     )

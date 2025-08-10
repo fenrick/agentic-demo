@@ -20,7 +20,7 @@ This document provides a **detailed**, **explicit** reference for all backend HT
 
 ### 2.1 GET `/healthz`
 
-- **Purpose**: Liveness and readiness check.
+- **Purpose**: Verifies database connectivity and research client availability.
 - **Authentication**: None
 - **Response**:
   - **200 OK**: `{ "status": "ok" }`
