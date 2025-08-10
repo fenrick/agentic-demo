@@ -1,22 +1,13 @@
-"""FastAPI endpoint exposing recent metrics in Prometheus format."""
+"""FastAPI endpoint exposing OpenTelemetry metrics in Prometheus format."""
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
-
-from fastapi import Request, Response
-
-from metrics.models import TimeRange
-from metrics.repository import MetricsRepository
+from fastapi import Response
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 
-def get_metrics(request: Request) -> Response:
-    """Return recent metrics formatted for Prometheus scrapers."""
+def get_metrics() -> Response:
+    """Return metrics for Prometheus scrapers."""
 
-    db_path: str = request.app.state.db_path
-    repo = MetricsRepository(db_path)
-    end = datetime.utcnow()
-    start = end - timedelta(minutes=5)
-    records = repo.query(TimeRange(start=start, end=end))
-    body = "\n".join(f"{m.name} {m.value}" for m in records)
-    return Response(content=body, media_type="text/plain")
+    data = generate_latest()
+    return Response(content=data, media_type=CONTENT_TYPE_LATEST)

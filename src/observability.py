@@ -9,6 +9,9 @@ from typing import TYPE_CHECKING, cast
 
 import logfire
 from loguru import logger as loguru_logger
+from opentelemetry.exporter.prometheus import PrometheusMetricReader
+from opentelemetry.metrics import get_meter_provider, set_meter_provider
+from opentelemetry.sdk.metrics import MeterProvider
 from starlette.types import ASGIApp
 
 if TYPE_CHECKING:  # pragma: no cover - import for type checking only
@@ -18,6 +21,11 @@ if TYPE_CHECKING:  # pragma: no cover - import for type checking only
 REPO_ROOT = Path(__file__).resolve().parents[1]
 # Only trace modules that live under the repository's ``src`` directory.
 SRC_DIR = REPO_ROOT / "src"
+
+_prometheus_reader = PrometheusMetricReader()
+_meter_provider = MeterProvider(metric_readers=[_prometheus_reader])
+set_meter_provider(_meter_provider)
+meter = get_meter_provider().get_meter("lecture_builder")
 
 
 def install_auto_tracing() -> None:

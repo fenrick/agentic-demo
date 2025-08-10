@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 
 import uvicorn
-from fastapi import APIRouter, Depends, FastAPI
+from fastapi import APIRouter, Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -18,6 +18,7 @@ from config import Settings, load_settings
 from core.orchestrator import graph_orchestrator
 from observability import init_observability, instrument_app
 from persistence.database import get_db_session, init_db
+from web.telemetry import REQUEST_COUNTER
 
 init_observability()
 
@@ -30,6 +31,12 @@ def create_app() -> FastAPI:
     app.state.settings = settings
 
     instrument_app(app)
+
+    @app.middleware("http")
+    async def _count_requests(request: Request, call_next):
+        response = await call_next(request)
+        REQUEST_COUNTER.add(1, {"method": request.method, "path": request.url.path})
+        return response
 
     # Bind search and fact-checking behaviour depending on offline mode.
     if settings.offline_mode:
