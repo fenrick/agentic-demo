@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
 import exportClient, { ExportUrls } from "../api/exportClient";
-import Toast from "./Toast";
 
 interface Props {
   workspaceId: string;
@@ -9,7 +9,6 @@ interface Props {
 // Polls export status and renders download links when ready.
 const DownloadsPanel: React.FC<Props> = ({ workspaceId }) => {
   const [urls, setUrls] = useState<ExportUrls | null>(null);
-  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     let interval: number;
@@ -22,7 +21,7 @@ const DownloadsPanel: React.FC<Props> = ({ workspaceId }) => {
           const u = await exportClient.getUrls(workspaceId);
           if (!cancelled) {
             setUrls(u);
-            setShowToast(true);
+            toast.success("Export ready!");
           }
           clearInterval(interval);
         }
@@ -45,9 +44,6 @@ const DownloadsPanel: React.FC<Props> = ({ workspaceId }) => {
 
   return (
     <>
-      {showToast && (
-        <Toast message="Export ready!" onClose={() => setShowToast(false)} />
-      )}
       <div className="flex gap-4">
         <a className="text-blue-600 hover:underline" href={urls.md}>
           Markdown

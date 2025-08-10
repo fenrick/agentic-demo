@@ -1328,8 +1328,8 @@ def from_schema(weave: WeaveResult) -> str:
    - **Component:** `SSEProvider`
      _Initialises `connectWithBackoff`, wires `onopen`/`onerror` to update `connectionStore`, and calls `startHeartbeat`._
 
-4. **`src/components/Toast.jsx`**
-   - **Component:** `Toast`
+4. **Toast notifications**
+   - **Mechanism:** use shadcn's `sonner` toaster
      _Listens to `connectionStore`; when status transitions to `"reconnecting"`, displays a dismissible “Attempting to reconnect…” toast._
 
 5. **Acceptance:**
