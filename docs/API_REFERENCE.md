@@ -71,27 +71,8 @@ This document provides a **detailed**, **explicit** reference for all backend HT
 
 ### 3.2 Resume Existing Job
 
-#### POST `/api/resume/{job_id}`
-
-- **Purpose**: Resume a previously interrupted job.
-
-- **Authentication**: Required (`editor` or `admin`).
-
-- **Path Parameter**:
-
-  | Parameter | Type   | Description                |
-  | --------- | ------ | -------------------------- |
-  | `job_id`  | String | UUID of the job to resume. |
-
-- **Response (JSON)**:
-  - **200 OK**
-
-    ```json
-    { "job_id": "<same-id>", "status": "resumed" }
-    ```
-
-  - **404 Not Found**: No job with given `job_id`.
-  - **401 Unauthorized**: Invalid JWT.
+The `POST /api/resume/{job_id}` endpoint is **not yet implemented** and currently
+returns `501 Not Implemented` for all requests.
 
 ---
 

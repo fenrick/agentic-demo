@@ -36,7 +36,7 @@ This document provides a **comprehensive** and **explicit** description of the L
 1. **API Layer (FastAPI)**
    - **Endpoints**:
    - `POST /run` — start new lecture build job
-   - `POST /resume/{job_id}` — resume after crash
+   - `POST /resume/{job_id}` — resume after crash *(not implemented)*
    - `SSE /stream/messages` — token diff messages
    - `SSE /stream/updates` — citation and progress updates
    - `SSE /stream/values` — state values
@@ -108,11 +108,12 @@ This document provides a **comprehensive** and **explicit** description of the L
 5. **Exporter** writes final files and signals completion.
 6. **Browser** enables download buttons.
 
-### 3.2 Resume After Crash
+### 3.2 Resume After Crash *(not implemented)*
 
-1. **User calls** `POST /resume/{job_id}`.
-2. **FastAPI** reloads latest checkpoint (`SqliteCheckpointSaver`) and re-invokes remaining agents.
-3. **SSE** streams catch up from last `state_version`.
+1. **Planned:** `POST /resume/{job_id}` would reload the latest checkpoint and
+   continue processing remaining agents.
+2. **Current state:** the endpoint returns `501 Not Implemented` and performs no
+   recovery.
 
 ### 3.3 Citation Cache Hit/Miss
 
@@ -160,7 +161,8 @@ This document provides a **comprehensive** and **explicit** description of the L
 
 | Interface                    | Protocol                               | Format         | Direction           |
 | ---------------------------- | -------------------------------------- | -------------- | ------------------- |
-| `/run`, `/resume`            | HTTP REST                              | JSON           | Client → Server     |
+| `/run`                       | HTTP REST                              | JSON           | Client → Server     |
+| `/resume` *(not implemented)* | HTTP REST                              | JSON           | Client → Server     |
 | SSE Streams                  | SSE                                    | JSON messages  | Server → Client     |
 | `/download`                  | HTTP REST                              | Binary stream  | Client ← Server     |
 | Orchestrator invocations     | In-process Call                        | Python objects | Orchestrator        |
