@@ -60,6 +60,14 @@
   h6 {
     @apply font-serif;
   }
+
+  a,
+  button,
+  input,
+  textarea,
+  select {
+    @apply ring-offset-background focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none;
+  }
 }
 
 @layer components {
