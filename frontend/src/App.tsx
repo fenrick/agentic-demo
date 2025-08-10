@@ -12,7 +12,7 @@ import { useWorkspaceStore } from "./store/useWorkspaceStore";
 // and renders the various panels bound to the global workspace store.
 const App: React.FC = () => {
   const connect = useWorkspaceStore((s) => s.connect);
-  const document = useWorkspaceStore((s) => s.document) as string;
+  const document = useWorkspaceStore((s) => s.document);
   const logs = useWorkspaceStore((s) => s.logs);
   const sources = useWorkspaceStore((s) => s.sources);
   const workspaceId = useWorkspaceStore((s) => s.workspaceId);
@@ -39,7 +39,7 @@ const App: React.FC = () => {
             <DataEntryForm />
           </div>
           <div className="card">
-            <DocumentPanel text={document || ""} onAcceptDiff={() => {}} />
+            <DocumentPanel text={document} onAcceptDiff={() => {}} />
           </div>
         </section>
         <aside className="space-y-4">
