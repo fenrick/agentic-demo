@@ -39,7 +39,7 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
       try {
         const resp = await fetch("/stream/token");
         const { token } = (await resp.json()) as { token: string };
-        const es = connectToWorkspaceStream(workspaceId, token);
+        const es = connectToWorkspaceStream(token);
         es.onmessage = (e: MessageEvent) => {
           try {
             const event: SseEvent = JSON.parse(e.data);

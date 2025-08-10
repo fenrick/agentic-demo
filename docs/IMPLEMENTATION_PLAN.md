@@ -213,7 +213,6 @@ Each node module defines a single `async` handler function and its input/output 
 
 - **File:** `src/core/orchestrator.py`
 - **Class `GraphOrchestrator`**
-
   - `run(state: State) -> State` — execute the pipeline for a given state.
   - `stream(state: State)` — yield progress events for each executed node.
 
@@ -813,7 +812,7 @@ def from_schema(weave: WeaveResult) -> str:
 
      ```python
      @app.get("/stream/{workspace}", response_model=None)
-    async def stream_events(workspace: str):
+     async def stream_events(workspace: str):
         return EventSourceResponse(stream_workspace_events(workspace, "state"))
      ```
 
@@ -845,7 +844,7 @@ def from_schema(weave: WeaveResult) -> str:
    - **Why**: single source of truth; panels subscribe here.
 
 1. **`frontend/src/api/sseClient.ts`**
-   - `connectToWorkspaceStream(workspaceId: string): EventSource`
+   - `connectToWorkspaceStream(token?: string, channel = "messages"): EventSource`
    - **Why**: encapsulates browser SSE setup (reconnect logic, backoff).
 
 1. **Directory `frontend/src/components/`**
