@@ -62,7 +62,7 @@ const DocumentPanel: React.FC<Props> = ({ text, onAcceptDiff }) => {
   };
 
   return (
-    <div className="font-mono whitespace-pre-wrap">
+    <div className="prose dark:prose-invert max-w-none" aria-live="polite">
       {tokens.map((t, i) => (
         <span key={i} className={highlighted.has(i) ? "bg-yellow-200" : ""}>
           {t}
