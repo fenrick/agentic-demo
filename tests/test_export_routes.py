@@ -7,12 +7,12 @@ import sqlite3
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 from fastapi import APIRouter, Depends, FastAPI  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 from web.auth import verify_jwt  # noqa: E402
-from typing import Any
 
 repo_src = Path(__file__).resolve().parents[1] / "src"
 if str(repo_src) in sys.path:
@@ -126,11 +126,17 @@ def test_download_routes_return_content(tmp_path: Path) -> None:
     md = client.get("/api/export/ws/md")
     assert md.status_code == 200
     assert md.text.strip()
+    assert md.headers["cache-control"] == "no-store"
+    assert "etag" in md.headers
 
     docx_resp = client.get("/api/export/ws/docx")
     assert docx_resp.status_code == 200
     assert docx_resp.content.startswith(b"PK")
+    assert docx_resp.headers["cache-control"] == "no-store"
+    assert "etag" in docx_resp.headers
 
     pdf = client.get("/api/export/ws/pdf")
     assert pdf.status_code == 200
     assert pdf.content.startswith(b"%PDF")
+    assert pdf.headers["cache-control"] == "no-store"
+    assert "etag" in pdf.headers

@@ -9,13 +9,15 @@ from sqlalchemy import text
 
 
 async def healthz(request: Request) -> dict[str, str]:
-    """Verify the database connection is available."""
+    """Verify critical dependencies are reachable."""
 
     try:
         async with request.app.state.db() as conn:
             await conn.execute(text("SELECT 1"))
     except Exception as exc:  # pragma: no cover - error path
         raise HTTPException(status_code=500, detail="database unavailable") from exc
+    if getattr(request.app.state, "research_client", None) is None:
+        raise HTTPException(status_code=500, detail="research client unavailable")
     return {"status": "ok"}
 
 
