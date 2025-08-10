@@ -5,6 +5,7 @@ import SourcesPanel from "./components/SourcesPanel";
 import ControlsPanel from "./components/ControlsPanel";
 import DownloadsPanel from "./components/DownloadsPanel";
 import DataEntryForm from "./components/DataEntryForm";
+import ThemeToggle from "./components/ThemeToggle";
 import { useWorkspaceStore } from "./store/useWorkspaceStore";
 
 // Top-level layout component that connects to the workspace stream
@@ -22,30 +23,43 @@ const App: React.FC = () => {
   }, [connect]);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-6">
-      <div className="card">
-        <DataEntryForm />
-      </div>
-      <div className="card">
-        <DocumentPanel text={document || ""} onAcceptDiff={() => {}} />
-      </div>
-      <div className="card">
-        <LogPanel logs={logs} />
-      </div>
-      <div className="card">
-        <SourcesPanel sources={sources} />
-      </div>
-      {workspaceId && (
-        <div className="card">
-          <ControlsPanel workspaceId={workspaceId} />
+    <>
+      <header className="sticky top-0 z-30 border-b border-black/5 backdrop-blur supports-[backdrop-filter]:bg-white/70 dark:border-white/10 dark:supports-[backdrop-filter]:bg-gray-950/70">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+          <h1 className="text-base font-semibold tracking-tight">
+            Lecture Builder
+          </h1>
+          <ThemeToggle />
         </div>
-      )}
-      {workspaceId && exportStatus === "ready" && (
-        <div className="card">
-          <DownloadsPanel workspaceId={workspaceId} />
-        </div>
-      )}
-    </div>
+      </header>
+
+      <main className="mx-auto grid max-w-6xl gap-4 p-4 md:grid-cols-3">
+        <section className="space-y-4 md:col-span-2">
+          <div className="card">
+            <DataEntryForm />
+          </div>
+          <div className="card">
+            <DocumentPanel text={document || ""} onAcceptDiff={() => {}} />
+          </div>
+        </section>
+        <aside className="space-y-4">
+          <div className="card">
+            <ControlsPanel workspaceId={workspaceId!} />
+          </div>
+          <div className="card">
+            <LogPanel logs={logs} />
+          </div>
+          <div className="card">
+            <SourcesPanel sources={sources} />
+          </div>
+          {workspaceId && exportStatus === "ready" && (
+            <div className="card">
+              <DownloadsPanel workspaceId={workspaceId} />
+            </div>
+          )}
+        </aside>
+      </main>
+    </>
   );
 };
 

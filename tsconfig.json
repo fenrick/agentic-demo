@@ -8,7 +8,7 @@
     "strict": true,
     "skipLibCheck": true,
     "baseUrl": "frontend/src",
-    "types": ["vitest/globals", "node"],
+    "types": ["vitest/globals", "node", "vite/client"],
     "paths": { "@/*": ["./*"] }
   },
   "include": ["frontend/src", "tests"]
