@@ -14,6 +14,15 @@ if (traceUrl) {
   });
 }
 
+// Seed a development JWT so API requests succeed without a login flow.
+// Token payload: {"role":"user"}
+if (import.meta.env.DEV && !localStorage.getItem("jwt")) {
+  localStorage.setItem(
+    "jwt",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoidXNlciJ9.hM2ErG_O2e4d9YiCeVoTbiRDoo4ziDiIPfDFE40GUlg",
+  );
+}
+
 // Bootstraps the React application and mounts it to the DOM root element.
 const container = document.getElementById("root");
 if (container) {

@@ -9,11 +9,16 @@ export interface SseEvent {
 
 export type DocState = string;
 
+interface SourceItem {
+  url?: string;
+  title?: string;
+}
+
 interface WorkspaceStore {
   workspaceId: string | null;
   document: DocState;
   logs: SseEvent[];
-  sources: unknown[];
+  sources: (string | SourceItem)[];
   exportStatus: string;
   status: "idle" | "running" | "paused";
   model: string;
@@ -65,7 +70,7 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
       case "source":
         set({
           sources: Array.isArray(event.payload)
-            ? (event.payload as unknown[])
+            ? (event.payload as (string | SourceItem)[])
             : [],
         });
         break;

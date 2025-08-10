@@ -1,6 +1,5 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
-
 import { vi } from "vitest";
 import DocumentPanel from "@/components/DocumentPanel";
 
@@ -22,10 +21,8 @@ describe("DocumentPanel", () => {
       expect(m.tagName).toBe("MARK");
       expect(m).toHaveClass("bg-yellow-200");
     });
+  });
 
-import DocumentPanel from "@/components/DocumentPanel";
-
-describe("DocumentPanel", () => {
   it("shows skeleton when empty", () => {
     render(<DocumentPanel text="" onAcceptDiff={() => {}} />);
     expect(screen.getByTestId("document-skeleton")).toBeInTheDocument();

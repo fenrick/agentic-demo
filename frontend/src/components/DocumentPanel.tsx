@@ -37,7 +37,7 @@ const DocumentPanel: React.FC<Props> = ({ text, onAcceptDiff }) => {
     }
   }, [text, onAcceptDiff]);
 
-  if (tokens.length === 0) {
+  if (text.length === 0) {
     return (
       <div
         data-testid="document-skeleton"
