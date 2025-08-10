@@ -33,15 +33,23 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   model: "o4-mini",
   connect: (workspaceId: string) => {
     set({ workspaceId });
-    const es = connectToWorkspaceStream(workspaceId);
-    es.onmessage = (e: MessageEvent) => {
+    (async () => {
       try {
-        const event: SseEvent = JSON.parse(e.data);
-        get().updateState(event);
+        const resp = await fetch("/stream/token");
+        const { token } = (await resp.json()) as { token: string };
+        const es = connectToWorkspaceStream(workspaceId, token);
+        es.onmessage = (e: MessageEvent) => {
+          try {
+            const event: SseEvent = JSON.parse(e.data);
+            get().updateState(event);
+          } catch (err) {
+            console.error("Failed to parse SSE event", err);
+          }
+        };
       } catch (err) {
-        console.error("Failed to parse SSE event", err);
+        console.error("Failed to connect to workspace stream", err);
       }
-    };
+    })();
   },
   setWorkspaceId: (workspaceId) => set({ workspaceId }),
   updateState: (event: SseEvent) => {
