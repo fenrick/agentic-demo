@@ -1,7 +1,12 @@
 import React from "react";
 
+interface SourceItem {
+  url?: string;
+  title?: string;
+}
+
 interface Props {
-  sources: unknown[];
+  sources: (SourceItem | string)[];
 }
 
 // Display source links with hostnames.
@@ -10,9 +15,9 @@ const SourcesPanel: React.FC<Props> = ({ sources }) => {
     return <p className="text-sm text-gray-500">No sources yet.</p>;
   return (
     <ul className="space-y-2">
-      {sources.map((s: any, idx) => {
-        const url = typeof s === "string" ? s : s?.url;
-        const title = typeof s === "string" ? s : (s?.title ?? s?.url);
+      {sources.map((s, idx) => {
+        const url = typeof s === "string" ? s : s.url;
+        const title = typeof s === "string" ? s : (s.title ?? s.url);
         const host = url ? new URL(url).host : "";
         return (
           <li key={idx} className="text-sm">

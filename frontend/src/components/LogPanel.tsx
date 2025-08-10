@@ -10,15 +10,15 @@ interface Props {
  * Displays log events with virtualization to handle long lists efficiently.
  */
 const LogPanel: React.FC<Props> = ({ logs }) => {
-  if (!logs?.length)
-    return <p className="text-sm text-gray-500">No activity yet.</p>;
-
   const parentRef = React.useRef<HTMLDivElement>(null);
   const rowVirtualizer = useVirtualizer({
     count: logs.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 32,
   });
+
+  if (!logs?.length)
+    return <p className="text-sm text-gray-500">No activity yet.</p>;
 
   return (
     <div ref={parentRef} className="max-h-64 overflow-auto">
