@@ -6,6 +6,7 @@ import ControlsPanel from "./components/ControlsPanel";
 import DownloadsPanel from "./components/DownloadsPanel";
 import DataEntryForm from "./components/DataEntryForm";
 import ThemeToggle from "./components/ThemeToggle";
+import CommandPalette from "./components/CommandPalette";
 import { useWorkspaceStore } from "./store/useWorkspaceStore";
 import { Toaster } from "./components/ui/sonner";
 
@@ -25,6 +26,7 @@ const App: React.FC = () => {
 
   return (
     <>
+      <CommandPalette />
       <Toaster />
       <header className="sticky top-0 z-30 border-b border-black/5 backdrop-blur supports-[backdrop-filter]:bg-white/70 dark:border-white/10 dark:supports-[backdrop-filter]:bg-gray-950/70">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
