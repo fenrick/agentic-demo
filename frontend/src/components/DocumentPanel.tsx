@@ -61,6 +61,19 @@ const DocumentPanel: React.FC<Props> = ({ text, onAcceptDiff }) => {
     });
   };
 
+  if (tokens.length === 0) {
+    return (
+      <div
+        data-testid="document-skeleton"
+        className="max-w-none animate-pulse space-y-2"
+      >
+        <div className="h-4 rounded bg-gray-300" />
+        <div className="h-4 rounded bg-gray-300" />
+        <div className="h-4 w-2/3 rounded bg-gray-300" />
+      </div>
+    );
+  }
+
   return (
     <div className="prose dark:prose-invert max-w-none" aria-live="polite">
       {tokens.map((t, i) => (
