@@ -30,7 +30,8 @@ def create_app() -> FastAPI:
     app = FastAPI()
     app.state.settings = settings
 
-    instrument_app(app)
+    if settings.enable_tracing:
+        instrument_app(app)
 
     @app.middleware("http")
     async def _count_requests(request: Request, call_next):

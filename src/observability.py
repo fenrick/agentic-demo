@@ -46,8 +46,12 @@ def init_observability() -> None:
     """Configure Logfire and instrument global libraries.
 
     Reads configuration from environment variables so that instrumentation
-    occurs before the application's settings module is imported.
+    occurs before the application's settings module is imported. Behaviour is
+    gated by the ``ENABLE_TRACING`` environment variable.
     """
+    if os.getenv("ENABLE_TRACING", "").lower() not in {"1", "true", "yes", "on"}:
+        return
+
     token = os.getenv("LOGFIRE_API_KEY")
     project = os.getenv("LOGFIRE_PROJECT")
 

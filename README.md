@@ -296,6 +296,9 @@ been replaced by Logfire's settings.
 | `DATA_DIR`           | Path for SQLite DB, cache, logs           | (required)                               |
 | `DATABASE_URL`       | SQLAlchemy connection string              | `sqlite:///${DATA_DIR}/workspace.db`     |
 | `OFFLINE_MODE`       | Run without external network calls        | `false`                                  |
+| `ENABLE_TRACING`     | Enable Logfire tracing instrumentation    | `true`                                   |
+| `ALLOWLIST_DOMAINS`  | JSON list of citation-allowed domains     | `["wikipedia.org", ".edu", ".gov"]` |
+| `ALERT_WEBHOOK_URL`  | Optional webhook for alert notifications  |                                          |
 | `JWT_SECRET`         | HMAC secret for signing JWTs               | (required)                               |
 | `JWT_ALGORITHM`      | JWT signing algorithm                      | `HS256`                                  |
 
