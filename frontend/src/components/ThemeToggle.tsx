@@ -1,4 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const ThemeToggle: React.FC = () => {
   const [dark, setDark] = useState<boolean>(() => {
@@ -13,14 +21,23 @@ const ThemeToggle: React.FC = () => {
   }, [dark]);
 
   return (
-    <button
-      type="button"
-      onClick={() => setDark((v) => !v)}
-      aria-pressed={dark}
-      className="rounded-full border border-black/10 px-3 py-2 text-sm shadow-sm transition hover:bg-black/5 dark:border-white/15 dark:hover:bg-white/10"
-    >
-      {dark ? "🌙 Dark" : "☀️ Light"}
-    </button>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setDark((v) => !v)}
+            aria-pressed={dark}
+          >
+            {dark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Toggle theme</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
