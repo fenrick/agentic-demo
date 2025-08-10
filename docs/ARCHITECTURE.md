@@ -35,8 +35,8 @@ This document provides a **comprehensive** and **explicit** description of the L
 
 1. **API Layer (FastAPI)**
    - **Endpoints**:
-   - `POST /run` — start new lecture build job
-   - `POST /resume/{job_id}` — resume after crash *(not implemented)*
+   - `POST /workspaces/{workspace_id}/run` — start new lecture build job
+   - `POST /workspaces/{workspace_id}/retry` — retry using last inputs
    - `SSE /stream/messages` — token diff messages
    - `SSE /stream/updates` — citation and progress updates
    - `SSE /stream/values` — state values
@@ -89,7 +89,7 @@ This document provides a **comprehensive** and **explicit** description of the L
   - **LogPanel**: chronological action entries with filters
   - **SourcesPanel**: citation list and snippet previews
   - **QualityTab**: gauge charts for pedagogy and fact-check scores
-  - **Controls**: run, pause, retry, model selector, export dropdown
+  - **Controls**: run and retry buttons, export dropdown
 
 - **SSE Client**: `web/src/services/stream.ts` subscribes and dispatches to Redux or Zustand store
 - **Download Buttons**: trigger GET requests to `/download/...`
@@ -100,7 +100,7 @@ This document provides a **comprehensive** and **explicit** description of the L
 
 ### 3.1 Initial Job Execution
 
-1. **User submits topic** via `POST /run`.
+1. **User submits topic** via `POST /workspaces/{workspace_id}/run`.
 2. **FastAPI** enqueues job and returns `job_id`.
 3. **Orchestrator.invoke(job_id)** triggers:
    - **Planner** generates `learning_objectives`, `modules` → `stream(values)`.
@@ -111,13 +111,6 @@ This document provides a **comprehensive** and **explicit** description of the L
 4. **Frontend** receives SSE streams, updates panels in real time.
 5. **Exporter** writes final files and signals completion.
 6. **Browser** enables download buttons.
-
-### 3.2 Resume After Crash *(not implemented)*
-
-1. **Planned:** `POST /resume/{job_id}` would reload the latest checkpoint and
-   continue processing remaining agents.
-2. **Current state:** the endpoint returns `501 Not Implemented` and performs no
-   recovery.
 
 ### 3.3 Citation Cache Hit/Miss
 
@@ -163,16 +156,16 @@ This document provides a **comprehensive** and **explicit** description of the L
 
 ## 5. Interfaces and Protocols
 
-| Interface                    | Protocol                               | Format         | Direction           |
-| ---------------------------- | -------------------------------------- | -------------- | ------------------- |
-| `/run`                       | HTTP REST                              | JSON           | Client → Server     |
-| `/resume` *(not implemented)* | HTTP REST                              | JSON           | Client → Server     |
-| SSE Streams                  | SSE                                    | JSON messages  | Server → Client     |
-| `/download`                  | HTTP REST                              | Binary stream  | Client ← Server     |
-| Orchestrator invocations     | In-process Call                        | Python objects | Orchestrator        |
-| Perplexity Sonar            | HTTP REST                              | JSON           | Server → Perplexity |
-| OpenAI API                   | HTTP REST                              | JSON           | Server → OpenAI     |
-| DB Access                    | SQL over TCP (PG) or File I/O (SQLite) | SQL            | Server ↔ DB        |
+| Interface                          | Protocol                               | Format         | Direction           |
+| ---------------------------------- | -------------------------------------- | -------------- | ------------------- |
+| `/workspaces/{workspace_id}/run`   | HTTP REST                              | JSON           | Client → Server     |
+| `/workspaces/{workspace_id}/retry` | HTTP REST                              | JSON           | Client → Server     |
+| SSE Streams                        | SSE                                    | JSON messages  | Server → Client     |
+| `/download`                        | HTTP REST                              | Binary stream  | Client ← Server     |
+| Orchestrator invocations           | In-process Call                        | Python objects | Orchestrator        |
+| Perplexity Sonar                   | HTTP REST                              | JSON           | Server → Perplexity |
+| OpenAI API                         | HTTP REST                              | JSON           | Server → OpenAI     |
+| DB Access                          | SQL over TCP (PG) or File I/O (SQLite) | SQL            | Server ↔ DB        |
 
 ---
 

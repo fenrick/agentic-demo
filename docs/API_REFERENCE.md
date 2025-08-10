@@ -46,33 +46,53 @@ This document provides a **detailed**, **explicit** reference for all backend HT
 
 ### 3.1 Start New Lecture Build
 
-#### POST `/api/run`
+#### POST `/api/workspaces/{workspace_id}/run`
 
 - **Purpose**: Begin a new lecture/workshop generation job.
 
 - **Authentication**: Required (`editor` or `admin`).
 
+- **Path Parameters**:
+
+  | Parameter      | Type   | Description                       |
+  | -------------- | ------ | --------------------------------- |
+  | `workspace_id` | String | Identifier for the workspace/job. |
+
 - **Request Body (JSON)**:
 
-  | Field     | Type   | Required | Description                               |
-  | --------- | ------ | -------- | ----------------------------------------- |
-  | `topic`   | String | Yes      | Lecture or workshop prompt string.        |
-  | `options` | Object | No       | Optional settings (e.g. model overrides). |
+  | Field   | Type   | Required | Description                        |
+  | ------- | ------ | -------- | ---------------------------------- |
+  | `topic` | String | Yes      | Lecture or workshop prompt string. |
 
 - **Response (JSON)**:
   - **201 Created**
 
     ```json
-    { "job_id": "123e4567-e89b-12d3-a456-426614174000" }
+    {
+      "job_id": "123e4567-e89b-12d3-a456-426614174000",
+      "workspace_id": "123e4567-e89b-12d3-a456-426614174000"
+    }
     ```
 
   - **400 Bad Request**: Invalid or missing `topic`.
   - **401 Unauthorized**: Missing or invalid JWT.
 
-### 3.2 Resume Existing Job
+### 3.2 Retry Existing Job
 
-The `POST /api/resume/{job_id}` endpoint is **not yet implemented** and currently
-returns `501 Not Implemented` for all requests.
+#### POST `/api/workspaces/{workspace_id}/retry`
+
+- **Purpose**: Retry the graph using the last inputs for a workspace.
+
+- **Authentication**: Required (`editor` or `admin`).
+
+- **Response (JSON)**:
+
+  ```json
+  {
+    "workspace_id": "123e4567-e89b-12d3-a456-426614174000",
+    "status": "retried"
+  }
+  ```
 
 ---
 

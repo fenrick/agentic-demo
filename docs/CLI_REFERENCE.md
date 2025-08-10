@@ -36,14 +36,6 @@ Command-line shortcuts for running the application, executing tests, and handlin
   npm test
   ```
 
-- **Resume workflow smoke test**
-
-  ```bash
-  ./scripts/test_resume.sh "<prompt>"
-  ```
-
-  Starts the server, generates an outline for the prompt, and verifies export resume functionality.
-
 ## Maintenance
 
 - **Reset the workspace database**

@@ -3,15 +3,13 @@
 from __future__ import annotations
 
 import asyncio
-from typing import NoReturn
 
-from fastapi import APIRouter, Body, HTTPException, Request
+from fastapi import APIRouter, Body, Request
 
 from core.orchestrator import GraphOrchestrator
 from core.state import State
 
 TopicBody = Body(..., embed=True)
-ModelBody = Body(..., embed=True)
 router = APIRouter(prefix="/workspaces/{workspace_id}")
 
 
@@ -37,29 +35,8 @@ async def run(
     return {"job_id": workspace_id, "workspace_id": workspace_id}
 
 
-@router.post("/pause")
-async def pause(workspace_id: str) -> NoReturn:
-    """Pause the graph execution for a workspace."""
-
-    raise HTTPException(status_code=501, detail="Not implemented")
-
-
 @router.post("/retry")
 async def retry(workspace_id: str) -> dict[str, str]:
     """Retry the graph using the last inputs for a workspace."""
 
     return {"workspace_id": workspace_id, "status": "retried"}
-
-
-@router.post("/resume")
-async def resume(workspace_id: str) -> NoReturn:
-    """Resume processing for a previously started job."""
-
-    raise HTTPException(status_code=501, detail="Not implemented")
-
-
-@router.post("/model")
-async def model(workspace_id: str, model: str = ModelBody) -> NoReturn:
-    """Select the model to run subsequent operations against."""
-
-    raise HTTPException(status_code=501, detail="Not implemented")

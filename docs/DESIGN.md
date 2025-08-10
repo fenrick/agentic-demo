@@ -222,7 +222,7 @@ Further ER diagrams in ARCHITECTURE.md.
 - **DocumentPanel**: displays streamed markdown with diff highlights.
 - **LogPanel**: lists `action_log` entries, filterable by agent and severity.
 - **SourcesPanel**: shows citation snippets with `license` badges.
-- **ControlsPanel**: run/pause/retry, model selector, export buttons.
+- **ControlsPanel**: run and retry buttons, export controls.
 - **QualityTab**: visual gauges for pedagogy and fact-check scores.
 
 ### 11.2 Streaming Implementation
