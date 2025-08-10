@@ -1,4 +1,5 @@
 import React from "react";
+import { Skeleton } from "./ui/skeleton";
 
 interface SourceItem {
   url?: string;
@@ -11,8 +12,13 @@ interface Props {
 
 // Display source links with hostnames.
 const SourcesPanel: React.FC<Props> = ({ sources }) => {
-  if (!sources?.length)
-    return <p className="text-sm text-gray-500">No sources yet.</p>;
+  if (!sources.length)
+    return (
+      <div data-testid="sources-skeleton" className="space-y-2">
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-4 w-1/3" />
+      </div>
+    );
   return (
     <ul className="space-y-2">
       {sources.map((s, idx) => {
