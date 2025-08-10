@@ -8,6 +8,16 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   root: "frontend",
   plugins: [react(), tailwindcss()],
+  server: {
+    proxy: {
+      "/api": "http://localhost:8000",
+      "/stream": {
+        target: "http://localhost:8000",
+        ws: false,
+        changeOrigin: true,
+      },
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "frontend/src"),
