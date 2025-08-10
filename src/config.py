@@ -10,9 +10,11 @@ from functools import lru_cache
 from pathlib import Path
 
 from dotenv import load_dotenv
-from pydantic import ValidationInfo, field_validator
+from pydantic import ValidationError, ValidationInfo, field_validator
 from pydantic_core import PydanticUndefined
 from pydantic_settings import BaseSettings, SettingsConfigDict, SettingsError
+
+from core.logging import logger
 
 # Load environment variables from a `.env` file if present.
 load_dotenv()
@@ -20,6 +22,23 @@ load_dotenv()
 # Default LLM provider and model enforced across the application.
 MODEL: str = "openai:o4-mini"
 DEFAULT_MODEL_NAME = MODEL.split(":", 1)[1]
+
+SENSITIVE_FIELDS = {
+    "openai_api_key",
+    "perplexity_api_key",
+    "tavily_api_key",
+    "logfire_api_key",
+    "jwt_secret",
+}
+
+
+def _log_settings(settings: "Settings") -> None:
+    """Emit the current configuration excluding sensitive fields."""
+
+    data = settings.model_dump()
+    for field in SENSITIVE_FIELDS:
+        data.pop(field, None)
+    logger.info("Loaded configuration: {}", data)
 
 
 class Settings(BaseSettings):
@@ -110,14 +129,26 @@ def load_env(env_file: Path) -> Settings:
     """Load :class:`Settings` from a specific ``.env`` file."""
 
     load_dotenv(env_file)
-    return Settings()  # type: ignore[call-arg]
+    try:
+        settings = Settings()  # type: ignore[call-arg]
+    except ValidationError as exc:
+        logger.error("Configuration error: {}", exc)
+        raise SystemExit(1) from exc
+    _log_settings(settings)
+    return settings
 
 
 @lru_cache
 def load_settings() -> Settings:
     """Return a cached :class:`Settings` instance."""
 
-    return Settings()  # type: ignore[call-arg]
+    try:
+        settings = Settings()  # type: ignore[call-arg]
+    except ValidationError as exc:
+        logger.error("Configuration error: {}", exc)
+        raise SystemExit(1) from exc
+    _log_settings(settings)
+    return settings
 
 
 # Backwards compatible convenience instance.
