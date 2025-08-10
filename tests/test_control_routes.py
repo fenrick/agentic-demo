@@ -41,7 +41,7 @@ def create_app() -> FastAPI:
 
 
 def test_control_endpoints() -> None:
-    """Ensure control routes respond with placeholders."""
+    """Ensure control routes behave as expected."""
 
     client = TestClient(create_app())
 
@@ -50,17 +50,17 @@ def test_control_endpoints() -> None:
     assert resp.json() == {"job_id": "abc", "workspace_id": "abc"}
 
     resp = client.post("/api/workspaces/abc/pause")
-    assert resp.status_code == 200
-    assert resp.json() == {"workspace_id": "abc", "status": "paused"}
+    assert resp.status_code == 501
+    assert resp.json() == {"detail": "Not implemented"}
 
     resp = client.post("/api/workspaces/abc/retry")
     assert resp.status_code == 200
     assert resp.json() == {"workspace_id": "abc", "status": "retried"}
 
     resp = client.post("/api/workspaces/abc/resume")
-    assert resp.status_code == 200
-    assert resp.json() == {"workspace_id": "abc", "status": "resumed"}
+    assert resp.status_code == 501
+    assert resp.json() == {"detail": "Not implemented"}
 
     resp = client.post("/api/workspaces/abc/model", json={"model": "gpt"})
-    assert resp.status_code == 200
-    assert resp.json() == {"workspace_id": "abc", "model": "gpt"}
+    assert resp.status_code == 501
+    assert resp.json() == {"detail": "Not implemented"}

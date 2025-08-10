@@ -61,7 +61,7 @@ _These controls will be implemented in version 2._
 - **Roles:** `viewer`, `editor`, `admin`
 - **Permissions matrix:** documented in `backend/auth/permissions.yaml`
   - `viewer`: read-only access to running jobs and downloads
-  - `editor`: run/resume jobs, view logs and citations
+  - `editor`: run jobs (resume not yet implemented), view logs and citations
   - `admin`: full access including security endpoints, key rotation
 
 - **Enforcement:** FastAPI dependencies guard each endpoint
