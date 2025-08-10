@@ -1,5 +1,6 @@
 import forms from "@tailwindcss/forms";
 import typography from "@tailwindcss/typography";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
   content: ["./frontend/index.html", "./frontend/src/**/*.{ts,tsx,html,css}"],
@@ -18,5 +19,5 @@ export default {
       },
     },
   },
-  plugins: [forms, typography],
+  plugins: [forms, typography, tailwindcssAnimate],
 };
