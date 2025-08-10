@@ -9,6 +9,6 @@ async def test_metrics_endpoint_exposes_counters() -> None:
     app = create_app()
     async with AsyncClient(app=app, base_url="http://test") as client:  # type: ignore[call-arg]
         await client.get("/healthz")
-        resp = await client.get("/api/metrics")
+        resp = await client.get("/metrics")
     assert resp.status_code == 200
     assert "requests_total" in resp.text
