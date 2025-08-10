@@ -112,8 +112,10 @@ def register_routes(app: FastAPI) -> None:
     from .metrics_endpoint import get_metrics
     from .routes import citation, control, entries, export, stream
 
+    # SSE routes are mounted directly to avoid JWT requirements on EventSource.
+    app.include_router(stream.router)
+
     api_router = APIRouter(prefix="/api", dependencies=[Depends(verify_jwt)])
-    api_router.include_router(stream.router)
     api_router.include_router(control.router)
     api_router.include_router(export.router)
     api_router.include_router(citation.router)

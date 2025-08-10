@@ -7,12 +7,12 @@ import sqlite3
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 from fastapi import APIRouter, Depends, FastAPI  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 from web.auth import verify_jwt  # noqa: E402
-from typing import Any
 
 repo_src = Path(__file__).resolve().parents[1] / "src"
 if str(repo_src) in sys.path:
