@@ -39,6 +39,7 @@
     "@pydantic/logfire-browser": "^0.9.0",
     "@tailwindcss/vite": "^4.1.11",
     "diff-match-patch": "^1.0.5",
+    "@tanstack/react-virtual": "^3.13.12",
     "postcss": "^8.5.6",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
