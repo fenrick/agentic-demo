@@ -180,6 +180,9 @@ To run the services directly on your host for development:
    npm run dev
    ```
 
+   The Vite dev server proxies `/api` and `/stream` requests to `http://localhost:8000`,
+   allowing the frontend to call those paths without specifying a host.
+
 3. Open your browser at `http://localhost:3000` and enter a topic to begin.
 
 ---
