@@ -18,7 +18,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column("payload_json", sa.Text, nullable=False),
         sa.Column("version", sa.Integer, nullable=False),
-        sa.Column("updated_at", sa.TIMESTAMP, nullable=False),
+        sa.Column("updated_at", sa.DateTime, nullable=False),
     )
 
 

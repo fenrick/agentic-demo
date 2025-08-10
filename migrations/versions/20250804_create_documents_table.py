@@ -18,7 +18,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column("state_id", sa.Integer, sa.ForeignKey("state.id"), nullable=False),
         sa.Column("parquet_blob", sa.LargeBinary, nullable=False),
-        sa.Column("created_at", sa.TIMESTAMP, nullable=False),
+        sa.Column("created_at", sa.DateTime, nullable=False),
     )
 
 
