@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from io import BytesIO
 from pathlib import Path
 
 from fastapi import FastAPI, Request, Response
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from export.docx_exporter import DocxExporter
@@ -58,13 +60,13 @@ async def get_markdown_export(request: Request, workspace_id: str) -> Response:
     return Response(content=md, media_type="text/markdown", headers=headers)
 
 
-async def get_docx_export(request: Request, workspace_id: str) -> Response:
+async def get_docx_export(request: Request, workspace_id: str) -> StreamingResponse:
     """Return a DOCX export for ``workspace_id``."""
     db_path: str = request.app.state.db_path
     docx_bytes = DocxExporter(db_path).export(workspace_id)
     headers = {"Content-Disposition": "attachment; filename=lecture.docx"}
-    return Response(
-        content=docx_bytes,
+    return StreamingResponse(
+        BytesIO(docx_bytes),
         media_type=(
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         ),
@@ -72,12 +74,14 @@ async def get_docx_export(request: Request, workspace_id: str) -> Response:
     )
 
 
-async def get_pdf_export(request: Request, workspace_id: str) -> Response:
+async def get_pdf_export(request: Request, workspace_id: str) -> StreamingResponse:
     """Return a PDF export for ``workspace_id``."""
     db_path: str = request.app.state.db_path
     pdf_bytes = PdfExporter(db_path).export(workspace_id)
     headers = {"Content-Disposition": "attachment; filename=lecture.pdf"}
-    return Response(content=pdf_bytes, media_type="application/pdf", headers=headers)
+    return StreamingResponse(
+        BytesIO(pdf_bytes), media_type="application/pdf", headers=headers
+    )
 
 
 async def get_citations_json(request: Request, workspace_id: str) -> Response:
@@ -88,13 +92,15 @@ async def get_citations_json(request: Request, workspace_id: str) -> Response:
     return Response(content=json_bytes, media_type="application/json", headers=headers)
 
 
-async def get_all_exports(request: Request, workspace_id: str) -> Response:
+async def get_all_exports(request: Request, workspace_id: str) -> StreamingResponse:
     """Return all export formats bundled into a ZIP archive."""
     db_path: str = request.app.state.db_path
     files = ZipExporter(db_path).collect_export_files(workspace_id)
     zip_bytes = ZipExporter.generate_zip(files)
     headers = {"Content-Disposition": "attachment; filename=exports.zip"}
-    return Response(content=zip_bytes, media_type="application/zip", headers=headers)
+    return StreamingResponse(
+        BytesIO(zip_bytes), media_type="application/zip", headers=headers
+    )
 
 
 def register_export_routes(app: FastAPI) -> None:
@@ -109,13 +115,13 @@ def register_export_routes(app: FastAPI) -> None:
         "/export/{workspace_id}/docx",
         get_docx_export,
         methods=["GET"],
-        response_class=Response,
+        response_class=StreamingResponse,
     )
     app.add_api_route(
         "/export/{workspace_id}/pdf",
         get_pdf_export,
         methods=["GET"],
-        response_class=Response,
+        response_class=StreamingResponse,
     )
     app.add_api_route(
         "/export/{workspace_id}/citations.json",
@@ -127,5 +133,5 @@ def register_export_routes(app: FastAPI) -> None:
         "/export/{workspace_id}/all",
         get_all_exports,
         methods=["GET"],
-        response_class=Response,
+        response_class=StreamingResponse,
     )

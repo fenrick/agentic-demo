@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from html import escape
 from pathlib import Path
 from typing import Optional
@@ -10,9 +11,13 @@ from weasyprint import HTML  # type: ignore
 
 from .markdown_exporter import MarkdownExporter
 
+os.environ.setdefault("WEASYPRINT_HEADLESS", "1")
+
 
 class PdfExporter:
     """Render a persisted workspace to a styled PDF document."""
+
+    DEFAULT_CSS = "@page { size: A4; margin: 1cm } body { font-family: sans-serif; }"
 
     def __init__(self, db_path: str, css_path: Optional[str] | None = None) -> None:
         """Create a new exporter.
@@ -72,14 +77,14 @@ class PdfExporter:
         return f"<html><head></head><body>{body}</body></html>"
 
     def apply_css(self, html: str) -> str:
-        """Embed CSS into the HTML document if ``css_path`` was provided."""
+        """Embed CSS into the HTML document."""
 
-        if not self._css_path:
-            return html
-        try:
-            css = Path(self._css_path).read_text(encoding="utf-8")
-        except OSError:
-            return html
+        css = self.DEFAULT_CSS
+        if self._css_path:
+            try:
+                css = Path(self._css_path).read_text(encoding="utf-8")
+            except OSError:
+                pass
         return html.replace("</head>", f"<style>{css}</style></head>", 1)
 
     @staticmethod
