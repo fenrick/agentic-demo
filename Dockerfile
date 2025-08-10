@@ -1,39 +1,38 @@
-# Dockerfile for FastAPI application with frontend build
-# Uses Python 3.13 slim base with WeasyPrint dependencies and Node for frontend
-FROM python:3.13-slim AS base
+# Build frontend assets
+FROM node:18 AS frontend-builder
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
 
-# Install system packages needed for WeasyPrint and frontend build
+# Final image for FastAPI application
+FROM python:3.13-slim AS runtime
+
+# Install system packages needed for WeasyPrint
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
     libcairo2 \
     libgdk-pixbuf2.0-0 \
-    nodejs \
-    npm \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
 WORKDIR /app
 
-# Install Poetry for dependency management
+# Install Poetry and project dependencies
 RUN pip install --no-cache-dir poetry
-
-# Copy dependency files and install Python packages (without dev deps)
 COPY pyproject.toml poetry.lock ./
 RUN poetry install --no-dev --no-interaction --no-ansi
 
-# Build frontend assets
-COPY frontend ./frontend
-RUN cd frontend && npm ci && npm run build && rm -rf node_modules
-
-# Copy application source code
+# Copy application code and built frontend
 COPY src ./src
 COPY alembic.ini ./alembic.ini
 COPY migrations ./migrations
+COPY scripts ./scripts
+COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
+RUN chmod +x ./scripts/docker-entrypoint.sh
 
-# Expose application port
 EXPOSE 8000
 
-# Default command to run the FastAPI app with Uvicorn
-CMD ["uvicorn", "web.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["./scripts/docker-entrypoint.sh"]

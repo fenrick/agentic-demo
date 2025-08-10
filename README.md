@@ -112,13 +112,15 @@ subscribe to:
    npm install
    ```
 
-4. Build the frontend:
+4. (Optional) Build the frontend locally:
 
    ```bash
    ./scripts/build_frontend.sh
    ```
 
-   This generates the static assets in `frontend/dist` that the FastAPI server serves.
+   Docker images build the frontend automatically, so this step is only
+   required when running the app directly on your host. The command generates
+   static assets in `frontend/dist` that the FastAPI server serves.
 
 ### Configuration
 
@@ -143,6 +145,17 @@ cp .env.example .env
 ```
 
 ### Running Locally
+
+For a single-command startup that builds the frontend, waits for the database,
+applies migrations, and serves the app with built assets, use Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+Then open your browser at `http://localhost:8000`.
+
+To run the services directly on your host for development:
 
 1. **Start the backend** (FastAPI + custom orchestrator):
 
