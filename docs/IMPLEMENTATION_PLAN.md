@@ -895,18 +895,18 @@ def from_schema(weave: WeaveResult) -> str:
 
 ---
 
-### H5. Controls & Model Selector
+### H5. Controls
 
 1. **`frontend/src/api/controlClient.ts`**
-   - `run(topic: string)`, `resume(jobId: string)`
+   - `run(workspaceId: string)`, `retry(workspaceId: string)`
    - **Why**: wrappers for the control endpoints.
 
 1. **`frontend/src/components/ControlsPanel.tsx`**
-   - **Buttons**: Run, Resume
+   - **Buttons**: Run, Retry
    - **Handlers**:
-     - `onRunClick()`, `onResumeClick()`, invoking respective `controlClient` methods and updating store.
+     - `onRunClick()`, `onRetryClick()`, invoking respective `controlClient` methods and updating store.
 
-   - **Why**: let users start and resume lecture generation jobs.
+   - **Why**: let users start and retry lecture generation jobs.
 
 1. **`tests/frontend/components/ControlsPanel.test.tsx`**
    - Simulate clicks, verify correct API calls and disabled states.
@@ -1154,7 +1154,7 @@ def from_schema(weave: WeaveResult) -> str:
 3. **File:** `src/web/routes/*.py`
    - **Usage:**
      - In `export` routes: add `dependencies=[Depends(ensure_viewer)]`.
-     - In `run/pause/retry` routes: `dependencies=[Depends(ensure_editor)]`.
+     - In `run/retry` routes: `dependencies=[Depends(ensure_editor)]`.
      - In governance or metrics endpoints: `dependencies=[Depends(ensure_admin)]`.
 
 4. **Tests:**

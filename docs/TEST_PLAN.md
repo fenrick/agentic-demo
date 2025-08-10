@@ -19,16 +19,16 @@ This document defines a **comprehensive**, **explicit** Test Plan for the Lectur
 
 ## 2. Testing Levels
 
-| Level                          | Description                                                   | Tools                                     | Ownership       |
-| ------------------------------ | ------------------------------------------------------------- | ----------------------------------------- | --------------- |
-| **Unit Testing**               | Component-level tests for functions, classes, schemas         | Pytest, Jest                              | Devs            |
+| Level                          | Description                                                      | Tools                                     | Ownership       |
+| ------------------------------ | ---------------------------------------------------------------- | ----------------------------------------- | --------------- |
+| **Unit Testing**               | Component-level tests for functions, classes, schemas            | Pytest, Jest                              | Devs            |
 | **Integration Testing**        | Interaction between backend services, orchestrator workflows, DB | Pytest, Postman, Docker Compose           | Devs            |
-| **End-to-End (E2E)**           | Simulate user flows from prompt to download                   | Playwright, Cypress                       | QA              |
-| **Performance Testing**        | Throughput, latency, resource utilization under load          | k6, Locust                                | SRE/QoS Team    |
-| **Security Testing**           | SAST, DAST, dependency scans, penetration tests               | Bandit, OWASP ZAP, Trivy, custom pen-test | DevSecOps       |
-| **Accessibility Testing**      | WCAG 2.1 AA compliance, keyboard navigation                   | Lighthouse CI, axe-core                   | UX/QA           |
-| **Compliance Testing**         | GDPR, Privacy Act, FERPA export/delete flows                  | Manual test scripts, policy checklists    | Compliance Team |
-| **Chaos & Resilience Testing** | Fault injection, crash recovery                               | Gremlin, Chaos Monkey                     | SRE             |
+| **End-to-End (E2E)**           | Simulate user flows from prompt to download                      | Playwright, Cypress                       | QA              |
+| **Performance Testing**        | Throughput, latency, resource utilization under load             | k6, Locust                                | SRE/QoS Team    |
+| **Security Testing**           | SAST, DAST, dependency scans, penetration tests                  | Bandit, OWASP ZAP, Trivy, custom pen-test | DevSecOps       |
+| **Accessibility Testing**      | WCAG 2.1 AA compliance, keyboard navigation                      | Lighthouse CI, axe-core                   | UX/QA           |
+| **Compliance Testing**         | GDPR, Privacy Act, FERPA export/delete flows                     | Manual test scripts, policy checklists    | Compliance Team |
+| **Chaos & Resilience Testing** | Fault injection, crash recovery                                  | Gremlin, Chaos Monkey                     | SRE             |
 
 ---
 
@@ -163,7 +163,7 @@ All test data stored in `tests/fixtures/` with version control.
 ### 9.1 E2E Test Scenarios
 
 1. **Happy Path**: User submits topic, watches streaming, downloads all formats.
-2. **Resume Path**: Interrupt job mid-stream, resume, and complete.
+2. **Retry Path**: Interrupt job mid-stream, retry, and complete.
 3. **Error Path**: Researcher API failure triggers retry logic, then fallback to cache.
 4. **RBAC Enforcement**: `viewer` cannot start jobs; `editor` can.
 5. **Invalid Input**: Empty or malicious prompt yields validation error.

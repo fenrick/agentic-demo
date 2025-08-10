@@ -20,13 +20,11 @@ interface WorkspaceStore {
   logs: SseEvent[];
   sources: (string | SourceItem)[];
   exportStatus: string;
-  status: "idle" | "running" | "paused";
-  model: string;
+  status: "idle" | "running";
   connect: (workspaceId: string) => void;
   setWorkspaceId: (workspaceId: string | null) => void;
   updateState: (event: SseEvent) => void;
-  setStatus: (status: "idle" | "running" | "paused") => void;
-  setModel: (model: string) => void;
+  setStatus: (status: "idle" | "running") => void;
 }
 
 // Global workspace state accessed throughout the UI.
@@ -37,7 +35,6 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   sources: [],
   exportStatus: "idle",
   status: "idle",
-  model: "o4-mini",
   connect: (workspaceId: string) => {
     set({ workspaceId });
     (async () => {
@@ -82,7 +79,6 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
     }
   },
   setStatus: (status) => set({ status }),
-  setModel: (model) => set({ model }),
 }));
 
 // Selectors provide convenient accessors to slices of the workspace state.
@@ -91,6 +87,5 @@ export const logEvents = () => useWorkspaceStore.getState().logs;
 export const sources = () => useWorkspaceStore.getState().sources;
 export const exportStatus = () => useWorkspaceStore.getState().exportStatus;
 export const runStatus = () => useWorkspaceStore.getState().status;
-export const selectedModel = () => useWorkspaceStore.getState().model;
 export const currentWorkspaceId = () =>
   useWorkspaceStore.getState().workspaceId;
