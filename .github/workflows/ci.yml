@@ -62,3 +62,16 @@ jobs:
           rm -f workspace/test.db || true
           poetry run alembic upgrade head
           poetry run pytest --maxfail=1 --disable-warnings -q
+
+  accessibility:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+      - run: npm ci
+      - run: npm run build
+      - run: npx http-server frontend/dist -p 3000 & sleep 5 && npx lighthouse http://localhost:3000 --only-categories=accessibility --quiet --chrome-flags="--headless" && npx @axe-core/cli http://localhost:3000

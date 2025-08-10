@@ -303,10 +303,10 @@ been replaced by Logfire's settings.
 
 ## Logging & Tracing
 
-- **Logfire:** Handles structured JSON logs, spans, and metrics. Use
+- **Logfire:** Handles structured JSON logs and spans. Use
   `core.logging.get_logger(job_id, user_id)` to bind contextual identifiers for
-  correlation. OpenTelemetry instrumentation remains enabled for FastAPI and
-  outbound HTTP requests.
+  correlation. OpenTelemetry metrics track request counts, active SSE clients,
+  and export durations, exposed at `/api/metrics` for Prometheus scraping.
 
 ---
 
@@ -317,13 +317,13 @@ been replaced by Logfire's settings.
 - **Performance tests**: `k6` scripts in `performance/`
 - **Benchmarks**: `scripts/benchmark_pipeline.py` compares the current
   pipeline against the previous implementation to surface regressions.
-- **Accessibility**: Lighthouse audit configured in CI pipeline.
+- **Accessibility**: Lighthouse and axe-core audits configured in CI pipeline.
 
 ---
 
 ## Operational Governance
 
-- Metrics emitted via Prometheus client in `src/metrics/`.
+- Metrics exposed via OpenTelemetry at `/api/metrics`.
 - Alerts: configurable thresholds for latency, error rates, unsupported-claim rate.
 - Audit: verify hash chain integrity using CLI tools.
 

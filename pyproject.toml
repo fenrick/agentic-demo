@@ -21,6 +21,7 @@ dependencies = [
     "opentelemetry-instrumentation-requests",
     "opentelemetry-instrumentation",
     "opentelemetry-sdk",
+    "opentelemetry-exporter-prometheus",
     "pyarrow",
     "pydantic-settings",
     "pydantic",

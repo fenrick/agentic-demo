@@ -30,12 +30,14 @@ This document provides a **detailed**, **explicit** reference for all backend HT
 
 - **Purpose**: Exposes Prometheus-formatted metrics.
 - **Authentication**: None (secured by network policy).
-- **Response**: Plaintext Prometheus metrics. Example:
+- **Response**: Plaintext Prometheus metrics including counters for HTTP requests,
+  active SSE clients, and export durations. Example:
 
   ```plaintext
-  # HELP http_request_duration_seconds ...
-  http_request_duration_seconds_bucket{le="0.5"} 42
-  ...
+  # HELP requests_total HTTP requests received
+  requests_total 5
+  # HELP sse_clients Active SSE client connections
+  sse_clients 1
   ```
 
 ---
