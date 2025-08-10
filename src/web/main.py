@@ -7,7 +7,6 @@ import argparse
 import os
 from pathlib import Path
 
-import uvicorn
 from fastapi import APIRouter, Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -118,9 +117,9 @@ def register_routes(app: FastAPI) -> None:
     api_router.include_router(export.router)
     api_router.include_router(citation.router)
     api_router.include_router(entries.router)
-    api_router.add_api_route("/metrics", get_metrics, methods=["GET"])
     api_router.add_api_route("/alerts/{workspace_id}", post_alerts, methods=["POST"])
     app.include_router(api_router)
+    app.add_api_route("/metrics", get_metrics, methods=["GET"])
     app.add_api_route("/healthz", healthz, methods=["GET"], include_in_schema=False)
     app.add_api_route("/readyz", readyz, methods=["GET"], include_in_schema=False)
 
@@ -137,6 +136,7 @@ def main() -> None:
 
     # Ensure settings reflect any environment overrides before app creation.
     load_settings()
+    import uvicorn
 
     uvicorn.run(create_app())
 

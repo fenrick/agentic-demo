@@ -322,7 +322,7 @@ been replaced by Logfire's settings.
 - **Logfire:** Handles structured JSON logs and spans. Use
   `core.logging.get_logger(job_id, user_id)` to bind contextual identifiers for
   correlation. OpenTelemetry metrics track request counts, active SSE clients,
-  and export durations, exposed at `/api/metrics` for Prometheus scraping.
+  and export durations, exposed at `/metrics` for Prometheus scraping.
 
 ---
 
@@ -339,7 +339,7 @@ been replaced by Logfire's settings.
 
 ## Operational Governance
 
-- Metrics exposed via OpenTelemetry at `/api/metrics`.
+- Metrics exposed via OpenTelemetry at `/metrics`.
 - Alerts: configurable thresholds for latency, error rates, unsupported-claim rate.
 - Audit: verify hash chain integrity using CLI tools.
 
