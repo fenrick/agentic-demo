@@ -1,6 +1,7 @@
 import React from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { SseEvent } from "../store/useWorkspaceStore";
+import { Skeleton } from "./ui/skeleton";
 
 interface Props {
   logs: SseEvent[];
@@ -17,8 +18,14 @@ const LogPanel: React.FC<Props> = ({ logs }) => {
     estimateSize: () => 32,
   });
 
-  if (!logs?.length)
-    return <p className="text-sm text-gray-500">No activity yet.</p>;
+  if (!logs.length)
+    return (
+      <div data-testid="logs-skeleton" className="space-y-2">
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-4 w-1/2" />
+      </div>
+    );
 
   return (
     <div ref={parentRef} className="max-h-64 overflow-auto">
