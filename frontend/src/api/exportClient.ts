@@ -1,3 +1,5 @@
+import { apiFetch } from "./http";
+
 export interface ExportStatus {
   ready: boolean;
 }
@@ -6,7 +8,7 @@ export type ExportUrls = Record<"md" | "docx" | "pdf" | "zip", string>;
 
 /** Retrieve current export generation status for a workspace. */
 export async function getStatus(workspaceId: string): Promise<ExportStatus> {
-  const res = await fetch(`/workspaces/${workspaceId}/export/status`);
+  const res = await apiFetch(`/workspaces/${workspaceId}/export/status`);
   if (!res.ok) {
     throw new Error("Failed to fetch export status");
   }
@@ -15,7 +17,7 @@ export async function getStatus(workspaceId: string): Promise<ExportStatus> {
 
 /** Fetch download URLs for generated export artifacts. */
 export async function getUrls(workspaceId: string): Promise<ExportUrls> {
-  const res = await fetch(`/workspaces/${workspaceId}/export/urls`);
+  const res = await apiFetch(`/workspaces/${workspaceId}/export/urls`);
   if (!res.ok) {
     throw new Error("Failed to fetch export URLs");
   }
