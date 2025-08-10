@@ -37,6 +37,7 @@ jobs:
           DATABASE_URL: sqlite:///${{ github.workspace }}/workspace/migration.db
           OPENAI_API_KEY: test
           PERPLEXITY_API_KEY: test
+          JWT_SECRET: test
         run: |
           rm -f workspace/migration.db || true
           poetry run alembic upgrade head
@@ -58,6 +59,7 @@ jobs:
           DATABASE_URL: sqlite:///${{ github.workspace }}/workspace/test.db
           OPENAI_API_KEY: test
           PERPLEXITY_API_KEY: test
+          JWT_SECRET: test
         run: |
           rm -f workspace/test.db || true
           poetry run alembic upgrade head
