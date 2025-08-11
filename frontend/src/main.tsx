@@ -2,6 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
+import "github-markdown-css";
 import { configure } from "@pydantic/logfire-browser";
 import { FetchInstrumentation } from "@opentelemetry/instrumentation-fetch";
 
