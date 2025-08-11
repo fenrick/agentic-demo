@@ -118,7 +118,7 @@ class State:
             "prompt": self.prompt,
             "sources": [source.model_dump() for source in self.sources],
             "outline": self.outline.model_dump(),
-            "log": [entry.model_dump() for entry in self.log],
+            "log": [entry.model_dump(mode="json") for entry in self.log],
             "retries": self.retries,
             "retry_counts": self.retry_counts,
             "learning_objectives": self.learning_objectives,
