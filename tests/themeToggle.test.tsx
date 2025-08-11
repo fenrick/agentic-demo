@@ -18,7 +18,9 @@ describe("ThemeToggle", () => {
   });
   beforeEach(() => {
     localStorage.clear();
-    document.documentElement.classList.remove("dark");
+    document.documentElement.removeAttribute("data-color-mode");
+    document.documentElement.removeAttribute("data-light-theme");
+    document.documentElement.removeAttribute("data-dark-theme");
   });
 
   it("returns focus to trigger after selecting a theme", async () => {
@@ -27,6 +29,11 @@ describe("ThemeToggle", () => {
     await userEvent.click(trigger);
     await userEvent.click(screen.getByText("Dark"));
     await waitFor(() => expect(trigger).toHaveFocus());
-    await waitFor(() => expect(document.documentElement).toHaveClass("dark"));
+    await waitFor(() =>
+      expect(document.documentElement).toHaveAttribute(
+        "data-color-mode",
+        "dark",
+      ),
+    );
   });
 });
