@@ -9,10 +9,10 @@ interface Props {
 
 // Renders basic graph controls.
 const ControlsPanel: React.FC<Props> = ({ workspaceId }) => {
-  const { status, setStatus } = useWorkspaceStore();
+  const { status, setStatus, topics } = useWorkspaceStore();
 
   const onRunClick = async () => {
-    const topic = window.prompt("Enter topic");
+    const topic = topics[0];
     if (!topic) return;
     console.info(`Running workspace ${workspaceId} with topic "${topic}"`);
     try {
@@ -33,12 +33,15 @@ const ControlsPanel: React.FC<Props> = ({ workspaceId }) => {
     }
   };
 
+  const runDisabled = status === "running" || topics.length === 0;
+
   return (
     <div className="flex flex-wrap items-center gap-3">
       <button
         onClick={onRunClick}
-        className="btn"
+        className="btn disabled:opacity-50"
         aria-busy={status === "running"}
+        disabled={runDisabled}
       >
         {status === "running" ? "Running…" : "Run"}
       </button>

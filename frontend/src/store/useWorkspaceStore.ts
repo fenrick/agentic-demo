@@ -21,10 +21,13 @@ interface WorkspaceStore {
   sources: (string | SourceItem)[];
   exportStatus: string;
   status: "idle" | "running";
+  topics: string[];
   connect: (workspaceId: string) => void;
   setWorkspaceId: (workspaceId: string | null) => void;
   updateState: (event: SseEvent) => void;
   setStatus: (status: "idle" | "running") => void;
+  setTopics: (topics: string[]) => void;
+  addTopic: (topic: string) => void;
 }
 
 // Global workspace state accessed throughout the UI.
@@ -35,6 +38,7 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   sources: [],
   exportStatus: "idle",
   status: "idle",
+  topics: [],
   connect: (workspaceId: string) => {
     set({ workspaceId });
     (async () => {
@@ -56,6 +60,8 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
     })();
   },
   setWorkspaceId: (workspaceId) => set({ workspaceId }),
+  setTopics: (topics) => set({ topics }),
+  addTopic: (topic) => set((state) => ({ topics: [...state.topics, topic] })),
   updateState: (event: SseEvent) => {
     switch (event.type) {
       case "document":

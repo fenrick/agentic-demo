@@ -14,11 +14,19 @@ vi.mock("../frontend/src/api/exportClient", () => ({
 
 describe("CommandPalette", () => {
   beforeEach(() => {
-    useWorkspaceStore.setState({ workspaceId: "abc", status: "idle" });
+    useWorkspaceStore.setState({
+      workspaceId: "abc",
+      status: "idle",
+      topics: [],
+    });
   });
 
   it("opens with Cmd+K and triggers run", async () => {
-    vi.spyOn(window, "prompt").mockReturnValue("topic");
+    useWorkspaceStore.setState({
+      topics: ["topic"],
+      workspaceId: "abc",
+      status: "idle",
+    });
     render(<CommandPalette />);
     await act(async () => {
       fireEvent.keyDown(window, { key: "k", metaKey: true });

@@ -6,6 +6,7 @@ import { useWorkspaceStore } from "../store/useWorkspaceStore";
 interface Command {
   name: string;
   action: () => Promise<void> | void;
+  disabled?: boolean;
 }
 
 /**
@@ -15,6 +16,7 @@ interface Command {
 const CommandPalette: React.FC = () => {
   const workspaceId = useWorkspaceStore((s) => s.workspaceId);
   const setStatus = useWorkspaceStore((s) => s.setStatus);
+  const topics = useWorkspaceStore((s) => s.topics);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -31,9 +33,10 @@ const CommandPalette: React.FC = () => {
   const commands: Command[] = [
     {
       name: "Run",
+      disabled: topics.length === 0,
       action: async () => {
         if (!workspaceId) return;
-        const topic = window.prompt("Enter topic");
+        const topic = topics[0];
         if (!topic) return;
         await controlClient.run(workspaceId, topic);
         setStatus("running");
@@ -76,8 +79,9 @@ const CommandPalette: React.FC = () => {
           {commands.map((cmd) => (
             <li key={cmd.name}>
               <button
-                className="w-full rounded p-2 text-left hover:bg-gray-100"
-                onClick={() => cmd.action()}
+                className="w-full rounded p-2 text-left hover:bg-gray-100 disabled:opacity-50"
+                onClick={() => !cmd.disabled && cmd.action()}
+                disabled={cmd.disabled}
               >
                 {cmd.name}
               </button>
