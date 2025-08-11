@@ -70,8 +70,8 @@ def test_policy_retry_on_low_confidence_retries_until_limit() -> None:
         DummyFactCheckReport(hallucination_count=1),
     ],
 )
-def test_policy_retry_on_critic_failure_raises_after_limit(report) -> None:
-    """Critic failures trigger retries and eventually raise."""
+def test_policy_retry_on_critic_failure_stops_after_limit(report) -> None:
+    """Critic failures trigger retries until the limit then continue."""
 
     state = State(prompt="topic")
 
@@ -79,5 +79,5 @@ def test_policy_retry_on_critic_failure_raises_after_limit(report) -> None:
         assert policy_retry_on_critic_failure(report, state) is True
     assert state.retries["Content-Weaver"] == 3
 
-    with pytest.raises(RuntimeError):
-        policy_retry_on_critic_failure(report, state)
+    # Fourth attempt exceeds retry limit and returns False instead of raising
+    assert policy_retry_on_critic_failure(report, state) is False
