@@ -15,10 +15,11 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
 
+import core.settings as app_settings
 from agents.cache_backed_researcher import CacheBackedResearcher
 from agents.researcher_web import TavilyClient
-from config import Settings, load_settings
 from core.orchestrator import graph_orchestrator
+from core.settings import Settings
 from observability import init_observability, instrument_app
 from persistence.database import get_db_session, init_db
 from web.telemetry import REQUEST_COUNTER
@@ -29,23 +30,23 @@ init_observability()
 def create_app() -> FastAPI:
     """Instantiate and configure the FastAPI application."""
 
-    settings = load_settings()
-
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         """Manage application startup and shutdown tasks."""
 
-        app.state.settings = settings
+        app.state.settings = app_settings.settings
 
-        if settings.enable_tracing:
+        if app_settings.settings.enable_tracing:
             instrument_app(app)
 
         # Bind search and fact-checking behaviour depending on offline mode.
-        if settings.offline_mode:
+        if app_settings.settings.offline_mode:
             app.state.research_client = CacheBackedResearcher()
             app.state.fact_check_offline = True
         else:
-            app.state.research_client = TavilyClient(settings.tavily_api_key or "")
+            app.state.research_client = TavilyClient(
+                app_settings.settings.tavily_api_key or ""
+            )
             app.state.fact_check_offline = False
 
         app.state.http = httpx.AsyncClient(timeout=httpx.Timeout(10.0, connect=5.0))
@@ -156,9 +157,8 @@ def main() -> None:
 
     if args.offline:
         os.environ["OFFLINE_MODE"] = "1"
+        app_settings.settings = app_settings.Settings()
 
-    # Ensure settings reflect any environment overrides before app creation.
-    load_settings()
     import uvicorn
 
     uvicorn.run(create_app())
