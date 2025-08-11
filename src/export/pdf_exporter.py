@@ -7,8 +7,6 @@ from html import escape
 from pathlib import Path
 from typing import Optional
 
-from weasyprint import HTML  # type: ignore
-
 from .markdown_exporter import MarkdownExporter
 
 os.environ.setdefault("WEASYPRINT_HEADLESS", "1")
@@ -99,5 +97,12 @@ class PdfExporter:
         Returns:
             The binary PDF data.
         """
+
+        try:
+            from weasyprint import HTML  # type: ignore
+        except Exception as exc:  # pragma: no cover - fallback path
+            raise RuntimeError(
+                "PDF export requires WeasyPrint and its system libraries (e.g., Pango)."
+            ) from exc
 
         return HTML(string=html).write_pdf()
