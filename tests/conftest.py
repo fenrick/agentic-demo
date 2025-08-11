@@ -80,7 +80,6 @@ def _span(*_a, **_k):  # pragma: no cover - simple stub
 logfire_stub.span = _span  # type: ignore[attr-defined]
 logfire_stub.trace = lambda *a, **k: None  # type: ignore[attr-defined]
 logfire_stub.get_logger = lambda *a, **k: None  # type: ignore[attr-defined]
-logfire_stub.install_auto_tracing = lambda *a, **k: None  # type: ignore[attr-defined]
 logfire_stub.configure = lambda *a, **k: None  # type: ignore[attr-defined]
 logfire_stub.instrument_pydantic = lambda *a, **k: None  # type: ignore[attr-defined]
 logfire_stub.instrument_httpx = lambda *a, **k: None  # type: ignore[attr-defined]
