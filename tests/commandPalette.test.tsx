@@ -18,6 +18,7 @@ describe("CommandPalette", () => {
   });
 
   it("opens with Cmd+K and triggers run", async () => {
+    vi.spyOn(window, "prompt").mockReturnValue("topic");
     render(<CommandPalette />);
     await act(async () => {
       fireEvent.keyDown(window, { key: "k", metaKey: true });
@@ -26,6 +27,6 @@ describe("CommandPalette", () => {
     await act(async () => {
       fireEvent.click(runButton);
     });
-    expect((controlClient as any).run).toHaveBeenCalledWith("abc");
+    expect((controlClient as any).run).toHaveBeenCalledWith("abc", "topic");
   });
 });

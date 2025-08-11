@@ -33,7 +33,9 @@ const CommandPalette: React.FC = () => {
       name: "Run",
       action: async () => {
         if (!workspaceId) return;
-        await controlClient.run(workspaceId);
+        const topic = window.prompt("Enter topic");
+        if (!topic) return;
+        await controlClient.run(workspaceId, topic);
         setStatus("running");
         setOpen(false);
       },
