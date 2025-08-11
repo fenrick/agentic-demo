@@ -14,14 +14,15 @@
     />
     <script>
       const t = localStorage.getItem("theme");
-      const prefersDark = window.matchMedia(
-        "(prefers-color-scheme: dark)",
-      ).matches;
-      const isDark = t ? t === "dark" : prefersDark;
-      document.documentElement.classList.toggle("dark", isDark);
+      const d = t
+        ? t === "dark"
+        : window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (t !== "light" && t !== "dark" && !d)
+        document.documentElement.classList.remove("dark");
+      else document.documentElement.classList.toggle("dark", d || t === "dark");
     </script>
   </head>
-  <body class="bg-white dark:bg-gray-950">
+  <body class="bg-background text-foreground min-h-screen antialiased">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { apiFetch } from "../api/http";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Entry {
   id: number;
@@ -65,7 +66,7 @@ const DataEntryForm: React.FC = () => {
         onSubmit={onSubmit}
         className="mb-4 flex flex-col items-center gap-2"
       >
-        <textarea
+        <Textarea
           ref={textareaRef}
           value={topic}
           onChange={handleChange}
