@@ -9,6 +9,7 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel, Field, HttpUrl
 from pydantic.dataclasses import dataclass
 
+from agents.models import Activity
 from models import CritiqueReport, FactCheckReport
 
 
@@ -29,6 +30,7 @@ class Module(BaseModel):
     title: str
     duration_min: int
     learning_objectives: List[str] = Field(default_factory=list)
+    activities: List[Activity] = Field(default_factory=list)
 
 
 class Outline(BaseModel):
@@ -43,6 +45,14 @@ class Outline(BaseModel):
     steps: List[str] = Field(default_factory=list)
     learning_objectives: List[str] = Field(default_factory=list)
     modules: List[Module] = Field(default_factory=list)
+
+    @property
+    def activities(self) -> List[Activity]:
+        """Aggregate activities from all modules."""
+        acts: List[Activity] = []
+        for module in self.modules:
+            acts.extend(module.activities)
+        return acts
 
 
 class ActionLog(BaseModel):
