@@ -5,8 +5,10 @@ from __future__ import annotations
 
 import argparse
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 
+import httpx
 from fastapi import APIRouter, Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -26,25 +28,41 @@ def create_app() -> FastAPI:
     """Instantiate and configure the FastAPI application."""
 
     settings = load_settings()
-    app = FastAPI()
-    app.state.settings = settings
 
-    if settings.enable_tracing:
-        instrument_app(app)
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        """Manage application startup and shutdown tasks."""
+
+        app.state.settings = settings
+
+        if settings.enable_tracing:
+            instrument_app(app)
+
+        # Bind search and fact-checking behaviour depending on offline mode.
+        if settings.offline_mode:
+            app.state.research_client = CacheBackedResearcher()
+            app.state.fact_check_offline = True
+        else:
+            app.state.research_client = TavilyClient(settings.tavily_api_key or "")
+            app.state.fact_check_offline = False
+
+        app.state.http = httpx.AsyncClient(timeout=httpx.Timeout(10.0, connect=5.0))
+
+        await setup_database(app)
+        setup_graph(app)
+
+        try:
+            yield
+        finally:
+            await app.state.http.aclose()
+
+    app = FastAPI(lifespan=lifespan)
 
     @app.middleware("http")
     async def _count_requests(request: Request, call_next):
         response = await call_next(request)
         REQUEST_COUNTER.add(1, {"method": request.method, "path": request.url.path})
         return response
-
-    # Bind search and fact-checking behaviour depending on offline mode.
-    if settings.offline_mode:
-        app.state.research_client = CacheBackedResearcher()
-        app.state.fact_check_offline = True
-    else:
-        app.state.research_client = TavilyClient(settings.tavily_api_key or "")
-        app.state.fact_check_offline = False
 
     app.add_middleware(
         CORSMiddleware,
@@ -53,11 +71,6 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-    @app.on_event("startup")
-    async def _startup() -> None:
-        await setup_database(app)
-        setup_graph(app)
 
     register_routes(app)
     mount_frontend(app)
