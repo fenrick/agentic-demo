@@ -51,7 +51,10 @@ const DocumentPanel: React.FC<Props> = ({ text, onAcceptDiff }) => {
   }
 
   return (
-    <div className="prose dark:prose-invert max-w-none" aria-live="polite">
+    <div
+      className="prose max-w-none text-black dark:text-black"
+      aria-live="polite"
+    >
       <ReactMarkdown rehypePlugins={[rehypeRaw]}>{rendered}</ReactMarkdown>
     </div>
   );
