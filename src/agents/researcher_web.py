@@ -15,7 +15,7 @@ from persistence import get_db_session
 from persistence.repositories.retrieval_cache_repo import RetrievalCacheRepo
 
 from .dense_retriever import DenseRetriever
-from .offline_cache import load_cached_results, save_cached_results
+from .offline_cache import save_cached_results
 from .streaming import stream_debug, stream_messages
 
 
@@ -41,42 +41,6 @@ class SearchClient(Protocol):
 
     def search(self, query: str) -> List[RawSearchResult]:
         """Return search results for ``query``."""
-
-
-class PerplexityClient(SearchClient):
-    """Lightweight HTTPX client for the Perplexity Sonar API."""
-
-    _URL = "https://api.perplexity.ai/search"
-
-    def __init__(self, api_key: str, http: Optional[httpx.Client] = None) -> None:
-        self._api_key = api_key
-        self._http = http or httpx.Client(timeout=30)
-
-    def search(self, query: str) -> List[RawSearchResult]:
-        """Call the Perplexity API and cache cited search results."""
-
-        stream_debug(f"perplexity search: {query}")
-        response = self._http.post(
-            self._URL,
-            json={"query": query},
-            headers={"Authorization": f"Bearer {self._api_key}"},
-        )
-        response.raise_for_status()
-        items = response.json().get("search_results", [])
-        results = [RawSearchResult.model_validate(item) for item in items]
-        for res in results:
-            stream_messages(res.snippet)
-        save_cached_results(query, results)
-        return results
-
-    def fallback_search(self, query: str) -> List[RawSearchResult]:
-        """Load cached results when offline."""
-
-        stream_debug(f"offline search: {query}")
-        results = load_cached_results(query) or []
-        for res in results:
-            stream_messages(res.snippet)
-        return results
 
 
 class TavilyClient(SearchClient):

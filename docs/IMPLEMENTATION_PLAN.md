@@ -56,9 +56,7 @@
 - **Purpose**: Template for required environment variables.
 - **Variables listed**:
   - `OPENAI_API_KEY`
-  - `PERPLEXITY_API_KEY`
   - `TAVILY_API_KEY` (optional)
-  - `SEARCH_PROVIDER` (default: `perplexity`)
   - `LOGFIRE_API_KEY` (optional)
   - `LOGFIRE_PROJECT` (optional)
   - `MODEL` (default: `openai:o4-mini`)
@@ -266,16 +264,14 @@ Each node module defines a single `async` handler function and its input/output 
 
 ---
 
-### C.1 Perplexity Sonar Client & Offline Fallback
+### C.1 Tavily Client & Offline Fallback
 
 #### 1. `src/agents/researcher_web.py`
 
-- **Class `PerplexityClient`**
+- **Class `TavilyClient`**
 
 - **`search(self, query: str) → List[RawSearchResult]`**
-  Uses Pydantic‑AI to call the Perplexity Sonar model and return cited snippets + URLs.
-- **`fallback_search(self, query: str) → List[RawSearchResult]`**
-  Invoked when `OFFLINE_MODE` is true; loads from cache instead of HTTP.
+  Calls the Tavily search API and returns cited snippets + URLs.
 
 - **Class `RawSearchResult`** (data container)
 
@@ -293,7 +289,7 @@ Each node module defines a single `async` handler function and its input/output 
 - **`run_web_search(state: State) → List[CitationDraft]`**
   Coordinates:
 
-1. Calls `PerplexityClient.search` or `.fallback_search`
+1. Calls `TavilyClient.search`
 1. Wraps each `RawSearchResult` in a preliminary `CitationDraft` (url + snippet + title)
 
 ---
@@ -365,7 +361,7 @@ Each node module defines a single `async` handler function and its input/output 
 
 - **`researcher_pipeline(query: str, state: State) → List[Citation]`**
 
-1. Call `PerplexityClient.search` (or fallback).
+1. Call `TavilyClient.search`.
 1. Wrap into `CitationDraft`.
 1. Apply `rank_by_authority`.
 1. Apply `filter_allowlist`.
@@ -971,7 +967,7 @@ def from_schema(weave: WeaveResult) -> str:
 #### 2. `src/config.py`
 
 - **`load_settings()`**
-  - Read environment variables (`OPENAI_API_KEY`, `PERPLEXITY_API_KEY`, `MODEL`, `DATA_DIR`, `OFFLINE_MODE`).
+  - Read environment variables (`OPENAI_API_KEY`, `MODEL`, `DATA_DIR`, `OFFLINE_MODE`).
   - Validate types/defaults via Pydantic.
   - Expose a global `Settings` object.
 
@@ -1049,7 +1045,7 @@ def from_schema(weave: WeaveResult) -> str:
 #### 1. In `create_app()` (main.py)
 
 - Read `Settings.OFFLINE_MODE` and:
-  - For search routes: bind `ResearcherWebClient` to either `ChatPerplexity` or `CacheBackedResearcher`.
+  - For search routes: bind `ResearcherWebClient` to either `TavilyClient` or `CacheBackedResearcher`.
   - For FactChecker: disable external URL fetches and license checks if `OFFLINE_MODE=True`.
 
 #### 2. In Agents

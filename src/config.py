@@ -26,7 +26,6 @@ DEFAULT_MODEL_NAME = MODEL.split(":", 1)[1]
 
 SENSITIVE_FIELDS = {
     "openai_api_key",
-    "perplexity_api_key",
     "tavily_api_key",
     "logfire_api_key",
     "jwt_secret",
@@ -50,11 +49,9 @@ class Settings(BaseSettings):
     """
 
     openai_api_key: str
-    perplexity_api_key: str
     data_dir: Path = Path("./workspace")
     database_url: str | None = None
     tavily_api_key: str | None = None
-    search_provider: str = "perplexity"
     model: str = MODEL
     offline_mode: bool = False
     enable_tracing: bool = True

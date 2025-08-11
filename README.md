@@ -1,6 +1,6 @@
 # Lecture Builder Agent
 
-A local-first, multi-agent system that generates high‑quality, university‑grade lecture and workshop outlines (with supporting materials) from a single topic prompt. Agents are defined with Pydantic‑AI models and coordinated by a custom Python orchestrator. The system integrates OpenAI o4‑mini/o3 models, pluggable web search (Perplexity Sonar or Tavily), and a React‑based UX. Full state, citations, logs, and intermediates persist in SQLite or Postgres. Observability is handled by Logfire. Exports include Markdown, DOCX, and PDF.
+A local-first, multi-agent system that generates high‑quality, university‑grade lecture and workshop outlines (with supporting materials) from a single topic prompt. Agents are defined with Pydantic‑AI models and coordinated by a custom Python orchestrator. The system integrates OpenAI o4‑mini/o3 models, web search via Tavily, and a React‑based UX. Full state, citations, logs, and intermediates persist in SQLite or Postgres. Observability is handled by Logfire. Exports include Markdown, DOCX, and PDF.
 
 ---
 
@@ -44,7 +44,7 @@ A local-first, multi-agent system that generates high‑quality, university‑gr
 
 - **Multi-Agent Workflow**: Planner, Researcher, Synthesiser, Pedagogy Critic, Fact Checker, Human-in-Loop, and Exporter nodes coordinated by a lightweight custom orchestrator.
 - **Streaming UI**: Token-level draft streaming with diff highlights; action/reasoning log streaming via SSE.
-- **Robust Citations**: Pluggable Perplexity or Tavily search, citation metadata stored in SQLite, Creative Commons and university domain filtering.
+- **Robust Citations**: Tavily search, citation metadata stored in SQLite, Creative Commons and university domain filtering.
 - **Local-First**: Operates offline using cached corpora and fallback to local dense retrieval.
 - **Flexible Exports**: Markdown (canonical), DOCX (python-docx), PDF (WeasyPrint), with cover page, TOC, and bibliography.
 - **Audit & Governance**: Immutable action logs, SHA‑256 state hashes, role‑based access, database encryption.
@@ -58,7 +58,7 @@ The system comprises:
 1. **Custom Orchestrator**: Manages typed `State` objects through nodes and edges defined with Pydantic models. Handles checkpointing in SQLite.
 2. **Agents**:
    - **Curriculum Planner**: Defines learning objectives and module structure.
-   - **Researcher-Web**: Executes parallel Perplexity Sonar/OpenAI searches, dedupes and ranks sources.
+   - **Researcher-Web**: Executes parallel Tavily searches, dedupes and ranks sources.
    - **Content Weaver**: Generates Markdown outline, speaker notes, slide bullets.
    - **Pedagogy Critic**: Verifies Bloom taxonomy coverage, activity diversity, cognitive load.
    - **Fact Checker**: Scans for hallucinations via Cleanlab/regex.
@@ -92,7 +92,7 @@ Fetch a token from `GET /stream/token` and connect using
 - Node.js 18+ (for frontend)
 - `poetry` (recommended) or `pipenv`
 - OpenAI API key
-- Perplexity or Tavily API key
+- Tavily API key (optional)
 
 ### Installation
 
@@ -135,9 +135,7 @@ variables (e.g. a `.env` file):
 cp .env.example .env
 # Edit .env:
 # OPENAI_API_KEY=sk-...
-# PERPLEXITY_API_KEY=...
 # TAVILY_API_KEY=...
-# SEARCH_PROVIDER=perplexity  # or 'tavily'
 # LOGFIRE_API_KEY=...
 # LOGFIRE_PROJECT=...
 # MODEL=openai:o4-mini
@@ -209,7 +207,7 @@ To run the services directly on your host for development:
 
 ### Retrieval & Citation
 
-- **SearchClient** abstraction in `src/agents/researcher_web.py` supporting Perplexity and Tavily
+- **SearchClient** abstraction in `src/agents/researcher_web.py` supporting Tavily
 - Citation objects stored in `state.citations` table.
 - Filtering by domain allowlist and SPDX license checks.
 
@@ -320,9 +318,7 @@ been replaced by Logfire's settings.
 | Variable             | Description                               | Default                                  |
 | -------------------- | ----------------------------------------- | ---------------------------------------- |
 | `OPENAI_API_KEY`     | API key for OpenAI                        | (required)                               |
-| `PERPLEXITY_API_KEY` | API key for Perplexity Sonar              | Required if `SEARCH_PROVIDER=perplexity` |
-| `TAVILY_API_KEY`     | API key for Tavily search                 | Required if `SEARCH_PROVIDER=tavily`     |
-| `SEARCH_PROVIDER`    | `perplexity` or `tavily`                  | `perplexity`                             |
+| `TAVILY_API_KEY`     | API key for Tavily search                 |                                          |
 | `LOGFIRE_API_KEY`    | API key for Logfire                       |                                          |
 | `LOGFIRE_PROJECT`    | Logfire project identifier                |                                          |
 | `MODEL`              | LLM provider and model (`openai:o4-mini`) | `openai:o4-mini`                         |

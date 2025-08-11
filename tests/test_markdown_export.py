@@ -16,7 +16,6 @@ from export.markdown import embed_citations, from_weave_result, render_section
 from export.markdown_exporter import MarkdownExporter
 
 os.environ.setdefault("OPENAI_API_KEY", "test")
-os.environ.setdefault("PERPLEXITY_API_KEY", "test")
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 

@@ -7,7 +7,6 @@ from agents.researcher_pipeline import CitationDraft, researcher_pipeline
 from core.state import State
 
 os.environ.setdefault("OPENAI_API_KEY", "test")
-os.environ.setdefault("PERPLEXITY_API_KEY", "test")
 
 
 @pytest.mark.asyncio
