@@ -140,5 +140,8 @@ def main() -> None:
     uvicorn.run(create_app())
 
 
+# Make the ASGI app importable by uvicorn and tests
+app = create_app()
+
 if __name__ == "__main__":  # pragma: no cover - manual execution
     main()
