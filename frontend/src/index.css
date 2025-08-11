@@ -40,6 +40,22 @@ body {
   padding: 1.5rem;
 }
 
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 8px 12px;
+  border-top: var(--borderWidth-thin) solid var(--borderColor-muted);
+}
+
+thead th {
+  background: var(--color-canvas-subtle);
+  text-align: left;
+}
+
 .skeleton {
   background: var(--color-neutral-muted);
   border-radius: 6px;
