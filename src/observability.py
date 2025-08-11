@@ -57,13 +57,21 @@ def init_observability() -> None:
 
     install_auto_tracing()
     logfire.configure(token=token, service_name=project)
-    logging.getLogger().addHandler(logfire.LogfireLoggingHandler())
+
+    # Ensure loguru and the standard logging module send records to Logfire.
+    # Clearing existing handlers prevents duplicate log entries.
+    root_logger = logging.getLogger()
+    root_logger.handlers.clear()
+    root_logger.addHandler(logfire.LogfireLoggingHandler())
+
+    loguru_logger.remove()
+    loguru_logger.add(logfire.loguru_handler())
+
     logfire.instrument_pydantic()
     logfire.instrument_httpx()
     logfire.instrument_sqlalchemy()
     logfire.instrument_sqlite3()
     logfire.instrument_system_metrics()
-    loguru_logger.add(logfire.loguru_handler())
 
 
 def instrument_app(app: "FastAPI") -> None:
