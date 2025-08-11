@@ -20,7 +20,9 @@ Command-line shortcuts for running the application, executing tests, and handlin
   ./scripts/cli.sh [--verbose] "<topic>"
   ```
 
-  Produces lecture JSON for the topic. `--verbose` shows progress logs.
+  Produces lecture JSON for the topic and saves it to `run_output.md`.
+  `--verbose` shows progress logs. Use `--output` to specify a different
+  Markdown file.
 
 ## Testing
 
@@ -49,3 +51,4 @@ Command-line shortcuts for running the application, executing tests, and handlin
   ```bash
   ./scripts/build_frontend.sh
   ```
+
