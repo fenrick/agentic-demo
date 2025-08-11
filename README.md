@@ -349,6 +349,7 @@ been replaced by Logfire's settings.
 - **Performance tests**: `k6` scripts in `performance/`
 - **Benchmarks**: `scripts/benchmark_pipeline.py` compares the current
   pipeline against the previous implementation to surface regressions.
+- **CLI run output**: `./scripts/cli.sh "<topic>"` writes the generated lecture to `run_output.md`.
 - **Accessibility**: Lighthouse and axe-core audits configured in CI pipeline.
 
 ---

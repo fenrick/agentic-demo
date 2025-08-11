@@ -3,7 +3,7 @@ import sys
 from types import ModuleType, SimpleNamespace
 
 
-def test_main_logs_stream_boundaries(monkeypatch, caplog):
+def test_main_logs_stream_boundaries(monkeypatch, caplog, tmp_path):
     fake_streaming = ModuleType("agents.streaming")
 
     def fake_stream_messages(message: str) -> None:
@@ -22,7 +22,7 @@ def test_main_logs_stream_boundaries(monkeypatch, caplog):
         return {"result": "ok"}
 
     def fake_parse_args():
-        return SimpleNamespace(topic="demo", verbose=True)
+        return SimpleNamespace(topic="demo", verbose=True, output=tmp_path / "out.md")
 
     monkeypatch.setattr(generate_lecture, "_generate", fake_generate)
     monkeypatch.setattr(generate_lecture, "parse_args", fake_parse_args)
