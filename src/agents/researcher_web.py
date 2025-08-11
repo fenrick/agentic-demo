@@ -39,7 +39,16 @@ class CitationDraft:
 class SearchClient(Protocol):
     """Protocol for search clients used by the web researcher."""
 
-    def search(self, query: str) -> List[RawSearchResult]:
+    async def __aenter__(self) -> "SearchClient":  # pragma: no cover - protocol
+        ...
+
+    async def __aexit__(self, exc_type, exc, tb) -> None:  # pragma: no cover - protocol
+        ...
+
+    async def aclose(self) -> None:
+        """Close any open resources."""
+
+    async def search(self, query: str) -> List[RawSearchResult]:
         """Return search results for ``query``."""
 
 
@@ -48,15 +57,28 @@ class TavilyClient(SearchClient):
 
     _URL = "https://api.tavily.com/search"
 
-    def __init__(self, api_key: str, http: Optional[httpx.Client] = None) -> None:
+    def __init__(self, api_key: str, http: Optional[httpx.AsyncClient] = None) -> None:
         self._api_key = api_key
-        self._http = http or httpx.Client(timeout=30)
+        self._http = http or httpx.AsyncClient(timeout=30)
 
-    def search(self, query: str) -> List[RawSearchResult]:
+    async def __aenter__(self) -> "TavilyClient":
+        return self
+
+    async def __aexit__(
+        self, exc_type, exc, tb
+    ) -> None:  # noqa: D401 - Protocol method
+        await self.aclose()
+
+    async def aclose(self) -> None:
+        """Close the underlying HTTP client."""
+
+        await self._http.aclose()
+
+    async def search(self, query: str) -> List[RawSearchResult]:
         """Call the Tavily API and cache search results."""
 
         stream_debug(f"tavily search: {query}")
-        response = self._http.post(
+        response = await self._http.post(
             self._URL,
             json={"api_key": self._api_key, "query": query},
         )
@@ -93,7 +115,7 @@ async def _cached_search_async(
             return [RawSearchResult.model_validate(item) for item in cached]
 
     try:
-        results = client.search(query)
+        results = await client.search(query)
     except Exception:
         logging.exception("Search client failed")
         if dense is None:

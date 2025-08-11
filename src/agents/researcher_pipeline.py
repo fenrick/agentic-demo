@@ -34,7 +34,7 @@ async def researcher_pipeline(query: str, state: State) -> List[Citation]:
 
     state.prompt = query
     try:
-        drafts: List[CitationDraft] = run_web_search(state)
+        drafts: List[CitationDraft] = await run_web_search(state)
     except Exception:
         logging.exception("Web search failed")
         return []
