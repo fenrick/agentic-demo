@@ -14,4 +14,11 @@ describe("SourcesPanel", () => {
     expect(screen.queryByTestId("sources-skeleton")).toBeNull();
     expect(screen.getByText("https://example.com")).toBeInTheDocument();
   });
+
+  it("ignores invalid source URLs", () => {
+    const sources = ["not a url"];
+    render(<SourcesPanel sources={sources} />);
+    expect(screen.getByText("not a url")).toBeInTheDocument();
+    expect(screen.queryByText(/—/)).toBeNull();
+  });
 });
