@@ -94,7 +94,7 @@ def classify_bloom_level(text: str) -> str:
         model = OpenAIModel(settings.model_name, provider=provider)
         agent = Agent(
             model=model,
-            output_type=BloomResult,
+            output_type=BloomResult,  # return structured BloomResult from LLM
             instructions=instructions,
         )
         result = agent.run_sync(text)
