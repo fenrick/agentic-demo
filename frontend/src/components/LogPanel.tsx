@@ -20,7 +20,7 @@ const LogPanel: React.FC<Props> = ({ logs }) => {
 
   if (!logs.length)
     return (
-      <div data-testid="logs-skeleton" className="space-y-2">
+      <div data-testid="logs-skeleton" className="stack">
         <Skeleton className="h-4 w-3/4" />
         <Skeleton className="h-4 w-2/3" />
         <Skeleton className="h-4 w-1/2" />

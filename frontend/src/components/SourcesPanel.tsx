@@ -14,17 +14,23 @@ interface Props {
 const SourcesPanel: React.FC<Props> = ({ sources }) => {
   if (!sources.length)
     return (
-      <div data-testid="sources-skeleton" className="space-y-2">
+      <div data-testid="sources-skeleton" className="stack">
         <Skeleton className="h-4 w-2/3" />
         <Skeleton className="h-4 w-1/3" />
       </div>
     );
   return (
-    <ul className="space-y-2">
+    <ul className="stack">
       {sources.map((s, idx) => {
         const url = typeof s === "string" ? s : s.url;
         const title = typeof s === "string" ? s : (s.title ?? s.url);
-        const host = url ? new URL(url).host : "";
+        // Parse the hostname safely in case an invalid URL is provided.
+        let host = "";
+        try {
+          host = url ? new URL(url).host : "";
+        } catch {
+          // ignore malformed URLs
+        }
         return (
           <li key={idx} className="text-sm">
             <a
