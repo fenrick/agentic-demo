@@ -22,7 +22,7 @@ This document provides a **comprehensive**, **explicit** security specification 
 ### 2.1 Assets
 
 - **User Data:** Prompts, generated lecture content, citations
-- **Service Secrets:** API keys (OpenAI, Perplexity Sonar), vault tokens
+- **Service Secrets:** API keys (OpenAI, Tavily), vault tokens
 - **Persistent Data:** SQLite/Postgres databases, cache, logs, document versions
 - **Infrastructure:** Compute resources, container images, network endpoints
 
@@ -80,7 +80,7 @@ _These controls will be implemented in version 2._
 
 - **HashiCorp Vault** as primary secrets store
   - Mounted via Kubernetes CSI driver or Vault Agent injector
-  - Secrets (OpenAI_API_KEY, PERPLEXITY_API_KEY, GPG_SIGN_KEY) injected at container runtime
+  - Secrets (OPENAI_API_KEY, TAVILY_API_KEY, GPG_SIGN_KEY) injected at container runtime
 
 - **Local Development:** `dotenv` files only; CI pipeline rejects commits with `.env` containing real credentials
 

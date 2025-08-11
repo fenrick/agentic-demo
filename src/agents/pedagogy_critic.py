@@ -90,13 +90,7 @@ def classify_bloom_level(text: str) -> str:
         from pydantic_ai.providers.openai import OpenAIProvider
 
         settings = config.load_settings()
-        if settings.model_provider == "perplexity":
-            provider = OpenAIProvider(
-                base_url="https://api.perplexity.ai",
-                api_key=settings.perplexity_api_key,
-            )
-        else:
-            provider = OpenAIProvider()
+        provider = OpenAIProvider()
         model = OpenAIModel(settings.model_name, provider=provider)
         agent = Agent(
             model=model,

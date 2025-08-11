@@ -10,7 +10,6 @@ from core.state import State
 from .cache_backed_researcher import CacheBackedResearcher
 from .researcher_web import (
     CitationDraft,
-    PerplexityClient,
     RawSearchResult,
     SearchClient,
     TavilyClient,
@@ -26,9 +25,7 @@ def run_web_search(state: State) -> List[CitationDraft]:
     settings = Settings()
     if settings.offline_mode:
         client: SearchClient = CacheBackedResearcher()
-    elif settings.search_provider == "tavily":
-        client = TavilyClient(settings.tavily_api_key or "")
     else:
-        client = PerplexityClient(settings.perplexity_api_key)
+        client = TavilyClient(settings.tavily_api_key or "")
     results = client.search(state.prompt)
     return [_to_draft(r) for r in results]

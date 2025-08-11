@@ -42,8 +42,6 @@ async def call_planner_llm(topic: str) -> str:
 
     try:  # pragma: no cover - exercised via monkeypatch in tests
         from pydantic_ai import Agent
-        from pydantic_ai.models.openai import OpenAIModel
-        from pydantic_ai.providers.openai import OpenAIProvider
 
         import config
     except Exception:  # dependency missing
@@ -53,18 +51,10 @@ async def call_planner_llm(topic: str) -> str:
     settings = config.load_settings()
     provider_name = settings.model_provider
     model_name = settings.model_name
-    if provider_name == "perplexity":
-        provider = OpenAIProvider(
-            base_url="https://api.perplexity.ai",
-            api_key=settings.perplexity_api_key,
-        )
-        model = OpenAIModel(model_name, provider=provider)
-        agent = Agent(model, system_prompt=get_prompt("planner_system"))
-    else:
-        agent = Agent(
-            f"{provider_name}:{model_name}",
-            system_prompt=get_prompt("planner_system"),
-        )
+    agent = Agent(
+        f"{provider_name}:{model_name}",
+        system_prompt=get_prompt("planner_system"),
+    )
     response = await agent.run(topic)
     return response.output or ""
 

@@ -23,18 +23,12 @@ def init_model(**overrides: Any) -> OpenAIModel | None:
 
     settings = config.load_settings()
     model_id: str = overrides.pop("model", settings.model)
-    provider_name, model_name = model_id.split(":", 1)
+    _, model_name = model_id.split(":", 1)
 
     if model_id in _MODEL_CACHE:
         return _MODEL_CACHE[model_id]
 
-    if provider_name == "perplexity":
-        pplx_api_key = overrides.pop("pplx_api_key", settings.perplexity_api_key)
-        provider = OpenAIProvider(
-            base_url="https://api.perplexity.ai", api_key=pplx_api_key
-        )
-    else:
-        provider = OpenAIProvider()
+    provider = OpenAIProvider()
 
     model = OpenAIModel(model_name, provider=provider)
     _MODEL_CACHE[model_id] = model

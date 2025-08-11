@@ -15,15 +15,15 @@ This document provides a **comprehensive** and **explicit** description of the L
          │ HTTP Websocket / REST       │ HTTP / gRPC                        │ HTTP
          ▼                             ▼                                    ▼
 ┌──────────────────┐        ┌─────────────────────────┐        ┌─────────────────┐
-│ Downloads API    │        │ Perplexity Sonar LLM    │        │ Local Dense     │
-│ (Markdown/DOCX/PDF)│        │ (LLM Client)           │        │ Retrieval Index │
+│ Downloads API    │        │ Tavily Search API       │        │ Local Dense     │
+│ (Markdown/DOCX/PDF)│        │ (Search Client)        │        │ Retrieval Index │
 └──────────────────┘        └─────────────────────────┘        └─────────────────┘
 ```
 
 - **FastAPI Server**: exposes REST endpoints, SSE streams, websocket connections. Hosts the graph orchestrator.
 - **Graph Orchestrator**: coordinates multi-agent workflows as a directed graph of nodes and edges. Maintains in-memory and persisted `State` snapshots.
 - **SQLite/Postgres**: checkpoint storage for graph state, citations, logs, and document versions.
-- **Perplexity Sonar LLM**: external source for research; fallback to local dense retrieval index.
+- **Tavily Search API**: external source for research; fallback to local dense retrieval index.
 - **Downloads API**: on-demand generation of final outputs in Markdown, DOCX, PDF.
 - **Browser Client**: subscribes to SSE streams for document updates, citations, and action logs.
 
@@ -54,7 +54,7 @@ This document provides a **comprehensive** and **explicit** description of the L
    - **Edge Policies**: confidence thresholds, retry loops
 
 3. **Retrieval Layer**
-   - **ChatPerplexity (Sonar model)**: client with API key support
+   - **TavilyClient**: client with API key support
    - **Cache Manager**: reads/writes to `retrieval_cache` table
    - **Dense Retriever**: fallback using `faiss` index of CC-BY abstracts
 
@@ -104,7 +104,7 @@ This document provides a **comprehensive** and **explicit** description of the L
 2. **FastAPI** enqueues job and returns `job_id`.
 3. **Orchestrator.invoke(job_id)** triggers:
    - **Planner** generates `learning_objectives`, `modules` → `stream(values)`.
-   - **Researcher-Web** fans out N parallel queries to Perplexity Sonar → `stream(updates)`.
+   - **Researcher-Web** fans out N parallel queries to Tavily search → `stream(updates)`.
    - **Content Weaver** streams token messages → `stream(messages)`.
    - **Critics** emit `stream(debug)` warnings.
 
@@ -116,7 +116,7 @@ This document provides a **comprehensive** and **explicit** description of the L
 
 1. **Researcher-Web** checks `retrieval_cache` table for query key.
 2. If **hit**, returns cached response, marks `retrieval_cache.hit_count++`.
-3. If **miss**, calls Perplexity Sonar, writes response to cache & timestamp.
+3. If **miss**, calls Tavily search, writes response to cache & timestamp.
 4. **Citation objects** created and written to `citations` table.
 
 ---
@@ -163,7 +163,7 @@ This document provides a **comprehensive** and **explicit** description of the L
 | SSE Streams                        | SSE                                    | JSON messages  | Server → Client     |
 | `/download`                        | HTTP REST                              | Binary stream  | Client ← Server     |
 | Orchestrator invocations           | In-process Call                        | Python objects | Orchestrator        |
-| Perplexity Sonar                   | HTTP REST                              | JSON           | Server → Perplexity |
+| Tavily Search                      | HTTP REST                              | JSON           | Server → Tavily     |
 | OpenAI API                         | HTTP REST                              | JSON           | Server → OpenAI     |
 | DB Access                          | SQL over TCP (PG) or File I/O (SQLite) | SQL            | Server ↔ DB        |
 

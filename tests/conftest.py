@@ -34,7 +34,6 @@ if str(SRC_DIR) not in sys.path:
 
 # Provide dummy environment keys expected by the settings module.
 os.environ.setdefault("OPENAI_API_KEY", "test")
-os.environ.setdefault("PERPLEXITY_API_KEY", "test")
 os.environ.setdefault("JWT_SECRET", "test-secret")
 
 # Minimal ``tiktoken`` replacement used by the orchestrator token counter.
