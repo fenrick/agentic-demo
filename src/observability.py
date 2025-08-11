@@ -50,7 +50,6 @@ def init_observability() -> None:
     gated by the ``ENABLE_TRACING`` environment variable.
     """
     if os.getenv("ENABLE_TRACING", "").lower() not in {"1", "true", "yes", "on"}:
-        logfire.configure(ignore_no_config=True)
         return
 
     token = os.getenv("LOGFIRE_API_KEY")
