@@ -22,8 +22,11 @@ const ThemeToggle: React.FC = () => {
   });
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
+    const isDark = theme === "dark";
+    document.documentElement.classList.toggle("dark", isDark);
+    document.body.classList.toggle("dark", isDark);
     localStorage.setItem("theme", theme);
+    document.dispatchEvent(new CustomEvent("theme-change", { detail: theme }));
   }, [theme]);
 
   return (
