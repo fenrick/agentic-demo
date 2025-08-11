@@ -9,7 +9,9 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.responses import FileResponse
 
 from agents.cache_backed_researcher import CacheBackedResearcher
 from agents.researcher_web import TavilyClient
@@ -85,18 +87,27 @@ def setup_graph(app: FastAPI) -> None:
 
 
 def mount_frontend(app: FastAPI) -> None:
-    """Serve the built frontend from `frontend/dist`."""
+    """Serve built frontend assets and provide history-fallback routing."""
 
-    frontend_dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"
-    index_file = frontend_dist / "index.html"
-    if frontend_dist.exists() and index_file.exists():
-        app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
-    else:
+    settings: Settings = app.state.settings
+    dist = Path(settings.frontend_dist)
+    if not dist.exists():
 
         @app.get("/", include_in_schema=False)
         async def root() -> dict[str, str]:
             """Fallback response when frontend assets are missing."""
             return {"detail": "Frontend build not found"}
+
+        return
+
+    app.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def spa(full_path: str):
+        index = dist / "index.html"
+        if index.exists() and not full_path.startswith("api/"):
+            return FileResponse(index)
+        return JSONResponse({"detail": "Not Found"}, status_code=404)
 
 
 def register_routes(app: FastAPI) -> None:
