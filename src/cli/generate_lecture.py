@@ -13,11 +13,6 @@ import logfire
 
 from agents.streaming import stream_messages
 from config import load_settings
-from core.orchestrator import graph_orchestrator
-from core.state import State
-from observability import install_auto_tracing
-
-install_auto_tracing()
 
 
 def parse_args() -> argparse.Namespace:
@@ -37,6 +32,9 @@ def parse_args() -> argparse.Namespace:
 async def _generate(topic: str) -> Dict[str, Any]:
     """Run the full graph for ``topic`` and return the final state."""
 
+    from core.orchestrator import graph_orchestrator
+    from core.state import State
+
     state = State(prompt=topic)
     await graph_orchestrator.run(state)
     return state.to_dict()
@@ -45,6 +43,9 @@ async def _generate(topic: str) -> Dict[str, Any]:
 def main() -> None:
     """Entry point for console scripts."""
     args = parse_args()
+    from observability import install_auto_tracing
+
+    install_auto_tracing()
     settings = load_settings()
     if settings.enable_tracing:
         logfire.configure(

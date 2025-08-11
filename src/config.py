@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 from dotenv import load_dotenv
 from pydantic import ValidationError, ValidationInfo, field_validator
@@ -152,7 +153,24 @@ def load_settings() -> Settings:
 
 
 # Backwards compatible convenience instance.
-settings = load_settings()
+class _SettingsProxy:
+    """Lazily resolve settings to avoid eager validation.
+
+    Importing modules that access :data:`settings` shouldn't require all
+    environment variables to be present (e.g. ``cli --help``). This proxy
+    defers loading until an attribute is accessed.
+    """
+
+    def __getattr__(self, name: str) -> Any:  # pragma: no cover - simple delegation
+        return getattr(load_settings(), name)
+
+    def __setattr__(
+        self, name: str, value: Any
+    ) -> None:  # pragma: no cover - simple delegation
+        setattr(load_settings(), name, value)
+
+
+settings = _SettingsProxy()
 
 
 __all__ = [
