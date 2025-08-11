@@ -21,6 +21,12 @@ if [ -f .env ]; then
   set +a
 fi
 
+# If help was requested, display it without running migrations
+if [[ "$*" == *"--help"* || "$*" == *"-h"* ]]; then
+  poetry run python -m cli.generate_lecture "$@"
+  exit 0
+fi
+
 # Run database migrations
 poetry run alembic upgrade head
 
