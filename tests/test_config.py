@@ -52,6 +52,27 @@ def test_settings_defaults_allowlist(monkeypatch):
     assert settings.allowlist_domains == ["wikipedia.org", ".edu", ".gov"]
 
 
+def test_settings_parses_cors_origins(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "key1")
+    monkeypatch.setenv("CORS_ORIGINS", '["https://example.com"]')
+    settings = Settings()
+    assert settings.cors_origins == ["https://example.com"]
+
+
+def test_settings_rejects_invalid_cors(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "key1")
+    monkeypatch.setenv("CORS_ORIGINS", "not-json")
+    with pytest.raises(SettingsError):
+        Settings()
+
+
+def test_settings_defaults_cors(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "key1")
+    monkeypatch.delenv("CORS_ORIGINS", raising=False)
+    settings = Settings()
+    assert settings.cors_origins is None
+
+
 def test_model_falls_back_to_default(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "key1")
     monkeypatch.delenv("MODEL", raising=False)

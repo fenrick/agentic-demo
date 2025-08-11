@@ -58,6 +58,7 @@ class Settings(BaseSettings):
     logfire_api_key: str | None = None
     logfire_project: str | None = None
     allowlist_domains: list[str] = ["wikipedia.org", ".edu", ".gov"]
+    cors_origins: list[str] | None = None
     alert_webhook_url: str | None = None
     jwt_secret: str
     jwt_algorithm: str = "HS256"
@@ -97,6 +98,24 @@ class Settings(BaseSettings):
                 isinstance(v, str) for v in parsed
             ):
                 raise SettingsError("ALLOWLIST_DOMAINS must be a JSON list of strings")
+            return parsed
+        return value
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _parse_cors_origins(cls, value: list[str] | str | None) -> list[str] | None:
+        """Parse ``CORS_ORIGINS`` from JSON or return ``None``."""
+        if value in (None, ""):
+            return None
+        if isinstance(value, str):
+            try:
+                parsed = json.loads(value)
+            except json.JSONDecodeError as exc:  # pragma: no cover - invalid input
+                raise SettingsError("CORS_ORIGINS must be valid JSON") from exc
+            if not isinstance(parsed, list) or not all(
+                isinstance(v, str) for v in parsed
+            ):
+                raise SettingsError("CORS_ORIGINS must be a JSON list of strings")
             return parsed
         return value
 

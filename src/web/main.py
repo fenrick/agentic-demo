@@ -10,6 +10,8 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.gzip import GZipMiddleware
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from agents.cache_backed_researcher import CacheBackedResearcher
 from agents.researcher_web import TavilyClient
@@ -18,6 +20,28 @@ from core.orchestrator import graph_orchestrator
 from observability import init_observability, instrument_app
 from persistence.database import get_db_session, init_db
 from web.telemetry import REQUEST_COUNTER
+
+
+class SecurityHeadersMiddleware:
+    """Attach basic security headers to every HTTP response."""
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        async def send_wrapper(message: dict) -> None:
+            if message["type"] == "http.response.start":
+                headers = [
+                    (b"x-content-type-options", b"nosniff"),
+                    (b"referrer-policy", b"no-referrer"),
+                    (b"permissions-policy", b"geolocation=()"),
+                ]
+                message.setdefault("headers", [])
+                message["headers"].extend(headers)
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
+
 
 init_observability()
 
@@ -46,13 +70,16 @@ def create_app() -> FastAPI:
         app.state.research_client = TavilyClient(settings.tavily_api_key or "")
         app.state.fact_check_offline = False
 
+    allowed = settings.cors_origins or ["http://localhost:5173"]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=allowed,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.add_middleware(GZipMiddleware, minimum_size=1024)
+    app.add_middleware(SecurityHeadersMiddleware)
 
     @app.on_event("startup")
     async def _startup() -> None:

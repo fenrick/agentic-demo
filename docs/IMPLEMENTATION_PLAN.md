@@ -64,6 +64,7 @@
   - `OFFLINE_MODE` (default: `false`)
   - `ENABLE_TRACING` (default: `true`)
   - `ALLOWLIST_DOMAINS` (JSON list, default: `["wikipedia.org", ".edu", ".gov"]`)
+  - `CORS_ORIGINS` (JSON list, default: `["http://localhost:5173"]`)
   - `ALERT_WEBHOOK_URL` (optional)
 
 1. **`src/config.py`**
@@ -71,7 +72,7 @@
 - **Class**: `Settings`
   - Subclass of `pydantic_settings.BaseSettings` with typed fields.
   - Automatically loads environment variables (and `.env` if present).
-  - Validators normalize `data_dir` paths and parse `ALLOWLIST_DOMAINS` JSON.
+  - Validators normalize `data_dir` paths and parse `ALLOWLIST_DOMAINS` and `CORS_ORIGINS` JSON.
 - **Function**: `load_env(env_file: Path)`
   - Loads variables from a given file and returns `Settings`.
 - **Function**: `load_settings()`

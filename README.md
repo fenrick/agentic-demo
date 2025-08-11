@@ -327,6 +327,7 @@ been replaced by Logfire's settings.
 | `OFFLINE_MODE`       | Run without external network calls        | `false`                                  |
 | `ENABLE_TRACING`     | Enable Logfire tracing instrumentation    | `true`                                   |
 | `ALLOWLIST_DOMAINS`  | JSON list of citation-allowed domains     | `["wikipedia.org", ".edu", ".gov"]`      |
+| `CORS_ORIGINS`       | JSON list of allowed CORS origins         | `["http://localhost:5173"]`                |
 | `ALERT_WEBHOOK_URL`  | Optional webhook for alert notifications  |                                          |
 | `JWT_SECRET`         | HMAC secret for signing JWTs              | (required)                               |
 | `JWT_ALGORITHM`      | JWT signing algorithm                     | `HS256`                                  |
