@@ -19,8 +19,8 @@ class Settings(BaseSettings):
     """Configuration sourced from environment variables."""
 
     model_config = SettingsConfigDict(
-        env_file=".env", env_prefix="", case_sensitive=False
-    )
+        env_file=".env", env_prefix="", case_sensitive=False, extra="ignore"
+    )  # ignore unknown env vars for forward compatibility
 
     OPENAI_API_KEY: SecretStr = Field(..., description="API key for OpenAI access")
     DATA_DIR: Path = Field(
