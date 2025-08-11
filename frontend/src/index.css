@@ -1,3 +1,4 @@
+@import "@primer/primitives/dist/css/base.css";
 @import "@primer/css/dist/primer.css";
 
 :root {

@@ -25,7 +25,7 @@ it("shows error toast on run failure", async () => {
     run: ReturnType<typeof vi.fn>;
   };
   render(<ControlsPanel workspaceId="1" />);
-  fireEvent.click(screen.getByText("Run"));
+  fireEvent.click(screen.getByRole("button", { name: "Run" }));
   await waitFor(() => expect(client.run).toHaveBeenCalledWith("1", "topic"));
   await waitFor(() =>
     expect(infoSpy).toHaveBeenCalledWith(
@@ -43,5 +43,5 @@ it("shows error toast on run failure", async () => {
 it("disables run button with no topics", () => {
   useWorkspaceStore.setState({ topics: [], status: "idle" });
   render(<ControlsPanel workspaceId="1" />);
-  expect(screen.getByText("Run")).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Run" })).toBeDisabled();
 });

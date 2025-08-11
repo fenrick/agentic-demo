@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { SunIcon, MoonIcon, DeviceDesktopIcon } from "@primer/octicons-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@primer/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,15 +54,11 @@ const ThemeToggle: React.FC = () => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
-          size="icon"
+          variant="invisible"
+          size="small"
           aria-pressed={resolved === "dark"}
         >
-          {resolved === "dark" ? (
-            <SunIcon className="h-4 w-4" />
-          ) : (
-            <MoonIcon className="h-4 w-4" />
-          )}
+          {resolved === "dark" ? <SunIcon size={16} /> : <MoonIcon size={16} />}
           <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>

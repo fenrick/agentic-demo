@@ -1,5 +1,6 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
+import { ThemeProvider, BaseStyles } from "@primer/react";
 import App from "./App";
 import "./index.css";
 import "github-markdown-css";
@@ -28,5 +29,11 @@ if (import.meta.env.DEV && !localStorage.getItem("jwt")) {
 const container = document.getElementById("root");
 if (container) {
   const root = createRoot(container);
-  root.render(<App />);
+  root.render(
+    <ThemeProvider>
+      <BaseStyles>
+        <App />
+      </BaseStyles>
+    </ThemeProvider>,
+  );
 }

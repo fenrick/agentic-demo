@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "@primer/react";
 import { toast } from "sonner";
 import controlClient from "../api/controlClient";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
@@ -37,21 +38,18 @@ const ControlsPanel: React.FC<Props> = ({ workspaceId }) => {
 
   return (
     <div className="d-flex flex-wrap flex-items-center">
-      <button
+      <Button
         onClick={onRunClick}
-        className="btn btn-primary mr-3"
+        className="mr-3"
         aria-busy={status === "running"}
         disabled={runDisabled}
+        variant="primary"
       >
         {status === "running" ? "Running…" : "Run"}
-      </button>
-      <button
-        onClick={onRetryClick}
-        disabled={status === "running"}
-        className="btn"
-      >
+      </Button>
+      <Button onClick={onRetryClick} disabled={status === "running"}>
         Retry
-      </button>
+      </Button>
     </div>
   );
 };
