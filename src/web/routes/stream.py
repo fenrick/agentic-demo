@@ -23,6 +23,12 @@ from web.sse import (  # type: ignore[import-not-found]
 
 router = APIRouter()
 
+SSE_HEADERS: Dict[str, str] = {
+    "Cache-Control": "no-store",
+    "X-Accel-Buffering": "no",
+    "Connection": "keep-alive",
+}
+
 
 def verify_stream_token(request: Request) -> Dict[str, Any]:
     """Validate the short-lived JWT passed as a query parameter."""
@@ -73,7 +79,7 @@ async def issue_stream_token(
 async def stream_messages(request: Request) -> EventSourceResponse:
     """Stream token diff messages."""
 
-    return EventSourceResponse(stream_events("messages", request))
+    return EventSourceResponse(stream_events("messages", request), headers=SSE_HEADERS)
 
 
 @router.get(
@@ -82,7 +88,7 @@ async def stream_messages(request: Request) -> EventSourceResponse:
 async def stream_updates(request: Request) -> EventSourceResponse:
     """Stream citation and progress updates."""
 
-    return EventSourceResponse(stream_events("updates", request))
+    return EventSourceResponse(stream_events("updates", request), headers=SSE_HEADERS)
 
 
 @router.get(
@@ -91,7 +97,7 @@ async def stream_updates(request: Request) -> EventSourceResponse:
 async def stream_values(request: Request) -> EventSourceResponse:
     """Stream structured state values."""
 
-    return EventSourceResponse(stream_events("values", request))
+    return EventSourceResponse(stream_events("values", request), headers=SSE_HEADERS)
 
 
 @router.get(
@@ -100,7 +106,7 @@ async def stream_values(request: Request) -> EventSourceResponse:
 async def stream_debug(request: Request) -> EventSourceResponse:
     """Stream debug and diagnostic messages."""
 
-    return EventSourceResponse(stream_events("debug", request))
+    return EventSourceResponse(stream_events("debug", request), headers=SSE_HEADERS)
 
 
 def _workspace_event_response(
@@ -109,7 +115,8 @@ def _workspace_event_response(
     """Return an SSE response for workspace ``event_type`` events."""
 
     return EventSourceResponse(
-        stream_workspace_events(workspace_id, event_type, request)
+        stream_workspace_events(workspace_id, event_type, request),
+        headers=SSE_HEADERS,
     )
 
 

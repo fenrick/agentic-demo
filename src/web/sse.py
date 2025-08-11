@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncGenerator
 from datetime import datetime, timezone
 from typing import Any
@@ -28,6 +29,9 @@ async def stream_events(
                 timestamp=datetime.now(timezone.utc),
             )
             yield {"event": channel, "data": event.model_dump_json()}
+    except asyncio.CancelledError:
+        # Client disconnected; exit quietly
+        pass
     finally:
         SSE_CLIENTS.add(-1)
 
@@ -48,6 +52,9 @@ async def stream_workspace_events(
                 timestamp=datetime.now(timezone.utc),
             )
             yield {"event": event_type, "data": event.model_dump_json()}
+    except asyncio.CancelledError:
+        # Client disconnected; exit quietly
+        pass
     finally:
         SSE_CLIENTS.add(-1)
 
