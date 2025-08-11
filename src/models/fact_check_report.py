@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import field
-from typing import List, Union
+from dataclasses import asdict, field
+from typing import Any, Dict, List, Union
 
 from pydantic.dataclasses import dataclass
 
@@ -39,6 +39,10 @@ class FactCheckReport:
         """Combined list of detected factual issues."""
 
         return [*self.hallucinations, *self.unsupported_claims]
+
+    def model_dump(self) -> Dict[str, Any]:
+        """Return a serializable representation of the report."""
+        return asdict(self)  # type: ignore[arg-type, call-overload]
 
 
 __all__ = [
