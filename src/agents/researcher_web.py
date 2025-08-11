@@ -134,12 +134,30 @@ async def _cached_search_async(
     return results
 
 
-def cached_search(
+async def cached_search(
     query: str, client: SearchClient, dense: Optional[DenseRetriever] = None
 ) -> List[RawSearchResult]:
-    """Synchronous wrapper around :func:`_cached_search_async`."""
+    """Return cached search results for ``query`` using ``client``."""
 
-    return asyncio.run(_cached_search_async(query, client, dense))
+    return await _cached_search_async(query, client, dense)
+
+
+def cached_search_sync(
+    query: str, client: SearchClient, dense: Optional[DenseRetriever] = None
+) -> List[RawSearchResult]:
+    """Synchronous wrapper around :func:`cached_search`.
+
+    Raises ``RuntimeError`` if called when an event loop is already running.
+    """
+
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(cached_search(query, client, dense))
+    raise RuntimeError(
+        "cached_search_sync cannot be used when an event loop is running; use 'await"
+        " cached_search'"
+    )
 
 
 def score_domain_authority(domain: str) -> float:
