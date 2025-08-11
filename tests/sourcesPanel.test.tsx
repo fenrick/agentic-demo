@@ -15,7 +15,13 @@ describe("SourcesPanel", () => {
     expect(screen.getByText("https://example.com")).toBeInTheDocument();
   });
 
-  it("ignores invalid source URLs", () => {
+  it("displays host for valid URLs", () => {
+    const sources = ["https://example.com/path"];
+    render(<SourcesPanel sources={sources} />);
+    expect(screen.getByText(/— example\.com/)).toBeInTheDocument();
+  });
+
+  it("omits host for invalid URLs", () => { 
     const sources = ["not a url"];
     render(<SourcesPanel sources={sources} />);
     expect(screen.getByText("not a url")).toBeInTheDocument();

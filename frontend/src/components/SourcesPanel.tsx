@@ -24,7 +24,6 @@ const SourcesPanel: React.FC<Props> = ({ sources }) => {
       {sources.map((s, idx) => {
         const url = typeof s === "string" ? s : s.url;
         const title = typeof s === "string" ? s : (s.title ?? s.url);
-        // Parse the hostname safely in case an invalid URL is provided.
         let host = "";
         try {
           host = url ? new URL(url).host : "";
