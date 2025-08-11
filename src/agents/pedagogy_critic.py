@@ -98,12 +98,8 @@ def classify_bloom_level(text: str) -> str:
         else:
             provider = OpenAIProvider()
         model = OpenAIModel(settings.model_name, provider=provider)
-        agent = Agent(
-            model=model,
-            result_type=BloomResult,
-            instructions=instructions,
-        )  # type: ignore[call-overload]
-        result = agent.run_sync(text)
+        agent = Agent(model=model, instructions=instructions)
+        result = agent.run_sync(text, result_type=BloomResult)
         level = result.data.level.strip().lower()
         if level in BLOOM_LEVELS:
             return level
