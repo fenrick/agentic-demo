@@ -9,10 +9,7 @@ import json
 import logging
 from typing import Any, Dict
 
-import logfire
-
 from agents.streaming import stream_messages
-from config import load_settings
 
 
 def parse_args() -> argparse.Namespace:
@@ -43,15 +40,10 @@ async def _generate(topic: str) -> Dict[str, Any]:
 def main() -> None:
     """Entry point for console scripts."""
     args = parse_args()
-    from observability import install_auto_tracing
+    from observability import init_observability, install_auto_tracing
 
     install_auto_tracing()
-    settings = load_settings()
-    if settings.enable_tracing:
-        logfire.configure(
-            token=settings.logfire_api_key,
-            service_name=settings.logfire_project,
-        )
+    init_observability()
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
         stream_messages("LLM response stream start")
