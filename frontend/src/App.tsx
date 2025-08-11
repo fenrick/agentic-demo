@@ -9,6 +9,7 @@ import ThemeToggle from "./components/ThemeToggle";
 import CommandPalette from "./components/CommandPalette";
 import { useWorkspaceStore } from "./store/useWorkspaceStore";
 import { Toaster } from "./components/ui/sonner";
+import { PageLayout } from "@primer/react";
 
 // Top-level layout component that connects to the workspace stream
 // and renders the various panels bound to the global workspace store.
@@ -28,23 +29,31 @@ const App: React.FC = () => {
     <>
       <CommandPalette />
       <Toaster />
-      <header className="position-sticky top-0 border-bottom color-border-muted">
-        <div className="mx-auto d-flex flex-items-center flex-justify-between p-3">
+      <PageLayout>
+        <PageLayout.Header
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            p: 3,
+            position: "sticky",
+            top: 0,
+            borderBottom: "1px solid",
+            borderColor: "border.default",
+          }}
+        >
           <h1 className="h4 m-0">Lecture Builder</h1>
           <ThemeToggle />
-        </div>
-      </header>
-
-      <main className="mx-auto p-3 d-flex flex-column flex-lg-row">
-        <section className="flex-1 d-flex flex-column">
+        </PageLayout.Header>
+        <PageLayout.Content sx={{ p: 3 }}>
           <div className="card mb-3">
             <DataEntryForm />
           </div>
           <div className="card">
             <DocumentPanel text={document} onAcceptDiff={() => {}} />
           </div>
-        </section>
-        <aside className="flex-1 d-flex flex-column ml-lg-3">
+        </PageLayout.Content>
+        <PageLayout.Pane position="end" sx={{ p: 3 }}>
           <div className="card mb-3">
             <ControlsPanel workspaceId={workspaceId!} />
           </div>
@@ -59,8 +68,8 @@ const App: React.FC = () => {
               <DownloadsPanel workspaceId={workspaceId} />
             </div>
           )}
-        </aside>
-      </main>
+        </PageLayout.Pane>
+      </PageLayout>
     </>
   );
 };

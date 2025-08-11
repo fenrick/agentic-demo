@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Button, TextInput } from "@primer/react";
 import { apiFetch } from "../api/http";
-import { Textarea } from "@/components/ui/textarea";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
 
 interface Entry {
@@ -14,7 +14,6 @@ interface Entry {
 const DataEntryForm: React.FC = () => {
   const [topic, setTopic] = useState("");
   const [entries, setEntries] = useState<Entry[]>([]);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const setTopics = useWorkspaceStore((s) => s.setTopics);
   const addTopic = useWorkspaceStore((s) => s.addTopic);
 
@@ -46,22 +45,9 @@ const DataEntryForm: React.FC = () => {
         setEntries((prev) => [...prev, entry]);
         addTopic(entry.topic);
         setTopic("");
-        const el = textareaRef.current;
-        if (el) {
-          el.style.height = "auto";
-        }
       }
     } catch {
       // ignore network errors
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setTopic(e.target.value);
-    const el = textareaRef.current;
-    if (el) {
-      el.style.height = "auto";
-      el.style.height = `${el.scrollHeight}px`;
     }
   };
 
@@ -71,18 +57,14 @@ const DataEntryForm: React.FC = () => {
         onSubmit={onSubmit}
         className="mb-4 d-flex flex-column flex-items-center"
       >
-        <Textarea
-          ref={textareaRef}
+        <TextInput
           value={topic}
-          onChange={handleChange}
-          className="mb-2 width-full"
-          style={{ resize: "none", overflow: "hidden", maxWidth: "28rem" }}
+          onChange={(e) => setTopic(e.target.value)}
           placeholder="Enter topic"
-          rows={1}
+          block
+          sx={{ mb: 2, maxWidth: "28rem" }}
         />
-        <button type="submit" className="btn">
-          Add
-        </button>
+        <Button type="submit">Add</Button>
       </form>
       {entries.length > 0 && (
         <table>

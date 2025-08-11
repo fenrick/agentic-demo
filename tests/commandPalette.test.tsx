@@ -5,6 +5,16 @@ import CommandPalette from "../frontend/src/components/CommandPalette";
 import { useWorkspaceStore } from "../frontend/src/store/useWorkspaceStore";
 import controlClient from "../frontend/src/api/controlClient";
 
+beforeAll(() => {
+  // Polyfill ResizeObserver used by Primer components
+  // @ts-ignore
+  global.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+});
+
 vi.mock("../frontend/src/api/controlClient", () => ({
   default: { run: vi.fn(), retry: vi.fn() },
 }));
@@ -39,7 +49,7 @@ describe("CommandPalette", () => {
     await act(async () => {
       fireEvent.keyDown(window, { key: "k", metaKey: true });
     });
-    const runButton = await screen.findByText("Run");
+    const runButton = await screen.findByRole("button", { name: "Run" });
     expect(runButton).toHaveFocus();
     await act(async () => {
       fireEvent.click(runButton);
@@ -60,12 +70,12 @@ describe("CommandPalette", () => {
     await act(async () => {
       fireEvent.keyDown(window, { key: "k", metaKey: true });
     });
-    const runButton = await screen.findByText("Run");
+    const runButton = await screen.findByRole("button", { name: "Run" });
     expect(runButton).toBeInTheDocument();
     await act(async () => {
       fireEvent.keyDown(runButton, { key: "Escape" });
     });
-    expect(screen.queryByText("Run")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Run" })).toBeNull();
     expect(trigger).toHaveFocus();
   });
 });
