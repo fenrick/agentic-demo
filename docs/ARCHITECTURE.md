@@ -9,7 +9,7 @@ This document provides a **comprehensive** and **explicit** description of the L
 ```plaintext
 ┌──────────────────┐        ┌─────────────────────────┐        ┌─────────────────┐
 │  User Browser    │  SSE   │       FastAPI Server     │  OpenAI API │ Citation Cache  │
-│ (React + Tailwind)│◀──────▶│ (Graph Orchestrator)     │◀──────────▶│ (SQLite or PG)   │
+│ (React + Primer) │◀──────▶│ (Graph Orchestrator)     │◀──────────▶│ (SQLite or PG)   │
 └──────────────────┘        └─────────────────────────┘        └─────────────────┘
          │                             │                                    │
          │ HTTP Websocket / REST       │ HTTP / gRPC                        │ HTTP

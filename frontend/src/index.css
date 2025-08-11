@@ -1,96 +1,46 @@
-@import "tailwindcss";
+@import "@primer/css/dist/primer.css";
 
-@config "../../tailwind.config.js";
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  @media (prefers-reduced-motion: no-preference) {
-    html,
-    body,
-    [data-theme] {
-      transition:
-        background-color 0.2s,
-        color 0.2s,
-        border-color 0.2s;
-    }
-  }
-
-  :root {
-    color-scheme: light;
-
-    --background: 0 0% 100%;
-    --foreground: 213 13% 16%;
-    --card: 0 0% 100%;
-    --card-foreground: 213 13% 16%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 213 13% 16%;
-    --primary: 212 92% 45%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 29% 97%;
-    --secondary-foreground: 213 13% 16%;
-    --muted: 210 29% 97%;
-    --muted-foreground: 212 10% 38%;
-    --accent: 212 92% 45%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 356 72% 47%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 210 18% 84%;
-    --input: 210 18% 84%;
-    --ring: 212 92% 45%;
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    color-scheme: dark;
-
-    --background: 216 28% 7%;
-    --foreground: 210 17% 82%;
-    --card: 216 28% 7%;
-    --card-foreground: 210 17% 82%;
-    --popover: 216 28% 7%;
-    --popover-foreground: 210 17% 82%;
-    --primary: 212 100% 67%;
-    --primary-foreground: 216 28% 7%;
-    --secondary: 215 21% 11%;
-    --secondary-foreground: 210 17% 82%;
-    --muted: 215 21% 11%;
-    --muted-foreground: 212 9% 58%;
-    --accent: 212 100% 67%;
-    --accent-foreground: 216 28% 7%;
-    --destructive: 3 93% 63%;
-    --destructive-foreground: 216 28% 7%;
-    --border: 212 12% 21%;
-    --input: 215 15% 15%;
-    --ring: 212 100% 67%;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply font-serif;
-  }
-
-  a,
-  button,
-  input,
-  textarea,
-  select {
-    @apply ring-offset-background focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none;
+@media (prefers-reduced-motion: no-preference) {
+  html,
+  body,
+  [data-theme] {
+    transition:
+      background-color 0.2s,
+      color 0.2s,
+      border-color 0.2s;
   }
 }
 
-@layer components {
-  .card {
-    @apply rounded-2xl border border-black/5 bg-white/70 p-6 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-white/10 dark:bg-gray-900/60;
-  }
+.card {
+  background-color: var(--color-canvas-default);
+  border: var(--borderWidth-thin) solid var(--borderColor-default);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
 
-  .btn {
-    @apply inline-flex items-center gap-2 rounded-lg border border-black/10 px-4 py-2 text-sm font-medium shadow-sm transition hover:bg-black/5 focus-visible:ring-2 focus-visible:ring-black/40 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/15 dark:hover:bg-white/10 dark:focus-visible:ring-white/30;
-  }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: var(--borderWidth-thin) solid var(--borderColor-muted);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: var(--color-canvas-default);
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.btn:hover {
+  background-color: var(--color-neutral-muted);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-accent-emphasis);
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }

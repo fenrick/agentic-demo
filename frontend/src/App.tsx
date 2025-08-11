@@ -28,32 +28,30 @@ const App: React.FC = () => {
     <>
       <CommandPalette />
       <Toaster />
-      <header className="sticky top-0 z-30 border-b border-black/5 backdrop-blur supports-[backdrop-filter]:bg-white/70 dark:border-white/10 dark:supports-[backdrop-filter]:bg-gray-950/70">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <h1 className="text-base font-semibold tracking-tight">
-            Lecture Builder
-          </h1>
+      <header className="position-sticky top-0 border-bottom color-border-muted">
+        <div className="mx-auto d-flex flex-items-center flex-justify-between p-3">
+          <h1 className="h4 m-0">Lecture Builder</h1>
           <ThemeToggle />
         </div>
       </header>
 
-      <main className="mx-auto grid max-w-6xl gap-4 p-4 md:grid-cols-3">
-        <section className="space-y-4 md:col-span-2">
-          <div className="card">
+      <main className="mx-auto p-3 d-flex flex-column flex-lg-row">
+        <section className="flex-1 d-flex flex-column">
+          <div className="card mb-3">
             <DataEntryForm />
           </div>
           <div className="card">
             <DocumentPanel text={document} onAcceptDiff={() => {}} />
           </div>
         </section>
-        <aside className="space-y-4">
-          <div className="card">
+        <aside className="flex-1 d-flex flex-column ml-lg-3">
+          <div className="card mb-3">
             <ControlsPanel workspaceId={workspaceId!} />
           </div>
-          <div className="card">
+          <div className="card mb-3">
             <LogPanel logs={logs} />
           </div>
-          <div className="card">
+          <div className="card mb-3">
             <SourcesPanel sources={sources} />
           </div>
           {workspaceId && exportStatus === "ready" && (

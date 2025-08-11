@@ -31,7 +31,7 @@ const DataEntryForm: React.FC = () => {
         // ignore network errors
       }
     })();
-  }, []);
+  }, [setTopics]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,13 +69,14 @@ const DataEntryForm: React.FC = () => {
     <div className="my-4">
       <form
         onSubmit={onSubmit}
-        className="mb-4 flex flex-col items-center gap-2"
+        className="mb-4 d-flex flex-column flex-items-center"
       >
         <Textarea
           ref={textareaRef}
           value={topic}
           onChange={handleChange}
-          className="w-full max-w-md resize-none overflow-hidden rounded border border-gray-300 p-2"
+          className="mb-2 width-full"
+          style={{ resize: "none", overflow: "hidden", maxWidth: "28rem" }}
           placeholder="Enter topic"
           rows={1}
         />
@@ -84,18 +85,16 @@ const DataEntryForm: React.FC = () => {
         </button>
       </form>
       {entries.length > 0 && (
-        <table className="w-full border-collapse">
+        <table className="width-full border-collapse">
           <thead>
             <tr>
-              <th className="border border-gray-300 bg-gray-100 p-2 text-left">
-                Topic
-              </th>
+              <th className="border color-bg-subtle p-2 text-left">Topic</th>
             </tr>
           </thead>
           <tbody>
             {entries.map((e) => (
               <tr key={e.id}>
-                <td className="border border-gray-300 p-2">{e.topic}</td>
+                <td className="border p-2">{e.topic}</td>
               </tr>
             ))}
           </tbody>

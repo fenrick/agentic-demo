@@ -36,10 +36,10 @@ const ControlsPanel: React.FC<Props> = ({ workspaceId }) => {
   const runDisabled = status === "running" || topics.length === 0;
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="d-flex flex-wrap flex-items-center">
       <button
         onClick={onRunClick}
-        className="btn disabled:opacity-50"
+        className="btn mr-3"
         aria-busy={status === "running"}
         disabled={runDisabled}
       >
@@ -48,7 +48,7 @@ const ControlsPanel: React.FC<Props> = ({ workspaceId }) => {
       <button
         onClick={onRetryClick}
         disabled={status === "running"}
-        className="btn disabled:opacity-50"
+        className="btn"
       >
         Retry
       </button>

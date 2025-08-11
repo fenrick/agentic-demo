@@ -1,3 +1,7 @@
 module.exports = {
-  extends: ["stylelint-config-standard", "stylelint-config-tailwindcss"],
+  extends: ["stylelint-config-standard"],
+  rules: {
+    "custom-property-pattern": null,
+    "import-notation": "string",
+  },
 };
