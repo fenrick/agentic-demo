@@ -1,5 +1,21 @@
 @import "@primer/css/dist/primer.css";
 
+:root {
+  --space-1: var(--base-size-4); /* 4px */
+  --space-2: var(--base-size-8); /* 8px */
+  --space-3: var(--base-size-12); /* 12px */
+  --space-4: var(--base-size-16); /* 16px */
+}
+
+.stack > * + * {
+  margin-top: var(--space-3);
+}
+
+.grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
 body {
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif,
@@ -22,4 +38,37 @@ body {
   border: var(--borderWidth-thin) solid var(--borderColor-default);
   border-radius: 12px;
   padding: 1.5rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 8px 12px;
+  border-top: var(--borderWidth-thin) solid var(--borderColor-muted);
+}
+
+thead th {
+  background: var(--color-canvas-subtle);
+  text-align: left;
+}
+
+.skeleton {
+  background: var(--color-neutral-muted);
+  border-radius: 6px;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }

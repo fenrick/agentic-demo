@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Moon, Sun, Monitor } from "lucide-react";
+import { SunIcon, MoonIcon, DeviceDesktopIcon } from "@primer/octicons-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -59,9 +59,9 @@ const ThemeToggle: React.FC = () => {
           aria-pressed={resolved === "dark"}
         >
           {resolved === "dark" ? (
-            <Sun className="h-4 w-4" />
+            <SunIcon className="h-4 w-4" />
           ) : (
-            <Moon className="h-4 w-4" />
+            <MoonIcon className="h-4 w-4" />
           )}
           <span className="sr-only">Toggle theme</span>
         </Button>
@@ -77,19 +77,19 @@ const ThemeToggle: React.FC = () => {
             value="light"
             className="flex items-center gap-2"
           >
-            <Sun className="h-4 w-4" /> Light
+            <SunIcon className="h-4 w-4" /> Light
           </DropdownMenuRadioItem>
           <DropdownMenuRadioItem
             value="dark"
             className="flex items-center gap-2"
           >
-            <Moon className="h-4 w-4" /> Dark
+            <MoonIcon className="h-4 w-4" /> Dark
           </DropdownMenuRadioItem>
           <DropdownMenuRadioItem
             value="system"
             className="flex items-center gap-2"
           >
-            <Monitor className="h-4 w-4" /> System
+            <DeviceDesktopIcon className="h-4 w-4" /> System
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
       </DropdownMenuContent>

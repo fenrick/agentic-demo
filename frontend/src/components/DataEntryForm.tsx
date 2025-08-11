@@ -85,16 +85,16 @@ const DataEntryForm: React.FC = () => {
         </button>
       </form>
       {entries.length > 0 && (
-        <table className="width-full border-collapse">
+        <table>
           <thead>
             <tr>
-              <th className="border color-bg-subtle p-2 text-left">Topic</th>
+              <th>Topic</th>
             </tr>
           </thead>
           <tbody>
             {entries.map((e) => (
               <tr key={e.id}>
-                <td className="border p-2">{e.topic}</td>
+                <td>{e.topic}</td>
               </tr>
             ))}
           </tbody>
