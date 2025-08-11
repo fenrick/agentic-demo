@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from collections import Counter
 from dataclasses import dataclass
-from typing import Callable, Dict, List
+from typing import Awaitable, Callable, Dict, List
 
 from pydantic import BaseModel, ValidationError
 
@@ -76,7 +76,7 @@ def _keyword_classify(text: str) -> str:
     return "unknown"
 
 
-def classify_bloom_level(text: str) -> str:
+async def classify_bloom_level(text: str) -> str:
     """Use an LLM to infer the Bloom level for ``text``.
 
     Falls back to simple keyword matching if the LLM is unavailable or
@@ -97,7 +97,7 @@ def classify_bloom_level(text: str) -> str:
             output_type=BloomResult,  # return structured BloomResult from LLM
             instructions=instructions,
         )
-        result = agent.run_sync(text)
+        result = await agent.run(text)
         level = result.output.level.strip().lower()
         if level in BLOOM_LEVELS:
             return level
@@ -109,20 +109,20 @@ def classify_bloom_level(text: str) -> str:
     return _keyword_classify(text)
 
 
-def analyze_bloom_coverage(
-    outline: Outline, classifier: Callable[[str], str] | None = None
+async def analyze_bloom_coverage(
+    outline: Outline, classifier: Callable[[str], Awaitable[str]] | None = None
 ) -> BloomCoverageReport:
     """Assess breadth of Bloom taxonomy coverage for an outline."""
 
     classify = classifier or classify_bloom_level
     counts: Dict[str, int] = {level: 0 for level in BLOOM_LEVELS}
     for objective in outline.learning_objectives:
-        level = classify(objective)
+        level = await classify(objective)
         if level in counts:
             counts[level] += 1
     for act in outline.activities:
         for obj in act.learning_objectives:
-            level = classify(obj)
+            level = await classify(obj)
             if level in counts:
                 counts[level] += 1
     covered = {lvl for lvl, cnt in counts.items() if cnt > 0}
@@ -174,7 +174,7 @@ async def run_pedagogy_critic(state: State) -> CritiqueReport:
         obj for module in state.modules for obj in module.learning_objectives
     ]
     outline = Outline(learning_objectives=objectives, activities=activities)
-    bloom = analyze_bloom_coverage(outline)
+    bloom = await analyze_bloom_coverage(outline)
     diversity = evaluate_activity_diversity(outline)
     cognitive = assess_cognitive_load(outline)
     recommendations: List[str] = []

@@ -23,9 +23,10 @@ async def test_run_pedagogy_critic_uses_module_activities(
 ) -> None:
     """Pedagogy critic aggregates activities from state modules."""
 
-    monkeypatch.setattr(
-        "agents.pedagogy_critic.classify_bloom_level", lambda _text: "remember"
-    )
+    async def _fake_classify(_text: str) -> str:
+        return "remember"
+
+    monkeypatch.setattr("agents.pedagogy_critic.classify_bloom_level", _fake_classify)
 
     state = State(prompt="topic")
     state.learning_objectives = ["List facts"]
