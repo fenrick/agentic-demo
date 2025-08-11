@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import {ActionMenu, ActionList, Button} from '@primer/react'
-import {SunIcon, MoonIcon, DeviceDesktopIcon} from '@primer/octicons-react'
+import { ActionMenu, ActionList, Button } from "@primer/react";
+import { SunIcon, MoonIcon, DeviceDesktopIcon } from "@primer/octicons-react";
 
 /**
  * Allows the user to switch between light and dark themes.
@@ -16,8 +16,6 @@ const ThemeToggle: React.FC = () => {
     return saved || "system";
   });
   const mql = window.matchMedia("(prefers-color-scheme: dark)");
-  const resolved =
-    theme === "system" ? (mql.matches ? "dark" : "light") : theme;
 
   useEffect(() => {
     const apply = (mode: "light" | "dark" | "system") => {
@@ -42,26 +40,33 @@ const ThemeToggle: React.FC = () => {
   }, [mql, theme]);
 
   return (
-<ActionMenu>
-  <ActionMenu.Anchor>
-    <Button>
-      Theme
-    </Button>
-  </ActionMenu.Anchor>
-  <ActionMenu.Overlay>
-    <ActionList selectionVariant="single">
-      <ActionList.Item onSelect={()=>setTheme('light')} selected={theme==='light'}>
-        <SunIcon /> Light
-      </ActionList.Item>
-      <ActionList.Item onSelect={()=>setTheme('dark')} selected={theme==='dark'}>
-        <MoonIcon /> Dark
-      </ActionList.Item>
-      <ActionList.Item onSelect={()=>setTheme('system')} selected={theme==='system'}>
-        <DeviceDesktopIcon /> System
-      </ActionList.Item>
-    </ActionList>
-  </ActionMenu.Overlay>
-</ActionMenu>
+    <ActionMenu>
+      <ActionMenu.Anchor>
+        <Button>Theme</Button>
+      </ActionMenu.Anchor>
+      <ActionMenu.Overlay>
+        <ActionList selectionVariant="single">
+          <ActionList.Item
+            onSelect={() => setTheme("light")}
+            selected={theme === "light"}
+          >
+            <SunIcon /> Light
+          </ActionList.Item>
+          <ActionList.Item
+            onSelect={() => setTheme("dark")}
+            selected={theme === "dark"}
+          >
+            <MoonIcon /> Dark
+          </ActionList.Item>
+          <ActionList.Item
+            onSelect={() => setTheme("system")}
+            selected={theme === "system"}
+          >
+            <DeviceDesktopIcon /> System
+          </ActionList.Item>
+        </ActionList>
+      </ActionMenu.Overlay>
+    </ActionMenu>
   );
 };
 

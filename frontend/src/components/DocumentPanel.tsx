@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import { computeDiff, type DiffPatch } from "../utils/diffUtils";
+import { Skeleton } from "./ui/skeleton";
 
 interface Props {
   /** Current markdown text to display. */
@@ -28,7 +29,7 @@ const DocumentPanel: React.FC<Props> = ({ text, onAcceptDiff }) => {
         .map((d) => {
           const token = escapeHtml(d.token);
           return d.type === "insert"
-            ? `<mark class=\"bg-yellow-200\">${token}</mark>`
+            ? `<mark class=\"color-bg-attention\">${token}</mark>`
             : token;
         })
         .join("");
@@ -40,13 +41,10 @@ const DocumentPanel: React.FC<Props> = ({ text, onAcceptDiff }) => {
 
   if (text.length === 0) {
     return (
-      <div
-        data-testid="document-skeleton"
-        className="max-w-none animate-pulse stack"
-      >
-        <div className="h-4 rounded bg-gray-300" />
-        <div className="h-4 rounded bg-gray-300" />
-        <div className="h-4 w-2/3 rounded bg-gray-300" />
+      <div data-testid="document-skeleton" className="stack">
+        <Skeleton style={{ height: "1rem", width: "100%" }} />
+        <Skeleton style={{ height: "1rem", width: "100%" }} />
+        <Skeleton style={{ height: "1rem", width: "66%" }} />
       </div>
     );
   }

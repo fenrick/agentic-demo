@@ -19,7 +19,7 @@ describe("DocumentPanel", () => {
     expect(marks).toHaveLength(2);
     marks.forEach((m) => {
       expect(m.tagName).toBe("MARK");
-      expect(m).toHaveClass("bg-yellow-200");
+      expect(m).toHaveClass("color-bg-attention");
     });
   });
 
