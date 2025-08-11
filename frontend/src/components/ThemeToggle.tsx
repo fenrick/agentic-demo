@@ -29,27 +29,26 @@ const ThemeToggle: React.FC = () => {
     theme === "system" ? (mql.matches ? "dark" : "light") : theme;
 
   useEffect(() => {
-    const apply = (t: "light" | "dark") => {
-      document.documentElement.classList.toggle("dark", t === "dark");
-      localStorage.setItem("theme", theme);
-      document.dispatchEvent(new CustomEvent("theme-change", { detail: t }));
+    const apply = (mode: "light" | "dark" | "system") => {
+      const root = document.documentElement;
+      root.setAttribute("data-color-mode", mode === "system" ? "auto" : mode);
+      root.setAttribute("data-light-theme", "light");
+      root.setAttribute("data-dark-theme", "dark_dimmed");
+      localStorage.setItem("theme", mode);
+      const res = mode === "system" ? (mql.matches ? "dark" : "light") : mode;
+      document.dispatchEvent(new CustomEvent("theme-change", { detail: res }));
       // keep meta theme-color in sync (see next point)
       const meta = document.querySelector('meta[name="theme-color"]');
       if (meta)
-        meta.setAttribute("content", t === "dark" ? "#0d1117" : "#ffffff");
+        meta.setAttribute("content", res === "dark" ? "#0d1117" : "#ffffff");
     };
-    apply(resolved);
+    apply(theme);
     if (theme === "system") {
-      const handler = () =>
-        apply(
-          window.matchMedia("(prefers-color-scheme: dark)").matches
-            ? "dark"
-            : "light",
-        );
+      const handler = () => apply("system");
       mql.addEventListener("change", handler);
       return () => mql.removeEventListener("change", handler);
     }
-  }, [mql, resolved, theme]);
+  }, [mql, theme]);
 
   return (
     <DropdownMenu>
