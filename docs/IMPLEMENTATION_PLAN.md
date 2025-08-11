@@ -949,8 +949,8 @@ def from_schema(weave: WeaveResult) -> str:
   - Initialize the custom orchestrator and checkpointing module.
   - Store orchestrator instance on `app.state.orchestrator` for endpoint handlers.
 
-- **`mount_frontend(app)`**
-  - Serve the React build directory (`/frontend/dist`) at the root path.
+- **`mount_frontend(app, settings)`**
+  - Serve the React build directory (`/frontend/dist`) at the root path using the provided settings instance.
 
 - **`register_routes(app)`**
   - Include routers from:

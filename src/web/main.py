@@ -77,7 +77,7 @@ def create_app() -> FastAPI:
     )
 
     register_routes(app)
-    mount_frontend(app)
+    mount_frontend(app, app_settings.settings)
     return app
 
 
@@ -101,10 +101,19 @@ def setup_graph(app: FastAPI) -> None:
     app.state.graph = graph_orchestrator
 
 
-def mount_frontend(app: FastAPI) -> None:
-    """Serve built frontend assets and provide history-fallback routing."""
+def mount_frontend(app: FastAPI, settings: Settings | None = None) -> None:
+    """Serve built frontend assets and provide history-fallback routing.
 
-    settings: Settings = app.state.settings
+    Parameters
+    ----------
+    app:
+        FastAPI application instance to mount the frontend on.
+    settings:
+        Optional settings instance. When ``None``, the function attempts to
+        retrieve settings from ``app.state`` and falls back to global settings.
+    """
+
+    settings = settings or getattr(app.state, "settings", app_settings.settings)
     dist = Path(settings.frontend_dist)
     if not dist.exists():
 
