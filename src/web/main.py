@@ -14,11 +14,13 @@ from fastapi.staticfiles import StaticFiles
 from agents.cache_backed_researcher import CacheBackedResearcher
 from agents.researcher_web import TavilyClient
 from config import Settings, load_settings
+from core.logging import RequestIDMiddleware, configure_logging
 from core.orchestrator import graph_orchestrator
 from observability import init_observability, instrument_app
 from persistence.database import get_db_session, init_db
 from web.telemetry import REQUEST_COUNTER
 
+configure_logging()
 init_observability()
 
 
@@ -28,6 +30,7 @@ def create_app() -> FastAPI:
     settings = load_settings()
     app = FastAPI()
     app.state.settings = settings
+    app.add_middleware(RequestIDMiddleware)
 
     if settings.enable_tracing:
         instrument_app(app)
