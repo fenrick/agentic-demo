@@ -18,6 +18,12 @@ if [ -f .env ]; then
   set +a
 fi
 
+# Generate a temporary JWT secret if one is not provided
+if [ -z "${JWT_SECRET:-}" ]; then
+  JWT_SECRET=$(python -c 'import secrets; print(secrets.token_hex(32))')
+  export JWT_SECRET
+fi
+
 # Run database migrations
 poetry run alembic upgrade head
 
