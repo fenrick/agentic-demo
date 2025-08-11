@@ -34,7 +34,6 @@ def test_init_observability_enabled(monkeypatch):
 
     monkeypatch.setenv("ENABLE_TRACING", "1")
     monkeypatch.setattr(logfire, "configure", fake_configure)
-    monkeypatch.setattr("observability.install_auto_tracing", lambda: None)
     for name in [
         "instrument_pydantic",
         "instrument_httpx",

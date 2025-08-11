@@ -13,6 +13,7 @@ import logfire
 
 from agents.streaming import stream_messages
 from config import load_settings
+from observability import trace
 
 
 def parse_args() -> argparse.Namespace:
@@ -29,6 +30,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+@trace
 async def _generate(topic: str) -> Dict[str, Any]:
     """Run the full graph for ``topic`` and return the final state."""
 
@@ -40,12 +42,10 @@ async def _generate(topic: str) -> Dict[str, Any]:
     return state.to_dict()
 
 
+@trace
 def main() -> None:
     """Entry point for console scripts."""
     args = parse_args()
-    from observability import install_auto_tracing
-
-    install_auto_tracing()
     settings = load_settings()
     if settings.enable_tracing:
         logfire.configure(

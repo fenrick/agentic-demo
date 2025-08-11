@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import inspect
 import logging
 import os
-from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from functools import wraps
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 import logfire
 from loguru import logger as loguru_logger
@@ -18,30 +19,35 @@ if TYPE_CHECKING:  # pragma: no cover - import for type checking only
     from fastapi import FastAPI
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-# Only trace modules that live under the repository's ``src`` directory.
-SRC_DIR = REPO_ROOT / "src"
-
 _prometheus_reader = PrometheusMetricReader()
 _meter_provider = MeterProvider(metric_readers=[_prometheus_reader])
 set_meter_provider(_meter_provider)
 meter = get_meter_provider().get_meter("lecture_builder")
 
-
-def install_auto_tracing() -> None:
-    """Install Logfire auto-tracing restricted to repository modules."""
-
-    def _in_project(module: logfire.AutoTraceModule) -> bool:
-        filename = module.filename
-        return filename is not None and Path(filename).resolve().is_relative_to(SRC_DIR)
-
-    logfire.install_auto_tracing(
-        modules=_in_project,
-        min_duration=0,
-        check_imported_modules="warn",
-    )
+F = TypeVar("F", bound=Callable[..., Any])
 
 
+def trace(fn: F) -> F:
+    """Wrap ``fn`` execution in a ``logfire`` span named after the function."""
+
+    if inspect.iscoroutinefunction(fn):
+
+        @wraps(fn)
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+            with logfire.span(fn.__name__):
+                return await fn(*args, **kwargs)
+
+        return cast(F, async_wrapper)
+
+    @wraps(fn)
+    def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
+        with logfire.span(fn.__name__):
+            return fn(*args, **kwargs)
+
+    return cast(F, sync_wrapper)
+
+
+@trace
 def init_observability() -> None:
     """Configure Logfire and instrument global libraries.
 
@@ -55,7 +61,6 @@ def init_observability() -> None:
     token = os.getenv("LOGFIRE_API_KEY")
     project = os.getenv("LOGFIRE_PROJECT")
 
-    install_auto_tracing()
     logfire.configure(token=token, service_name=project)
     logging.getLogger().addHandler(logfire.LogfireLoggingHandler())
     logfire.instrument_pydantic()
@@ -66,6 +71,7 @@ def init_observability() -> None:
     loguru_logger.add(logfire.loguru_handler())
 
 
+@trace
 def instrument_app(app: "FastAPI") -> None:
     """Instrument a FastAPI application and its ASGI server."""
     logfire.instrument_fastapi(app, capture_headers=True)
