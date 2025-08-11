@@ -55,8 +55,8 @@ def policy_retry_on_critic_failure(
     """Determine whether content must be regenerated after critic review.
 
     The retry tracker ensures the content weaver is not reinvoked more than
-    three times. Exceeding this limit raises a :class:`RuntimeError` which
-    should terminate the workflow.
+    three times. Once the limit is hit further retries are suppressed without
+    raising an exception, allowing the workflow to continue.
 
     Args:
         report: Outcome from either the pedagogy critic or fact checker.
@@ -75,7 +75,10 @@ def policy_retry_on_critic_failure(
             report.hallucination_count or report.unsupported_claims_count
         )
     if should_retry:
-        retry_tracker(state, agent_name)
+        try:
+            retry_tracker(state, agent_name)
+        except RuntimeError:
+            should_retry = False
     return should_retry
 
 

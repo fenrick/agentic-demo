@@ -95,13 +95,12 @@ async def test_content_weaver_reinvoked_until_retry_ceiling() -> None:
         ]
     )
 
-    with pytest.raises(RuntimeError):
-        while True:
-            await fake_weaver(state)
-            report = next(reports)
-            if policy_retry_on_critic_failure(report, state):
-                continue
-            break
+    while True:
+        await fake_weaver(state)
+        report = next(reports)
+        if policy_retry_on_critic_failure(report, state):
+            continue
+        break
 
     assert calls["weaver"] == 4
     assert state.retries["Content-Weaver"] == 3
