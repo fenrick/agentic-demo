@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the React/Tailwind frontend and outputs static assets for serving.
+# Builds the React/Primer frontend and outputs static assets for serving.
 #
 # Usage:
 #   ./scripts/build_frontend.sh

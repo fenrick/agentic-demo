@@ -64,7 +64,7 @@ The system comprises:
    - **Fact Checker**: Scans for hallucinations via Cleanlab/regex.
    - **Exporter**: Renders final deliverables.
 
-3. **Web UX**: React + Tailwind, SSE-driven, panels for document, log, sources, and controls.
+3. **Web UX**: React + Primer, SSE-driven, panels for document, log, sources, and controls.
 4. **Storage Layer**: SQLite or Postgres for state, logs, citations via repository abstraction.
 5. **Export Pipeline**: Pandoc-ready Markdown, python-docx, WeasyPrint PDF.
 
@@ -234,8 +234,7 @@ To run the services directly on your host for development:
 - React app (`frontend/src/`): Panels for Document, Log, Sources.
 - SSE client in `frontend/src/services/stream.ts`.
 - Diff highlighting via `diff-match-patch`.
-- Tailwind CSS enhanced with `@tailwindcss/forms` and `@tailwindcss/typography`; utility
-  classes are auto-sorted via `prettier-plugin-tailwindcss`.
+- Primer CSS provides the base styling for components and layout.
 - Command palette (Cmd/Ctrl+K) for quick Run, Retry, and Export actions.
 
 ### Exporters

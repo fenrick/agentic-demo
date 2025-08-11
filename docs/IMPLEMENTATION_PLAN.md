@@ -1033,7 +1033,7 @@ def from_schema(weave: WeaveResult) -> str:
 
 #### 3. `scripts/build_frontend.sh`
 
-- **Purpose**: compile the React/Tailwind UI.
+- **Purpose**: compile the React/Primer UI.
 - **Steps**:
   1. `cd frontend && npm ci && npm run build`.
   2. Copy `frontend/dist` into `src/web/static`.
