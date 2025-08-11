@@ -363,7 +363,9 @@ been replaced by Logfire's settings.
 
 ## Roadmap & Next Steps
 
-Basic JWT authentication is in place; role-based authorization is planned for v2.
+Basic JWT authentication is in place for remote deployments; requests sent to
+`http://localhost` or `http://127.0.0.1` bypass authentication entirely. Role-
+based authorization is planned for v2.
 
 Refer to [ROADMAP.md](./docs/ROADMAP.md) for sprint plans and milestones.
 

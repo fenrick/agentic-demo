@@ -7,8 +7,8 @@ This document provides a **detailed**, **explicit** reference for all backend HT
 ## 1. Authentication and Base Path
 
 - **Base URL**: `https://<your-domain>/api`
-- **Authentication**: All endpoints (except `/healthz` and `/metrics`) require a valid JSON Web Token (JWT).
-  - Send in HTTP header:
+- **Authentication**: All endpoints (except `/healthz` and `/metrics`) require a valid JSON Web Token (JWT) when accessed remotely. Requests sent to `http://localhost` or `http://127.0.0.1` bypass authentication.
+  - Send in HTTP header when required:
 
     ```http
     Authorization: Bearer <JWT_TOKEN>
@@ -101,15 +101,17 @@ This document provides a **detailed**, **explicit** reference for all backend HT
 Clients subscribe to four SSE endpoints to receive real-time updates. Each
 stream sends newline-delimited JSON messages where the `event` field indicates
 the channel and the payload conforms to the `SseEvent` schema (`type`,
-`payload`, `timestamp`). A short-lived JWT is required on the query string and
-can be obtained from `GET /stream/token`.
+`payload`, `timestamp`). For remote access, a short-lived JWT is required on the
+query string and can be obtained from `GET /stream/token`. Localhost requests do
+not require this token.
 
 ### 4.1 Token Messages
 
 #### GET `/stream/messages`
 
 - **Purpose**: Stream token-level diff messages from LLMs.
-- **Authentication**: Required (`viewer`, `editor`, or `admin`).
+- **Authentication**: Required (`viewer`, `editor`, or `admin`) for remote clients.
+  Localhost requests require none.
 - **Event Format**: `event: messages` followed by a serialized `SseEvent`.
 
 ### 4.2 Updates
@@ -117,7 +119,8 @@ can be obtained from `GET /stream/token`.
 #### GET `/stream/updates`
 
 - **Purpose**: Stream citation additions and workflow progress updates.
-- **Authentication**: Required (`viewer`, `editor`, or `admin`).
+- **Authentication**: Required (`viewer`, `editor`, or `admin`) for remote clients.
+  Localhost requests require none.
 - **Event Format**: `event: updates` with an `SseEvent` payload.
 
 ### 4.3 Values
@@ -125,7 +128,8 @@ can be obtained from `GET /stream/token`.
 #### GET `/stream/values`
 
 - **Purpose**: Stream structured state values as they change.
-- **Authentication**: Required (`viewer`, `editor`, or `admin`).
+- **Authentication**: Required (`viewer`, `editor`, or `admin`) for remote clients.
+  Localhost requests require none.
 - **Event Format**: `event: values` followed by an `SseEvent`.
 
 ### 4.4 Debug
@@ -133,7 +137,8 @@ can be obtained from `GET /stream/token`.
 #### GET `/stream/debug`
 
 - **Purpose**: Stream diagnostic or debug messages.
-- **Authentication**: Required (`viewer`, `editor`, or `admin`).
+- **Authentication**: Required (`viewer`, `editor`, or `admin`) for remote clients.
+  Localhost requests require none.
 - **Event Format**: `event: debug` followed by an `SseEvent`.
 
 ### 4.5 Workspace-Scoped Streams
@@ -144,26 +149,30 @@ events to a single workspace.
 #### GET `/stream/{workspace_id}/messages`
 
 - **Purpose**: Stream token-level diff messages for a specific workspace.
-- **Authentication**: Required (`viewer`, `editor`, or `admin`).
+- **Authentication**: Required (`viewer`, `editor`, or `admin`) for remote clients.
+  Localhost requests require none.
 - **Event Format**: `event: messages` with an `SseEvent` payload.
 
 #### GET `/stream/{workspace_id}/updates`
 
 - **Purpose**: Stream citation additions and workflow progress updates for a
   workspace.
-- **Authentication**: Required (`viewer`, `editor`, or `admin`).
+- **Authentication**: Required (`viewer`, `editor`, or `admin`) for remote clients.
+  Localhost requests require none.
 - **Event Format**: `event: updates` with an `SseEvent` payload.
 
 #### GET `/stream/{workspace_id}/values`
 
 - **Purpose**: Stream structured state values for a workspace.
-- **Authentication**: Required (`viewer`, `editor`, or `admin`).
+- **Authentication**: Required (`viewer`, `editor`, or `admin`) for remote clients.
+  Localhost requests require none.
 - **Event Format**: `event: values` followed by an `SseEvent`.
 
 #### GET `/stream/{workspace_id}/debug`
 
 - **Purpose**: Stream diagnostic messages for a workspace.
-- **Authentication**: Required (`viewer`, `editor`, or `admin`).
+- **Authentication**: Required (`viewer`, `editor`, or `admin`) for remote clients.
+  Localhost requests require none.
 - **Event Format**: `event: debug` followed by an `SseEvent`.
 
 ---

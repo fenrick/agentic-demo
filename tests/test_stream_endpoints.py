@@ -38,6 +38,21 @@ async def test_stream_messages_endpoint() -> None:
 
 
 @pytest.mark.asyncio
+async def test_stream_messages_endpoint_no_auth_localhost() -> None:
+    """Localhost requests should bypass the stream token requirement."""
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://localhost") as client:
+        async with client.stream("GET", "/stream/messages") as response:
+            await asyncio.sleep(0)
+            stream_messages("hi")
+            async for line in response.aiter_lines():
+                if line.startswith("data:"):
+                    assert "hi" in line
+                    break
+
+
+@pytest.mark.asyncio
 async def test_stream_workspace_messages_endpoint() -> None:
     """Workspace messages endpoint forwards streamed tokens."""
 
