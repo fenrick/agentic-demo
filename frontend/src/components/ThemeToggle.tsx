@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -18,7 +17,12 @@ import {
  */
 const ThemeToggle: React.FC = () => {
   const [theme, setTheme] = useState<"light" | "dark" | "system">(() => {
-    const saved = localStorage.getItem("theme") || "system";
+    const saved = localStorage.getItem("theme") as
+      | "light"
+      | "dark"
+      | "system"
+      | null;
+    return saved || "system";
   });
   const mql = window.matchMedia("(prefers-color-scheme: dark)");
   const resolved =
@@ -32,7 +36,7 @@ const ThemeToggle: React.FC = () => {
       // keep meta theme-color in sync (see next point)
       const meta = document.querySelector('meta[name="theme-color"]');
       if (meta)
-        meta.setAttribute("content", t === "dark" ? "#0b0b0c" : "#ffffff");
+        meta.setAttribute("content", t === "dark" ? "#0d1117" : "#ffffff");
     };
     apply(resolved);
     if (theme === "system") {
@@ -50,8 +54,12 @@ const ThemeToggle: React.FC = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" aria-pressed={theme === "dark"}>
-          {theme === "dark" ? (
+        <Button
+          variant="outline"
+          size="icon"
+          aria-pressed={resolved === "dark"}
+        >
+          {resolved === "dark" ? (
             <Sun className="h-4 w-4" />
           ) : (
             <Moon className="h-4 w-4" />
@@ -60,10 +68,30 @@ const ThemeToggle: React.FC = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
-          <DropdownMenuRadioItem value="light">Light</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="dark">Dark</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="system">System</DropdownMenuRadioItem>
+        <DropdownMenuRadioGroup
+          value={theme}
+          onValueChange={(value) =>
+            setTheme(value as "light" | "dark" | "system")
+          }
+        >
+          <DropdownMenuRadioItem
+            value="light"
+            className="flex items-center gap-2"
+          >
+            <Sun className="h-4 w-4" /> Light
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem
+            value="dark"
+            className="flex items-center gap-2"
+          >
+            <Moon className="h-4 w-4" /> Dark
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem
+            value="system"
+            className="flex items-center gap-2"
+          >
+            <Monitor className="h-4 w-4" /> System
+          </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
       </DropdownMenuContent>
     </DropdownMenu>
