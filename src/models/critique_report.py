@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import field
-from typing import Dict, List, Optional
+from dataclasses import asdict, field
+from typing import Any, Dict, List, Optional
 
 from pydantic.dataclasses import dataclass
 
@@ -48,6 +48,10 @@ class CritiqueReport:
         """List of actionable recommendations for remediation."""
 
         return self.recommendations
+
+    def model_dump(self) -> Dict[str, Any]:
+        """Return a serializable representation of the report."""
+        return asdict(self)  # type: ignore[arg-type, call-overload]
 
 
 __all__ = [
