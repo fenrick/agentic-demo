@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import ThemeToggle from "@/components/ThemeToggle";
+import { ThemeProvider } from "@primer/react";
 
 describe("ThemeToggle", () => {
   beforeAll(() => {
@@ -24,8 +25,12 @@ describe("ThemeToggle", () => {
   });
 
   it("returns focus to trigger after selecting a theme", async () => {
-    render(<ThemeToggle />);
-    const trigger = screen.getByRole("button", { name: /toggle theme/i });
+    render(
+      <ThemeProvider>
+        <ThemeToggle />
+      </ThemeProvider>,
+    );
+    const trigger = screen.getByRole("button", { name: "Theme" });
     await userEvent.click(trigger);
     await userEvent.click(screen.getByText("Dark"));
     await waitFor(() => expect(trigger).toHaveFocus());

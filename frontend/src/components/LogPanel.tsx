@@ -2,7 +2,7 @@ import React from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { SseEvent } from "../store/useWorkspaceStore";
 import { Skeleton } from "./ui/skeleton";
-import {Box, Label, Text} from '@primer/react'
+import { Box, Label, Text } from "@primer/react";
 
 interface Props {
   logs: SseEvent[];
@@ -22,28 +22,49 @@ const LogPanel: React.FC<Props> = ({ logs }) => {
   if (!logs.length)
     return (
       <div data-testid="logs-skeleton" className="stack">
-        <Skeleton className="h-4 w-3/4" />
-        <Skeleton className="h-4 w-2/3" />
-        <Skeleton className="h-4 w-1/2" />
+        <Skeleton style={{ height: "1rem", width: "75%" }} />
+        <Skeleton style={{ height: "1rem", width: "66%" }} />
+        <Skeleton style={{ height: "1rem", width: "50%" }} />
       </div>
     );
 
   return (
-<Box ref={parentRef} sx={{height: 280, overflow: 'auto', position: 'relative'}}>
-  <Box sx={{height: rowVirtualizer.getTotalSize(), position: 'relative'}}>
-    {rowVirtualizer.getVirtualItems().map(v => {
-      const log = logs[v.index]
-      return (
-        <Box key={v.key} sx={{position: 'absolute', insetInline: 0, transform: `translateY(${v.start}px)`}}>
-          <Box sx={{display: 'flex', alignItems: 'flex-start', gap: 2, fontSize: 0}}>
-            <Label variant="secondary" sx={{textTransform: 'capitalize'}}>{log.type}</Label>
-            <Text sx={{whiteSpace: 'pre-wrap'}}>{log.message}</Text>
-          </Box>
-        </Box>
-      )
-    })}
-  </Box>
-</Box>
+    <Box
+      ref={parentRef}
+      role="list"
+      sx={{ height: 280, overflow: "auto", position: "relative" }}
+    >
+      <Box sx={{ height: rowVirtualizer.getTotalSize(), position: "relative" }}>
+        {rowVirtualizer.getVirtualItems().map((v) => {
+          const log = logs[v.index];
+          return (
+            <Box
+              key={v.key}
+              role="listitem"
+              sx={{
+                position: "absolute",
+                insetInline: 0,
+                transform: `translateY(${v.start}px)`,
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 2,
+                  fontSize: 0,
+                }}
+              >
+                <Label variant="secondary" sx={{ textTransform: "capitalize" }}>
+                  {log.type}
+                </Label>
+                <Text sx={{ whiteSpace: "pre-wrap" }}>{log.message}</Text>
+              </Box>
+            </Box>
+          );
+        })}
+      </Box>
+    </Box>
   );
 };
 
