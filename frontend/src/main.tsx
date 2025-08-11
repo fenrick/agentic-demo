@@ -30,10 +30,10 @@ const container = document.getElementById("root");
 if (container) {
   const root = createRoot(container);
   root.render(
-    <ThemeProvider>
-      <BaseStyles>
-        <App />
-      </BaseStyles>
-    </ThemeProvider>,
+<ThemeProvider colorMode="auto" dayScheme="light" nightScheme="dark_dimmed" preventSSRMismatch>
+  <BaseStyles>
+    <App />
+  </BaseStyles>
+</ThemeProvider>,
   );
 }

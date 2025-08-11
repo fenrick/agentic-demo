@@ -11,16 +11,15 @@ import { useWorkspaceStore } from "./store/useWorkspaceStore";
 import { Toaster } from "./components/ui/sonner";
 import { PageLayout } from "@primer/react";
 
-// Top-level layout component that connects to the workspace stream
-// and renders the various panels bound to the global workspace store.
 const App: React.FC = () => {
   const connect = useWorkspaceStore((s) => s.connect);
-  const document = useWorkspaceStore((s) => s.document);
+  const documentText = useWorkspaceStore((s) => s.document);
   const logs = useWorkspaceStore((s) => s.logs);
   const sources = useWorkspaceStore((s) => s.sources);
   const workspaceId = useWorkspaceStore((s) => s.workspaceId);
   const exportStatus = useWorkspaceStore((s) => s.exportStatus);
 
+  // Connect to the default workspace on mount.
   useEffect(() => {
     connect("default");
   }, [connect]);
@@ -29,6 +28,7 @@ const App: React.FC = () => {
     <>
       <CommandPalette />
       <Toaster />
+
       <PageLayout>
         <PageLayout.Header
           sx={{
@@ -40,31 +40,41 @@ const App: React.FC = () => {
             top: 0,
             borderBottom: "1px solid",
             borderColor: "border.default",
+            bg: "canvas.default",
+            zIndex: 1,
           }}
         >
-          <h1 className="h4 m-0">Lecture Builder</h1>
+          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>
+            Lecture Builder
+          </h1>
           <ThemeToggle />
         </PageLayout.Header>
+
         <PageLayout.Content sx={{ p: 3 }}>
-          <div className="card mb-3">
+          <div className="card" style={{ marginBottom: "var(--base-size-16)" }}>
             <DataEntryForm />
           </div>
+
           <div className="card">
-            <DocumentPanel text={document} onAcceptDiff={() => {}} />
+            <DocumentPanel text={documentText} onAcceptDiff={() => {}} />
           </div>
         </PageLayout.Content>
-        <PageLayout.Pane position="end" sx={{ p: 3 }}>
-          <div className="card mb-3">
-            <ControlsPanel workspaceId={workspaceId!} />
+
+        <PageLayout.Pane position="end" sx={{ p: 3, width: 360 }}>
+          <div className="card" style={{ marginBottom: "var(--base-size-16)" }}>
+            <ControlsPanel workspaceId={workspaceId ?? "default"} />
           </div>
-          <div className="card mb-3">
+
+          <div className="card" style={{ marginBottom: "var(--base-size-16)" }}>
             <LogPanel logs={logs} />
           </div>
-          <div className="card mb-3">
+
+          <div className="card">
             <SourcesPanel sources={sources} />
           </div>
+
           {workspaceId && exportStatus === "ready" && (
-            <div className="card">
+            <div className="card" style={{ marginTop: "var(--base-size-16)" }}>
               <DownloadsPanel workspaceId={workspaceId} />
             </div>
           )}

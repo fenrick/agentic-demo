@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import exportClient, { ExportUrls } from "../api/exportClient";
+import {Box, Link} from '@primer/react'
 
 interface Props {
   workspaceId: string;
@@ -44,20 +45,11 @@ const DownloadsPanel: React.FC<Props> = ({ workspaceId }) => {
 
   return (
     <>
-      <div className="flex gap-4">
-        <a className="text-blue-600 hover:underline" href={urls.md}>
-          Markdown
-        </a>
-        <a className="text-blue-600 hover:underline" href={urls.docx}>
-          DOCX
-        </a>
-        <a className="text-blue-600 hover:underline" href={urls.pdf}>
-          PDF
-        </a>
-        <a className="text-blue-600 hover:underline" href={urls.zip}>
-          ZIP
-        </a>
-      </div>
+<Box sx={{display: 'flex', gap: 3}}>
+  <Link href={urls.pdf} download>PDF</Link>
+  <Link href={urls.md} download>Markdown</Link>
+</Box>
+
     </>
   );
 };

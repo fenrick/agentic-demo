@@ -1,15 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { SunIcon, MoonIcon, DeviceDesktopIcon } from "@primer/octicons-react";
-import { Button } from "@primer/react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-} from "@radix-ui/react-dropdown-menu";
+import {ActionMenu, ActionList, Button} from '@primer/react'
+import {SunIcon, MoonIcon, DeviceDesktopIcon} from '@primer/octicons-react'
 
 /**
  * Allows the user to switch between light and dark themes.
@@ -51,45 +42,26 @@ const ThemeToggle: React.FC = () => {
   }, [mql, theme]);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="invisible"
-          size="small"
-          aria-pressed={resolved === "dark"}
-        >
-          {resolved === "dark" ? <SunIcon size={16} /> : <MoonIcon size={16} />}
-          <span className="sr-only">Toggle theme</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuRadioGroup
-          value={theme}
-          onValueChange={(value) =>
-            setTheme(value as "light" | "dark" | "system")
-          }
-        >
-          <DropdownMenuRadioItem
-            value="light"
-            className="flex items-center gap-2"
-          >
-            <SunIcon className="h-4 w-4" /> Light
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem
-            value="dark"
-            className="flex items-center gap-2"
-          >
-            <MoonIcon className="h-4 w-4" /> Dark
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem
-            value="system"
-            className="flex items-center gap-2"
-          >
-            <DeviceDesktopIcon className="h-4 w-4" /> System
-          </DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+<ActionMenu>
+  <ActionMenu.Anchor>
+    <Button>
+      Theme
+    </Button>
+  </ActionMenu.Anchor>
+  <ActionMenu.Overlay>
+    <ActionList selectionVariant="single">
+      <ActionList.Item onSelect={()=>setTheme('light')} selected={theme==='light'}>
+        <SunIcon /> Light
+      </ActionList.Item>
+      <ActionList.Item onSelect={()=>setTheme('dark')} selected={theme==='dark'}>
+        <MoonIcon /> Dark
+      </ActionList.Item>
+      <ActionList.Item onSelect={()=>setTheme('system')} selected={theme==='system'}>
+        <DeviceDesktopIcon /> System
+      </ActionList.Item>
+    </ActionList>
+  </ActionMenu.Overlay>
+</ActionMenu>
   );
 };
 
