@@ -7,8 +7,10 @@ import argparse
 import os
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, FastAPI, Request
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from agents.cache_backed_researcher import CacheBackedResearcher
@@ -142,6 +144,31 @@ def main() -> None:
 
 # Make the ASGI app importable by uvicorn and tests
 app = create_app()
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_handler(_: Request, exc: RequestValidationError) -> JSONResponse:
+    """Return a standard response for validation errors."""
+    return JSONResponse(
+        {"error": "validation_error", "details": exc.errors()},
+        status_code=422,
+    )
+
+
+@app.exception_handler(HTTPException)
+async def http_handler(_: Request, exc: HTTPException) -> JSONResponse:
+    """Return a standard response for HTTP exceptions."""
+    return JSONResponse(
+        {"error": exc.detail or "http_error"},
+        status_code=exc.status_code,
+    )
+
+
+@app.exception_handler(Exception)
+async def unhandled_handler(_: Request, exc: Exception) -> JSONResponse:
+    """Return a generic response for uncaught exceptions."""
+    return JSONResponse({"error": "internal_error"}, status_code=500)
+
 
 if __name__ == "__main__":  # pragma: no cover - manual execution
     main()
