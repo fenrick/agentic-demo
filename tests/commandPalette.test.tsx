@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import "@testing-library/jest-dom";
 import { vi } from "vitest";
 import CommandPalette from "../frontend/src/components/CommandPalette";
 import { useWorkspaceStore } from "../frontend/src/store/useWorkspaceStore";
@@ -21,20 +22,50 @@ describe("CommandPalette", () => {
     });
   });
 
-  it("opens with Cmd+K and triggers run", async () => {
+  it("opens with Cmd+K, focuses first item and triggers run", async () => {
     useWorkspaceStore.setState({
       topics: ["topic"],
       workspaceId: "abc",
       status: "idle",
     });
-    render(<CommandPalette />);
+    render(
+      <>
+        <button>Trigger</button>
+        <CommandPalette />
+      </>,
+    );
+    const trigger = screen.getByText("Trigger");
+    trigger.focus();
     await act(async () => {
       fireEvent.keyDown(window, { key: "k", metaKey: true });
     });
     const runButton = await screen.findByText("Run");
+    expect(runButton).toHaveFocus();
     await act(async () => {
       fireEvent.click(runButton);
     });
     expect((controlClient as any).run).toHaveBeenCalledWith("abc", "topic");
+    expect(trigger).toHaveFocus();
+  });
+
+  it("closes on Escape and restores focus", async () => {
+    render(
+      <>
+        <button>Trigger</button>
+        <CommandPalette />
+      </>,
+    );
+    const trigger = screen.getByText("Trigger");
+    trigger.focus();
+    await act(async () => {
+      fireEvent.keyDown(window, { key: "k", metaKey: true });
+    });
+    const runButton = await screen.findByText("Run");
+    expect(runButton).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.keyDown(runButton, { key: "Escape" });
+    });
+    expect(screen.queryByText("Run")).toBeNull();
+    expect(trigger).toHaveFocus();
   });
 });

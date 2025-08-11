@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
 import controlClient from "../api/controlClient";
 import exportClient from "../api/exportClient";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
@@ -18,6 +19,8 @@ const CommandPalette: React.FC = () => {
   const setStatus = useWorkspaceStore((s) => s.setStatus);
   const topics = useWorkspaceStore((s) => s.topics);
   const [open, setOpen] = useState(false);
+  const firstItemRef = useRef<HTMLButtonElement | null>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -29,6 +32,15 @@ const CommandPalette: React.FC = () => {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, []);
+
+  useEffect(() => {
+    if (open) {
+      previouslyFocusedRef.current = document.activeElement as HTMLElement;
+      requestAnimationFrame(() => firstItemRef.current?.focus());
+    } else {
+      previouslyFocusedRef.current?.focus();
+    }
+  }, [open]);
 
   const commands: Command[] = [
     {
@@ -67,29 +79,34 @@ const CommandPalette: React.FC = () => {
     },
   ];
 
-  if (!open) return null;
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 pt-24"
-      role="dialog"
-    >
-      <div className="w-full max-w-md rounded-md bg-white p-2 shadow-lg">
-        <ul>
-          {commands.map((cmd) => (
-            <li key={cmd.name}>
-              <button
-                className="w-full rounded p-2 text-left hover:bg-gray-100 disabled:opacity-50"
-                onClick={() => !cmd.disabled && cmd.action()}
-                disabled={cmd.disabled}
-              >
-                {cmd.name}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
+    <Dialog.Root open={open} onOpenChange={setOpen}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
+        <Dialog.Content
+          aria-label="Command palette"
+          aria-modal="true"
+          aria-describedby=""
+          className="fixed left-1/2 top-1/4 z-50 w-full max-w-md -translate-x-1/2 rounded-md bg-white p-2 shadow-lg focus:outline-none"
+        >
+          <Dialog.Title className="sr-only">Command palette</Dialog.Title>
+          <ul>
+            {commands.map((cmd, idx) => (
+              <li key={cmd.name}>
+                <button
+                  ref={idx === 0 ? firstItemRef : undefined}
+                  className="w-full rounded p-2 text-left hover:bg-gray-100 disabled:opacity-50"
+                  onClick={() => !cmd.disabled && cmd.action()}
+                  disabled={cmd.disabled}
+                >
+                  {cmd.name}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 };
 
