@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from collections import Counter
 from dataclasses import dataclass
-from typing import Callable, Dict, List, cast
+from typing import Callable, Dict, List
 
 from pydantic import BaseModel, ValidationError
 
@@ -169,10 +169,17 @@ def assess_cognitive_load(outline: Outline) -> CognitiveLoadReport:
 
 async def run_pedagogy_critic(state: State) -> CritiqueReport:
     """Run pedagogical checks and update ``state.critique_report``."""
-
-    outline = cast(Outline, state.outline)
-    if outline is None:
-        raise ValueError("state.outline is required for pedagogy critique")
+    if not state.modules:
+        raise ValueError("state.modules is required for pedagogy critique")
+    activities: List[Activity] = []
+    for module in state.modules:
+        activities.extend(module.activities)
+    if not activities:
+        raise ValueError("state.modules must include activities for pedagogy critique")
+    objectives = state.learning_objectives or [
+        obj for module in state.modules for obj in module.learning_objectives
+    ]
+    outline = Outline(learning_objectives=objectives, activities=activities)
     bloom = analyze_bloom_coverage(outline)
     diversity = evaluate_activity_diversity(outline)
     cognitive = assess_cognitive_load(outline)

@@ -108,6 +108,7 @@ async def run_content_weaver(state: State, section_id: int | None = None) -> Mod
         title=weave.title,
         duration_min=weave.duration_min,
         learning_objectives=weave.learning_objectives,
+        activities=weave.activities,
     )
     state.modules.append(module)
     return module
