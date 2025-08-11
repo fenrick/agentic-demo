@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import exportClient, { ExportUrls } from "../api/exportClient";
-import {Box, Link} from '@primer/react'
+import { Box, Link, Spinner, Text } from "@primer/react";
 
 interface Props {
   workspaceId: string;
@@ -40,17 +40,23 @@ const DownloadsPanel: React.FC<Props> = ({ workspaceId }) => {
   }, [workspaceId]);
 
   if (!urls) {
-    return <div className="text-sm text-gray-500">Preparing export…</div>;
+    return (
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <Spinner size="small" />
+        <Text sx={{ color: "fg.muted", fontSize: 1 }}>Preparing export…</Text>
+      </Box>
+    );
   }
 
   return (
-    <>
-<Box sx={{display: 'flex', gap: 3}}>
-  <Link href={urls.pdf} download>PDF</Link>
-  <Link href={urls.md} download>Markdown</Link>
-</Box>
-
-    </>
+    <Box sx={{ display: "flex", gap: 3 }}>
+      <Link href={urls.pdf} download>
+        PDF
+      </Link>
+      <Link href={urls.md} download>
+        Markdown
+      </Link>
+    </Box>
   );
 };
 
