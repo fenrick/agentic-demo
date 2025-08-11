@@ -42,7 +42,7 @@ const DocumentPanel: React.FC<Props> = ({ text, onAcceptDiff }) => {
     return (
       <div
         data-testid="document-skeleton"
-        className="max-w-none animate-pulse space-y-2"
+        className="max-w-none animate-pulse stack"
       >
         <div className="h-4 rounded bg-gray-300" />
         <div className="h-4 rounded bg-gray-300" />
