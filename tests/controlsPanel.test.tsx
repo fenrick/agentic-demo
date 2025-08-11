@@ -18,12 +18,22 @@ import { toast } from "sonner";
 
 it("shows error toast on run failure", async () => {
   vi.spyOn(window, "prompt").mockReturnValue("topic");
+  const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
+  const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   const client = controlClient as unknown as {
     run: ReturnType<typeof vi.fn>;
   };
   render(<ControlsPanel workspaceId="1" />);
   fireEvent.click(screen.getByText("Run"));
   await waitFor(() => expect(client.run).toHaveBeenCalledWith("1", "topic"));
+  await waitFor(() =>
+    expect(infoSpy).toHaveBeenCalledWith(
+      'Running workspace 1 with topic "topic"',
+    ),
+  );
+  await waitFor(() =>
+    expect(errorSpy).toHaveBeenCalledWith("Run failed", expect.any(Error)),
+  );
   await waitFor(() =>
     expect(vi.mocked(toast.error)).toHaveBeenCalledWith("Run failed"),
   );
