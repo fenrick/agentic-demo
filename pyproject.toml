@@ -33,6 +33,7 @@ dependencies = [
     "uvicorn[standard]",
     "weasyprint",
     "pyjwt",
+    "tiktoken (>=0.11.0,<0.12.0)",
 ]
 
 [build-system]
