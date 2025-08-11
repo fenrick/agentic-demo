@@ -14,10 +14,12 @@ const ControlsPanel: React.FC<Props> = ({ workspaceId }) => {
   const onRunClick = async () => {
     const topic = window.prompt("Enter topic");
     if (!topic) return;
+    console.info(`Running workspace ${workspaceId} with topic "${topic}"`);
     try {
       await controlClient.run(workspaceId, topic);
       setStatus("running");
-    } catch {
+    } catch (err) {
+      console.error("Run failed", err);
       toast.error("Run failed");
     }
   };
