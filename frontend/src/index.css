@@ -23,3 +23,19 @@ body {
   border-radius: 12px;
   padding: 1.5rem;
 }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 8px 12px;
+  border-top: var(--borderWidth-thin) solid var(--borderColor-muted);
+}
+
+thead th {
+  background: var(--color-canvas-subtle);
+  text-align: left;
+}
