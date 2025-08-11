@@ -27,7 +27,7 @@ def test_invalid_role_returns_403() -> None:
     assert resp.status_code == 403
 
 
-def test_localhost_bypasses_authentication() -> None:
+def test_loopback_client_bypasses_authentication() -> None:
     """Requests from 127.0.0.1 should bypass authentication."""
     app = create_app()
     scope = {
@@ -36,6 +36,23 @@ def test_localhost_bypasses_authentication() -> None:
         "method": "GET",
         "path": "/",
         "headers": [],
+        "app": app,
+    }
+    request = Request(scope)
+    assert verify_jwt(request, None) == {"role": "user"}
+
+
+def test_localhost_hostname_bypasses_authentication() -> None:
+    """Requests with a Host header of localhost should bypass authentication."""
+    app = create_app()
+    scope = {
+        "type": "http",
+        "client": ("192.168.1.5", 12345),
+        "scheme": "http",
+        "server": ("localhost", 80),
+        "method": "GET",
+        "path": "/",
+        "headers": [(b"host", b"localhost")],
         "app": app,
     }
     request = Request(scope)

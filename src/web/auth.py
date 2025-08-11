@@ -18,7 +18,7 @@ def verify_jwt(
 ) -> Dict[str, Any]:
     """Validate the provided JWT and return its payload.
 
-    Requests from ``127.0.0.1`` bypass authentication checks.
+    Requests targeting ``localhost`` bypass authentication checks.
 
     Args:
         request: Incoming HTTP request used to access application settings.
@@ -30,7 +30,12 @@ def verify_jwt(
     Raises:
         HTTPException: If the token is missing, invalid, or fails authorization.
     """
-    if request.client and request.client.host == "127.0.0.1":
+    host = request.url.hostname
+    client_host = request.client.host if request.client else None
+    if host in {"localhost", "127.0.0.1", "::1"} or client_host in {
+        "127.0.0.1",
+        "::1",
+    }:
         return {"role": "user"}
 
     if credentials is None:
