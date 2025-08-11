@@ -39,7 +39,7 @@ const ControlsPanel: React.FC<Props> = ({ workspaceId }) => {
     <div className="d-flex flex-wrap flex-items-center">
       <button
         onClick={onRunClick}
-        className="btn mr-3"
+        className="btn btn-primary mr-3"
         aria-busy={status === "running"}
         disabled={runDisabled}
       >

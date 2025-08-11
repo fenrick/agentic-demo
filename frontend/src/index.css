@@ -23,33 +23,3 @@ body {
   border-radius: 12px;
   padding: 1.5rem;
 }
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border: var(--borderWidth-thin) solid var(--borderColor-muted);
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  background-color: var(--color-canvas-default);
-  transition:
-    background-color 0.2s,
-    color 0.2s,
-    border-color 0.2s;
-}
-
-.btn:hover {
-  background-color: var(--color-neutral-muted);
-}
-
-.btn:focus-visible {
-  outline: 2px solid var(--color-accent-emphasis);
-  outline-offset: 2px;
-}
-
-.btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
