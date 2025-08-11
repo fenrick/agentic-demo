@@ -32,7 +32,7 @@ jobs:
           cache: "poetry"
           cache-dependency-path: poetry.lock
       - run: poetry install --with dev --extras test --no-interaction --no-ansi
-      - name: Verify migrations
+      - name: Smoke test migrations
         env:
           DATABASE_URL: sqlite:///${{ github.workspace }}/workspace/migration.db
           OPENAI_API_KEY: test
