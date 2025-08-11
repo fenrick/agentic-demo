@@ -15,9 +15,10 @@ vi.mock("@/api/controlClient", () => ({
 import ControlsPanel from "@/components/ControlsPanel";
 import controlClient from "@/api/controlClient";
 import { toast } from "sonner";
+import { useWorkspaceStore } from "../frontend/src/store/useWorkspaceStore";
 
 it("shows error toast on run failure", async () => {
-  vi.spyOn(window, "prompt").mockReturnValue("topic");
+  useWorkspaceStore.setState({ topics: ["topic"], status: "idle" });
   const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
   const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   const client = controlClient as unknown as {
@@ -37,4 +38,10 @@ it("shows error toast on run failure", async () => {
   await waitFor(() =>
     expect(vi.mocked(toast.error)).toHaveBeenCalledWith("Run failed"),
   );
+});
+
+it("disables run button with no topics", () => {
+  useWorkspaceStore.setState({ topics: [], status: "idle" });
+  render(<ControlsPanel workspaceId="1" />);
+  expect(screen.getByText("Run")).toBeDisabled();
 });

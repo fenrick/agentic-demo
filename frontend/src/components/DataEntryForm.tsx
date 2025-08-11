@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { apiFetch } from "../api/http";
 import { Textarea } from "@/components/ui/textarea";
+import { useWorkspaceStore } from "../store/useWorkspaceStore";
 
 interface Entry {
   id: number;
@@ -14,6 +15,8 @@ const DataEntryForm: React.FC = () => {
   const [topic, setTopic] = useState("");
   const [entries, setEntries] = useState<Entry[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const setTopics = useWorkspaceStore((s) => s.setTopics);
+  const addTopic = useWorkspaceStore((s) => s.addTopic);
 
   useEffect(() => {
     (async () => {
@@ -22,6 +25,7 @@ const DataEntryForm: React.FC = () => {
         if (res.ok) {
           const data: Entry[] = await res.json();
           setEntries(data);
+          setTopics(data.map((e) => e.topic));
         }
       } catch {
         // ignore network errors
@@ -40,6 +44,7 @@ const DataEntryForm: React.FC = () => {
       if (res.ok) {
         const entry: Entry = await res.json();
         setEntries((prev) => [...prev, entry]);
+        addTopic(entry.topic);
         setTopic("");
         const el = textareaRef.current;
         if (el) {
