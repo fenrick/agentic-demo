@@ -18,7 +18,20 @@ class CacheBackedResearcher:
     populate the cache beforehand.
     """
 
-    def search(self, query: str) -> List[RawSearchResult]:
+    async def __aenter__(self) -> "CacheBackedResearcher":
+        return self
+
+    async def __aexit__(
+        self, exc_type, exc, tb
+    ) -> None:  # noqa: D401 - Protocol method
+        return None
+
+    async def aclose(self) -> None:
+        """Conform to the :class:`SearchClient` interface."""
+
+        return None
+
+    async def search(self, query: str) -> List[RawSearchResult]:
         """Load cached results for ``query`` or raise ``FileNotFoundError``.
 
         Parameters

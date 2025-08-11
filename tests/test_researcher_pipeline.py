@@ -11,7 +11,7 @@ os.environ.setdefault("OPENAI_API_KEY", "test")
 
 @pytest.mark.asyncio
 async def test_pipeline_handles_web_search_error(monkeypatch):
-    def fail_search(_state):
+    async def fail_search(_state):
         raise httpx.HTTPError("search failure")
 
     monkeypatch.setattr("agents.researcher_pipeline.run_web_search", fail_search)
@@ -27,7 +27,7 @@ async def test_pipeline_continues_on_license_and_db_errors(monkeypatch):
         CitationDraft(url="https://example.edu/b", snippet="", title="B"),
     ]
 
-    def good_search(_state):
+    async def good_search(_state):
         return drafts
 
     async def flaky_lookup(url: str) -> str:

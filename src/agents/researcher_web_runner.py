@@ -20,12 +20,16 @@ def _to_draft(result: RawSearchResult) -> CitationDraft:
     return CitationDraft(url=result.url, snippet=result.snippet, title=result.title)
 
 
-def run_web_search(state: State) -> List[CitationDraft]:
+async def run_web_search(state: State) -> List[CitationDraft]:
     """Run a web search using the configured provider."""
+
     settings = Settings()
     if settings.offline_mode:
         client: SearchClient = CacheBackedResearcher()
     else:
         client = TavilyClient(settings.tavily_api_key or "")
-    results = client.search(state.prompt)
+
+    async with client:
+        results = await client.search(state.prompt)
+
     return [_to_draft(r) for r in results]

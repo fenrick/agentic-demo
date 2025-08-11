@@ -1,11 +1,13 @@
 import json
 
 import httpx
+import pytest
 
 from agents.researcher_web import TavilyClient
 
 
-def test_tavily_client_parses_response():
+@pytest.mark.asyncio
+async def test_tavily_client_parses_response():
     def handler(
         request: httpx.Request,
     ) -> httpx.Response:  # pragma: no cover - simple handler
@@ -19,6 +21,8 @@ def test_tavily_client_parses_response():
         return httpx.Response(200, json=data)
 
     transport = httpx.MockTransport(handler)
-    client = TavilyClient("key", http=httpx.Client(transport=transport))
-    results = client.search("query")
+    async with TavilyClient(
+        "key", http=httpx.AsyncClient(transport=transport)
+    ) as client:
+        results = await client.search("query")
     assert results[0].title == "Tavily"

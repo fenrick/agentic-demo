@@ -57,6 +57,7 @@ def create_app() -> FastAPI:
         try:
             yield
         finally:
+            await app.state.research_client.aclose()
             await app.state.http.aclose()
 
     app = FastAPI(lifespan=lifespan)
