@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { apiFetch } from "../api/http";
 
 interface Entry {
   id: number;
@@ -16,7 +17,7 @@ const DataEntryForm: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/entries");
+        const res = await apiFetch("/entries");
         if (res.ok) {
           const data: Entry[] = await res.json();
           setEntries(data);
@@ -31,9 +32,8 @@ const DataEntryForm: React.FC = () => {
     e.preventDefault();
     if (!topic) return;
     try {
-      const res = await fetch("/api/entries", {
+      const res = await apiFetch("/entries", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic }),
       });
       if (res.ok) {

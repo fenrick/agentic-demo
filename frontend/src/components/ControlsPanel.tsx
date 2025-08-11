@@ -12,8 +12,10 @@ const ControlsPanel: React.FC<Props> = ({ workspaceId }) => {
   const { status, setStatus } = useWorkspaceStore();
 
   const onRunClick = async () => {
+    const topic = window.prompt("Enter topic");
+    if (!topic) return;
     try {
-      await controlClient.run(workspaceId);
+      await controlClient.run(workspaceId, topic);
       setStatus("running");
     } catch {
       toast.error("Run failed");

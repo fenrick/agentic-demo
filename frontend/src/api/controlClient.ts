@@ -1,8 +1,8 @@
 import { apiFetch } from "./http";
 
 /** Simple client for posting control commands to workspace endpoints. */
-export async function run(workspaceId: string): Promise<void> {
-  await post(`/workspaces/${workspaceId}/run`);
+export async function run(workspaceId: string, topic: string): Promise<void> {
+  await post(`/workspaces/${workspaceId}/run`, { topic });
 }
 
 /** Retry the graph using the last inputs. */
