@@ -50,6 +50,7 @@ class Settings(BaseSettings):
 
     openai_api_key: str
     data_dir: Path = Path("./workspace")
+    frontend_dist: Path = Path("./frontend/dist")
     database_url: str | None = None
     tavily_api_key: str | None = None
     model: str = MODEL
@@ -77,7 +78,7 @@ class Settings(BaseSettings):
             raise ValueError("MODEL must be in '<provider>:<model_name>' format")
         return value
 
-    @field_validator("data_dir", mode="before")
+    @field_validator("data_dir", "frontend_dist", mode="before")
     @classmethod
     def _to_path(cls, value: str | Path) -> Path:
         return Path(value)

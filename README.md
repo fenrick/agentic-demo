@@ -323,6 +323,7 @@ been replaced by Logfire's settings.
 | `LOGFIRE_PROJECT`    | Logfire project identifier                |                                          |
 | `MODEL`              | LLM provider and model (`openai:o4-mini`) | `openai:o4-mini`                         |
 | `DATA_DIR`           | Path for SQLite DB, cache, logs           | (required)                               |
+| `FRONTEND_DIST`      | Directory containing built frontend assets | `frontend/dist`                          |
 | `DATABASE_URL`       | SQLAlchemy connection string              | `sqlite:///${DATA_DIR}/workspace.db`     |
 | `OFFLINE_MODE`       | Run without external network calls        | `false`                                  |
 | `ENABLE_TRACING`     | Enable Logfire tracing instrumentation    | `true`                                   |
