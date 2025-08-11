@@ -3,6 +3,7 @@ import typography from "@tailwindcss/typography";
 import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
+   darkMode: "class",
   content: ["./frontend/index.html", "./frontend/src/**/*.{ts,tsx,html,css}"],
   theme: {
     extend: {
