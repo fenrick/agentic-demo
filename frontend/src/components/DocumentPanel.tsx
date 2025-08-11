@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import { computeDiff, type DiffPatch } from "../utils/diffUtils";
 
 interface Props {
@@ -50,12 +51,22 @@ const DocumentPanel: React.FC<Props> = ({ text, onAcceptDiff }) => {
     );
   }
 
+  const sanitizeSchema = {
+    ...defaultSchema,
+    tagNames: [...(defaultSchema.tagNames || []), "mark"],
+    attributes: {
+      ...defaultSchema.attributes,
+      mark: ["className"],
+    },
+  };
+
   return (
-    <div
-      className="prose max-w-none text-black dark:text-black"
-      aria-live="polite"
-    >
-      <ReactMarkdown rehypePlugins={[rehypeRaw]}>{rendered}</ReactMarkdown>
+    <div className="markdown-body" aria-live="polite">
+      <ReactMarkdown
+        rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}
+      >
+        {rendered}
+      </ReactMarkdown>
     </div>
   );
 };
