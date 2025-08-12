@@ -103,6 +103,7 @@ async def content_weaver(state: State, section_id: int | None = None) -> WeaveRe
         prompt = state.outline.steps[section_id]
 
     base_prompt = prompt
+    error = "validation failed"
     for attempt in range(2):
         tokens: list[str] = []
         stream = await call_openai_function(prompt, state.sources)
@@ -116,16 +117,30 @@ async def content_weaver(state: State, section_id: int | None = None) -> WeaveRe
             stream_debug(str(exc))
             raise RetryableError("model returned invalid schema") from exc
 
-        total = sum(act.duration_min for act in weave.activities)
-        if total == weave.duration_min:
-            return weave
-        prompt = (
-            f"{base_prompt}\n"
-            "Durations of activities must sum to the overall duration. "
-            f"Activities total {total} but duration_min is {weave.duration_min}."
-        )
+        # Guardrail: ensure speaker notes provide sufficient material
+        word_count = len(weave.speaker_notes.split()) if weave.speaker_notes else 0
+        if word_count < 1200:
+            prompt = (
+                f"{base_prompt}\n"
+                "Expand speaker_notes to 1500–2500 words with slide-scoped sections; "
+                "keep JSON identical otherwise."
+            )
+            error = "speaker notes too short"
+            continue
 
-    raise RetryableError("duration mismatch after retry")
+        # Guardrail: verify activity timings sum to declared duration
+        total = sum(act.duration_min for act in weave.activities)
+        if total != weave.duration_min:
+            prompt = (
+                f"{base_prompt}\n"
+                "Fix timing so sum equals duration_min; keep content unchanged."
+            )
+            error = "duration mismatch"
+            continue
+
+        return weave
+
+    raise RetryableError(f"{error} after retry")
 
 
 async def run_content_weaver(state: State, section_id: int | None = None) -> Module:

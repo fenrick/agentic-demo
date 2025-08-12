@@ -242,4 +242,42 @@ def test_content_weaver_retries_on_duration_mismatch(monkeypatch: Any) -> None:
         asyncio.run(content_weaver.content_weaver(state))
 
     assert len(calls) == 2
-    assert "Activities total 1 but duration_min is 2" in calls[1]
+    assert "Fix timing so sum equals duration_min; keep content unchanged." in calls[1]
+
+
+def test_content_weaver_retries_on_short_speaker_notes(monkeypatch: Any) -> None:
+    """Short speaker notes trigger a retry and raise when unresolved."""
+
+    calls: list[str] = []
+
+    async def fake_call(
+        prompt: str, *_a, **_k
+    ) -> Any:  # pragma: no cover - used in test
+        calls.append(prompt)
+
+        async def gen() -> Any:
+            yield json.dumps(
+                {
+                    "title": "T",
+                    "learning_objectives": [],
+                    "activities": [],
+                    "duration_min": 0,
+                    "speaker_notes": "short notes",
+                }
+            )
+
+        return gen()
+
+    monkeypatch.setattr(content_weaver, "call_openai_function", fake_call)
+    from core.state import State
+
+    state = State(prompt="topic")
+    with pytest.raises(RetryableError):
+        asyncio.run(content_weaver.content_weaver(state))
+
+    assert len(calls) == 2
+    assert (
+        "Expand speaker_notes to 1500–2500 words with slide-scoped sections;"
+        " keep JSON identical otherwise."
+        in calls[1]
+    )
