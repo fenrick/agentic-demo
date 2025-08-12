@@ -151,3 +151,95 @@ def test_call_openai_function_emits_logfire_trace(monkeypatch: Any) -> None:
 
     asyncio.run(run())
     assert "agent" in trace_calls
+
+
+def test_call_openai_function_includes_sources(monkeypatch: Any) -> None:
+    """Sources provided to ``call_openai_function`` appear in instructions."""
+
+    captured: dict[str, Any] = {}
+
+    class DummyAgent:
+        def __init__(self, *, instructions: list[str], model: Any) -> None:
+            captured["instructions"] = instructions
+
+        def run_stream(self, prompt: str) -> Any:  # pragma: no cover - used in test
+            class Resp:
+                async def __aenter__(self) -> "Resp":
+                    return self
+
+                async def __aexit__(self, *args: Any) -> None:
+                    return None
+
+                def stream_text(self, delta: bool = False) -> Any:
+                    async def gen() -> Any:
+                        yield ""
+
+                    return gen()
+
+            return Resp()
+
+    monkeypatch.setitem(
+        sys.modules, "pydantic_ai", types.SimpleNamespace(Agent=DummyAgent)
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "agents.model_utils",
+        types.SimpleNamespace(init_model=lambda **_: object()),
+    )
+
+    from core.state import Citation
+
+    src = Citation(
+        url="https://example.com",
+        title="Example",
+        licence="CC BY",
+        retrieved_at="2024-01-01",
+    )
+
+    async def run() -> None:
+        stream = await content_weaver.call_openai_function("topic", [src])
+        _ = [token async for token in stream]
+
+    asyncio.run(run())
+    instructions = captured.get("instructions", [])
+    assert any("Example (https://example.com)" in instr for instr in instructions)
+
+
+def test_content_weaver_retries_on_duration_mismatch(monkeypatch: Any) -> None:
+    """Duration mismatch triggers a retry and raises when unresolved."""
+
+    calls: list[str] = []
+
+    async def fake_call(
+        prompt: str, *_a, **_k
+    ) -> Any:  # pragma: no cover - used in test
+        calls.append(prompt)
+
+        async def gen() -> Any:
+            yield json.dumps(
+                {
+                    "title": "T",
+                    "learning_objectives": [],
+                    "activities": [
+                        {
+                            "type": "x",
+                            "description": "",
+                            "duration_min": 1,
+                            "learning_objectives": [],
+                        }
+                    ],
+                    "duration_min": 2,
+                }
+            )
+
+        return gen()
+
+    monkeypatch.setattr(content_weaver, "call_openai_function", fake_call)
+    from core.state import State
+
+    state = State(prompt="topic")
+    with pytest.raises(RetryableError):
+        asyncio.run(content_weaver.content_weaver(state))
+
+    assert len(calls) == 2
+    assert "Activities total 1 but duration_min is 2" in calls[1]

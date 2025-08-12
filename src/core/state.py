@@ -18,9 +18,15 @@ class Citation(BaseModel):
 
     Attributes:
         url: Location of the referenced material.
+        title: Human readable name for the source.
+        licence: Usage licence for the material.
+        retrieved_at: ISO8601 timestamp when the source was accessed.
     """
 
     url: HttpUrl
+    title: str | None = None
+    licence: str | None = None
+    retrieved_at: str | None = None
 
 
 class Module(BaseModel):
