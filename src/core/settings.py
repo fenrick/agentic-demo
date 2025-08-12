@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     ENABLE_TRACING: bool = Field(
         True, description="Enable application performance tracing and metrics"
     )
-    FRONTEND_DIST: str = Field(
+    frontend_dist: str = Field(
         "frontend/dist", description="Path to the built frontend assets"
     )
 
