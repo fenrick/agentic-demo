@@ -40,8 +40,9 @@ logger = get_logger()
 
 metrics = MetricsCollector(MetricsRepository(":memory:"))
 
+settings = config.load_settings()
 try:
-    _ENCODING = tiktoken.encoding_for_model(config.DEFAULT_MODEL_NAME)
+    _ENCODING = tiktoken.encoding_for_model(settings.model_name)
 except KeyError:  # pragma: no cover - fallback for unknown models
     _ENCODING = tiktoken.get_encoding("cl100k_base")
 
@@ -54,14 +55,15 @@ def _token_count(payload: object) -> int:
 
 
 def validate_model_configuration() -> None:
-    """Ensure the configured model matches the enforced default."""
+    """Log the configured model, warning if it differs from the default."""
 
     configured = config.load_settings().model
     if configured != config.MODEL:
-        raise ValueError(
-            f"MODEL misconfigured: expected '{config.MODEL}', got '{configured}'"
+        logger.info(
+            "Configured model %s differs from default %s", configured, config.MODEL
         )
-    logger.info("Using LLM engine %s", config.MODEL)
+    else:
+        logger.info("Using LLM engine %s", configured)
 
 
 validate_model_configuration()

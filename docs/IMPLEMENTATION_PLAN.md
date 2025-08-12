@@ -1195,9 +1195,9 @@ def from_schema(weave: WeaveResult) -> str:
 
 ---
 
-### K.1 Enforce OpenAI o4-mini for All Agents
+### K.1 Default OpenAI o4-mini for All Agents
 
-> **Objective:** Guarantee every LLM call uses `o4-mini` by default.
+> **Objective:** Use `o4-mini` by default while allowing custom models via configuration.
 
 1. **`src/config.py`**
    - **Field:** `MODEL: str = "openai:o4-mini"`
@@ -1205,14 +1205,14 @@ def from_schema(weave: WeaveResult) -> str:
 
 2. **`src/core/orchestrator.py`**
    - **Method:** `validate_model_configuration()`
-     _Runs at startup to assert `config.MODEL == "openai:o4-mini"`, or raise a clear error._
+     _Logs a warning when the configured model differs from the default._
 
 3. **`src/agents/model_utils.py`**
-   - **Function:** `init_model()` centralizes Pydantic AI model creation.
+   - **Function:** `init_model()` centralizes Pydantic AI model creation.
      _Reads `settings.model` and constructs the provider/model for API calls._
 
 4. **Acceptance:**
-   - Startup log prints “Using LLM engine o4-mini”
+   - Startup log notes the model in use and warns if not `o4-mini`.
    - Unit test in `tests/test_model_config.py` covers a mis-set environment var.
 
 ---
