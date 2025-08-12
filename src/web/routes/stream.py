@@ -60,7 +60,8 @@ def verify_stream_token(request: Request) -> Dict[str, Any]:
 
 @router.get("/stream/token")
 async def issue_stream_token(
-    request: Request, payload: Dict[str, Any] = Depends(verify_jwt)  # noqa: B008
+    request: Request,
+    payload: Dict[str, Any] = Depends(verify_jwt),  # noqa: B008
 ) -> Dict[str, str]:
     """Return a short-lived JWT for authenticating SSE connections."""
 
