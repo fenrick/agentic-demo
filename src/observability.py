@@ -65,7 +65,7 @@ def init_observability() -> None:
     root_logger.addHandler(logfire.LogfireLoggingHandler())
 
     loguru_logger.remove()
-    loguru_logger.add(logfire.loguru_handler())
+    loguru_logger.add(**logfire.loguru_handler())
 
     logfire.instrument_pydantic()
     logfire.instrument_httpx()

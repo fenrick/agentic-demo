@@ -46,7 +46,7 @@ def test_init_observability_enabled(monkeypatch):
         "instrument_system_metrics",
     ]:
         monkeypatch.setattr(logfire, name, lambda *a, **k: None)
-    monkeypatch.setattr(logfire, "loguru_handler", lambda: None)
+    monkeypatch.setattr(logfire, "loguru_handler", lambda: {"sink": None})
     monkeypatch.setattr(loguru_logger, "add", lambda *a, **k: None)
     init_observability()
     assert called is True
@@ -66,7 +66,7 @@ def test_loguru_and_logfire_handlers_aligned(monkeypatch):
     ]:
         monkeypatch.setattr(logfire, name, lambda *a, **k: None)
     monkeypatch.setattr(logfire, "configure", lambda *a, **k: None)
-    monkeypatch.setattr(logfire, "loguru_handler", lambda: None)
+    monkeypatch.setattr(logfire, "loguru_handler", lambda: {"sink": None})
 
     removed = []
     added = []
