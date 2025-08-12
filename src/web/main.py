@@ -15,11 +15,11 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
 
-import core.settings as app_settings
+import config
 from agents.cache_backed_researcher import CacheBackedResearcher
 from agents.researcher_web import TavilyClient
+from config import Settings
 from core.orchestrator import graph_orchestrator
-from core.settings import Settings
 from observability import init_observability, instrument_app
 from persistence.database import get_db_session, init_db
 from web.telemetry import REQUEST_COUNTER
@@ -34,19 +34,18 @@ def create_app() -> FastAPI:
     async def lifespan(app: FastAPI):
         """Manage application startup and shutdown tasks."""
 
-        app.state.settings = app_settings.settings
+        settings = config.load_settings()
+        app.state.settings = settings
 
-        if app_settings.settings.enable_tracing:
+        if settings.enable_tracing:
             instrument_app(app)
 
         # Bind search and fact-checking behaviour depending on offline mode.
-        if app_settings.settings.offline_mode:
+        if settings.offline_mode:
             app.state.research_client = CacheBackedResearcher()
             app.state.fact_check_offline = True
         else:
-            app.state.research_client = TavilyClient(
-                app_settings.settings.tavily_api_key or ""
-            )
+            app.state.research_client = TavilyClient(settings.tavily_api_key or "")
             app.state.fact_check_offline = False
 
         app.state.http = httpx.AsyncClient(timeout=httpx.Timeout(10.0, connect=5.0))
@@ -77,7 +76,7 @@ def create_app() -> FastAPI:
     )
 
     register_routes(app)
-    mount_frontend(app, app_settings.settings)
+    mount_frontend(app)
     return app
 
 
@@ -113,7 +112,7 @@ def mount_frontend(app: FastAPI, settings: Settings | None = None) -> None:
         retrieve settings from ``app.state`` and falls back to global settings.
     """
 
-    settings = settings or getattr(app.state, "settings", app_settings.settings)
+    settings = settings or getattr(app.state, "settings", config.load_settings())
     dist = Path(settings.frontend_dist)
     if not dist.exists():
 
@@ -167,7 +166,7 @@ def main() -> None:
 
     if args.offline:
         os.environ["OFFLINE_MODE"] = "1"
-        app_settings.settings = app_settings.Settings()
+        config.load_settings.cache_clear()
 
     import uvicorn
 
