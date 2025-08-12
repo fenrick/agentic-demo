@@ -1,23 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Toaster as SonnerToaster } from "sonner";
+import { useTheme } from "@primer/react";
 
 export function Toaster() {
-  const [theme, setTheme] = useState<"light" | "dark">(
-    document.documentElement.classList.contains("dark") ? "dark" : "light",
-  );
-
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const newTheme = (e as CustomEvent<"light" | "dark">).detail;
-      setTheme(newTheme);
-    };
-    document.addEventListener("theme-change", handler);
-    return () => document.removeEventListener("theme-change", handler);
-  }, []);
-
-  return <SonnerToaster position="bottom-right" richColors theme={theme} />;
+  const { resolvedColorMode } = useTheme();
+  const theme = resolvedColorMode === "night" ? "dark" : "light";
+return <SonnerToaster position="bottom-right" richColors theme={theme} />;
 }
 
 export default Toaster;
