@@ -49,7 +49,12 @@ class Settings(BaseSettings):
 
 
 # Eagerly validate configuration on import for early failure.
-settings = Settings()
+#
+# Pydantic's ``BaseSettings`` pulls required configuration from environment
+# variables at runtime. Mypy cannot determine that these values will be
+# provided, so we ignore the missing argument error when instantiating the
+# settings object.
+settings = Settings()  # type: ignore[call-arg]
 
 
 __all__ = ["Settings", "settings"]
