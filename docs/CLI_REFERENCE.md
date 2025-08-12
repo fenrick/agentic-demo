@@ -20,7 +20,7 @@ Command-line shortcuts for running the application, executing tests, and handlin
   ./scripts/cli.sh [--verbose] "<topic>"
   ```
 
-  Produces lecture JSON for the topic and saves it to `run_output.md`.
+  Produces a structured lecture in Markdown for the topic and saves it to `run_output.md`.
   `--verbose` shows progress logs. Use `--output` to specify a different
   Markdown file.
 
