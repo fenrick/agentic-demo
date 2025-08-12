@@ -98,3 +98,38 @@ def test_loguru_and_logfire_handlers_aligned(monkeypatch):
 
     assert removed and added
     assert cleared and handlers_added
+
+
+def test_init_observability_handles_missing_httpx(monkeypatch):
+    """HTTPX instrumentation failures do not crash initialization."""
+
+    monkeypatch.setenv("ENABLE_TRACING", "1")
+    monkeypatch.setattr("observability.install_auto_tracing", lambda: None)
+    monkeypatch.setattr(logfire, "configure", lambda *a, **k: None)
+    monkeypatch.setattr(logfire, "loguru_handler", lambda: {"sink": None})
+    for name in [
+        "instrument_pydantic",
+        "instrument_sqlalchemy",
+        "instrument_sqlite3",
+        "instrument_system_metrics",
+    ]:
+        monkeypatch.setattr(logfire, name, lambda *a, **k: None)
+
+    monkeypatch.setattr(loguru_logger, "remove", lambda *a, **k: None)
+    monkeypatch.setattr(loguru_logger, "add", lambda *a, **k: None)
+
+    class HandlerList(list):
+        def clear(self):  # type: ignore[override]
+            super().clear()
+
+    root_logger = types.SimpleNamespace(
+        handlers=HandlerList(), addHandler=lambda _h: None
+    )
+    monkeypatch.setattr(logging, "getLogger", lambda: root_logger)
+
+    def _raise(*_a, **_k):
+        raise RuntimeError("missing httpx instrumentation")
+
+    monkeypatch.setattr(logfire, "instrument_httpx", _raise)
+
+    init_observability()  # Should not raise

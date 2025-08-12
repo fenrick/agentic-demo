@@ -1,13 +1,20 @@
 """Application entrypoint for the FastAPI server."""
 
+# flake8: noqa
 # ruff: noqa: E402
+
 from __future__ import annotations
+
+from observability import init_observability  # isort: skip_file
+
+init_observability()
 
 import argparse
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+from observability import instrument_app
 import httpx
 from fastapi import APIRouter, Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,11 +27,8 @@ from agents.cache_backed_researcher import CacheBackedResearcher
 from agents.researcher_web import TavilyClient
 from config import Settings
 from core.orchestrator import graph_orchestrator
-from observability import init_observability, instrument_app
 from persistence.database import get_db_session, init_db
 from web.telemetry import REQUEST_COUNTER
-
-init_observability()
 
 
 def create_app() -> FastAPI:
