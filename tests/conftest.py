@@ -47,26 +47,7 @@ tiktoken_stub.get_encoding = (  # type: ignore[attr-defined]
 sys.modules.setdefault("tiktoken", tiktoken_stub)
 
 
-# Provide an ``opentelemetry`` tracer that acts as a no-op context manager.
-
-
-class _Tracer:
-    def start_as_current_span(self, _name):  # pragma: no cover - simple stub
-        class _Span:
-            def __enter__(self):
-                return None
-
-            def __exit__(self, exc_type, exc, tb):
-                pass
-
-        return _Span()
-
-
-opentelemetry_stub = types.ModuleType("opentelemetry")
-opentelemetry_stub.trace = types.SimpleNamespace(  # type: ignore[attr-defined]
-    get_tracer=lambda _name: _Tracer()
-)
-sys.modules.setdefault("opentelemetry", opentelemetry_stub)
+# Real opentelemetry packages are installed; no stubs required.
 
 # Minimal logfire replacement
 logfire_stub = types.ModuleType("logfire")

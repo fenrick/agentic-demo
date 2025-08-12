@@ -68,7 +68,10 @@ def init_observability() -> None:
     loguru_logger.add(**logfire.loguru_handler())
 
     logfire.instrument_pydantic()
-    logfire.instrument_httpx()
+    try:
+        logfire.instrument_httpx()
+    except RuntimeError as exc:
+        logging.getLogger(__name__).warning("HTTPX instrumentation disabled: %s", exc)
     logfire.instrument_sqlalchemy()
     logfire.instrument_sqlite3()
     logfire.instrument_system_metrics()
