@@ -95,7 +95,13 @@ class LogfireLoggingHandler:  # pragma: no cover - simple placeholder
 
 
 logfire_stub.LogfireLoggingHandler = LogfireLoggingHandler  # type: ignore[attr-defined]
-logfire_stub.loguru_handler = LogfireLoggingHandler  # type: ignore[attr-defined]
+
+
+def _loguru_handler():  # pragma: no cover - simple placeholder
+    return {"sink": LogfireLoggingHandler()}
+
+
+logfire_stub.loguru_handler = _loguru_handler  # type: ignore[attr-defined]
 sys.modules.setdefault("logfire", logfire_stub)
 
 # Minimal loguru replacement
