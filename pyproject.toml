@@ -39,6 +39,7 @@ dependencies = [
     "opentelemetry-instrumentation-sqlalchemy (>=0.57b0,<0.58)",
     "opentelemetry-instrumentation-sqlite3 (>=0.57b0,<0.58)",
     "opentelemetry-instrumentation-urllib (>=0.57b0,<0.58)",
+    "opentelemetry-instrumentation-system-metrics (>=0.57b0,<0.58)",
 ]
 
 [build-system]
