@@ -6,6 +6,8 @@ import asyncio
 import sys
 import types
 
+from cli.generate_lecture import save_markdown
+
 
 def test_generate(monkeypatch):
     """_generate returns final graph state."""
@@ -66,3 +68,30 @@ def test_main_writes_output(monkeypatch, tmp_path):
     generate_lecture.main()
     content = (tmp_path / "out.md").read_text()
     assert "demo" in content
+
+
+def test_save_markdown_formats_lecture(tmp_path):
+    """save_markdown renders structured lecture Markdown when modules exist."""
+    payload = {
+        "modules": [
+            {
+                "id": "m1",
+                "title": "Demo",
+                "duration_min": 10,
+                "learning_objectives": ["lo1"],
+                "activities": [
+                    {
+                        "type": "Lecture",
+                        "description": "desc",
+                        "duration_min": 5,
+                        "learning_objectives": [],
+                    }
+                ],
+            }
+        ]
+    }
+    out = tmp_path / "lecture.md"
+    save_markdown(out, "Demo", payload)
+    text = out.read_text()
+    assert "## Learning Objectives" in text
+    assert "- lo1" in text
