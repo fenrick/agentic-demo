@@ -18,7 +18,7 @@ def test_main_logs_stream_boundaries(monkeypatch, caplog, tmp_path):
 
     from cli import generate_lecture
 
-    async def fake_generate(topic: str):
+    async def fake_generate(topic: str, verbose: bool = False):
         return {"result": "ok"}
 
     def fake_parse_args():
