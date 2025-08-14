@@ -20,13 +20,18 @@ class RetryableError(RuntimeError):
 
 
 async def call_openai_function(
-    prompt: str, sources: Sequence[Citation] | None = None
+    prompt: str,
+    sources: Sequence[Citation] | None = None,
+    instructions: Sequence[str] | None = None,
 ) -> AsyncGenerator[str, None]:
     """Invoke an LLM via Pydantic AI and yield streamed tokens.
 
     Args:
         prompt: Prompt passed to the agent.
         sources: Optional citation metadata to provide additional context.
+        instructions: Optional override instructions for the agent. When
+            provided, default instructions including JSON schema enforcement
+            are skipped.
     """
 
     try:
@@ -51,31 +56,33 @@ async def call_openai_function(
 
         return empty()
 
-    schema = json.dumps(WeaveResult.model_json_schema(), indent=2)
-    instructions: list[str] = []
-    if sources:
-        lines = []
-        for src in sources:
-            if src.title and src.licence and src.retrieved_at:
-                lines.append(
-                    f"- {src.title} ({src.url}) – {src.licence} retrieved"
-                    f" {src.retrieved_at}"
+    if instructions is None:
+        schema = json.dumps(WeaveResult.model_json_schema(), indent=2)
+        instructions = []
+        if sources:
+            lines = []
+            for src in sources:
+                if src.title and src.licence and src.retrieved_at:
+                    lines.append(
+                        f"- {src.title} ({src.url}) – {src.licence} retrieved"
+                        f" {src.retrieved_at}"
+                    )
+            if lines:
+                context = "\n".join(lines)
+                instructions.append(
+                    "Use only the following sources. If a claim is not supported here, "
+                    "write it cautiously and avoid definitive language.\n"
+                    + context
                 )
-        if lines:
-            context = "\n".join(lines)
-            instructions.append(
-                "Use only the following sources. If a claim is not supported here, "
-                "write it cautiously and avoid definitive language.\n"
-                + context
-            )
-    instructions.extend(
-        [
-            get_prompt("content_weaver_system"),
-            "Ensure the total duration equals the sum of activity durations.",
-            f"Output must conform to this JSON schema:\n{schema}",
-        ]
-    )
-    agent = Agent(model=model, instructions=instructions)
+        instructions.extend(
+            [
+                get_prompt("content_weaver_system"),
+                "Ensure the total duration equals the sum of activity durations.",
+                f"Output must conform to this JSON schema:\n{schema}",
+            ]
+        )
+
+    agent = Agent(model=model, instructions=list(instructions))
 
     async def generator() -> AsyncGenerator[str, None]:
         async with agent.run_stream(prompt) as response:  # pragma: no cover - streaming
@@ -119,14 +126,36 @@ async def content_weaver(state: State, section_id: int | None = None) -> WeaveRe
 
         # Guardrail: ensure speaker notes provide sufficient material
         word_count = len(weave.speaker_notes.split()) if weave.speaker_notes else 0
-        if word_count < 1200:
-            prompt = (
-                f"{base_prompt}\n"
-                "Expand speaker_notes to 1500–2500 words with slide-scoped sections; "
-                "keep JSON identical otherwise."
+        if word_count < 1200 and attempt == 0:
+            rewrite_prompt = (
+                f"{raw}\n\n"
+                "Rewrite the 'speaker_notes' field to 1500–2500 words with "
+                "slide-scoped sections. Return only the rewritten "
+                "speaker_notes text."
             )
-            error = "speaker notes too short"
-            continue
+            rewrite_stream = await call_openai_function(
+                rewrite_prompt,
+                instructions=[
+                    (
+                        "Rewrite the provided 'speaker_notes' to 1500–2500 words with "
+                        "slide-scoped sections."
+                    ),
+                    "Return only the rewritten speaker_notes text, without JSON.",
+                ],
+            )
+            rewrite_tokens: list[str] = []
+            async for token in rewrite_stream:
+                rewrite_tokens.append(token)
+                stream_messages(token)
+            weave.speaker_notes = "".join(rewrite_tokens).strip()
+            word_count = len(weave.speaker_notes.split())
+            if word_count < 1200:
+                stream_debug(
+                    "Speaker notes remain short after rewrite; proceeding anyway"
+                )
+        elif word_count < 1200:
+            stream_debug("Speaker notes remain short after rewrite; proceeding anyway")
+        # Continue with duration checks regardless of speaker note length
 
         # Guardrail: verify activity timings sum to declared duration
         total = sum(act.duration_min for act in weave.activities)
