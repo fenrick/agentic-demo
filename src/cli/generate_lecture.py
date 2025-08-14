@@ -147,7 +147,6 @@ def main() -> None:
             raise SystemExit(f"Error generating lecture: {exc}") from exc
         if args.verbose:
             stream_messages("LLM response stream complete: %s" % json.dumps(payload))
-        print(json.dumps(payload, indent=2))
         output_name = f"{args.output.stem}_{slugify(portfolio)}{args.output.suffix}"
         output_path = args.output.parent / output_name
         save_markdown(output_path, topic, payload)
