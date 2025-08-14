@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections import defaultdict
 from collections.abc import AsyncIterator
 from typing import Any, Callable, DefaultDict, List
@@ -63,15 +64,27 @@ async def subscribe(channel: str, *, max_queue: int = 100) -> AsyncIterator[Any]
 
 
 def stream_messages(token: str) -> None:
-    """Forward ``token`` over the ``messages`` channel."""
+    """Forward ``token`` over the ``messages`` channel and log it."""
 
-    stream("messages", token)
+    stream("messages", token, fallback=_log_message)
 
 
 def stream_debug(message: str) -> None:
-    """Forward ``message`` over the ``debug`` channel."""
+    """Forward ``message`` over the ``debug`` channel and log it."""
 
-    stream("debug", message)
+    stream("debug", message, fallback=_log_debug)
+
+
+def _log_message(_channel: str, payload: Any) -> None:
+    """Emit ``payload`` to the logger as a ``messages`` event."""
+
+    logging.getLogger(__name__).info("[messages] %s", payload)
+
+
+def _log_debug(_channel: str, payload: Any) -> None:
+    """Emit ``payload`` to the logger as a ``debug`` event."""
+
+    logging.getLogger(__name__).debug("[debug] %s", payload)
 
 
 __all__ = ["stream", "subscribe", "stream_messages", "stream_debug"]

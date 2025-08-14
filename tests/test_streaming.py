@@ -23,6 +23,15 @@ def test_stream_uses_fallback(caplog):
     assert "[messages] hi" in caplog.text
 
 
+def test_stream_messages_logs(caplog):
+    """``stream_messages`` should log tokens for CLI visibility."""
+
+    with caplog.at_level(logging.INFO, logger="agents.streaming"):
+        streaming.stream_messages("hello")
+
+    assert "[messages] hello" in caplog.text
+
+
 @pytest.mark.asyncio
 async def test_stream_broadcasts_to_subscribers() -> None:
     async def reader():

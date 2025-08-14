@@ -26,10 +26,7 @@ from agents.planner import run_planner
 from agents.researcher_web_node import run_researcher_web
 from agents.streaming import stream as publish
 from core.logging import get_logger
-from core.policies import (
-    policy_retry_on_critic_failure,
-    policy_retry_on_low_confidence,
-)
+from core.policies import policy_retry_on_low_confidence
 from core.state import State
 from metrics.collector import MetricsCollector
 from metrics.repository import MetricsRepository
