@@ -10,7 +10,7 @@ from typing import List
 from docx import Document as DocumentFactory
 from docx.document import Document
 
-from agents.models import Activity, AssessmentItem, Citation, SlideBullet, WeaveResult
+from agents.models import AssessmentItem, Citation, Slide, WeaveResult
 
 
 class DocxExporter:
@@ -46,14 +46,12 @@ class DocxExporter:
         if row is None:
             raise ValueError("lecture not found")
         data = json.loads(row[0])
-        activities = [Activity(**a) for a in data.get("activities", [])]
-        slide_bullets = [SlideBullet(**s) for s in data.get("slide_bullets", [])]
+        slides = [Slide(**s) for s in data.get("slides", [])]
         assessment = [AssessmentItem(**a) for a in data.get("assessment", [])]
         references = [Citation(**c) for c in data.get("references", [])]
         return WeaveResult(
             title=data["title"],
             learning_objectives=data.get("learning_objectives", []),
-            activities=activities,
             duration_min=data.get("duration_min", 0),
             author=data.get("author"),
             date=data.get("date"),
@@ -61,8 +59,7 @@ class DocxExporter:
             summary=data.get("summary"),
             tags=data.get("tags"),
             prerequisites=data.get("prerequisites"),
-            slide_bullets=slide_bullets or None,
-            speaker_notes=data.get("speaker_notes"),
+            slides=slides or None,
             assessment=assessment or None,
             references=references or None,
         )
@@ -103,21 +100,17 @@ class DocxExporter:
             doc.add_heading("Prerequisites", level=1)
             for item in lecture.prerequisites:
                 doc.add_paragraph(item, style="List Bullet")
-        if lecture.activities:
-            doc.add_heading("Activities", level=1)
-            for act in lecture.activities:
-                desc = f"{act.type} ({act.duration_min} min): {act.description}"
-                if act.learning_objectives:
-                    desc += f" — objectives: {', '.join(act.learning_objectives)}"
-                doc.add_paragraph(desc, style="List Bullet")
-        if lecture.slide_bullets:
-            for slide in lecture.slide_bullets:
+        if lecture.slides:
+            for slide in lecture.slides:
                 doc.add_heading(f"Slide {slide.slide_number}", level=1)
-                for bullet in slide.bullets:
+                for bullet in slide.copy.bullet_points if slide.copy else []:
                     doc.add_paragraph(bullet, style="List Bullet")
-        if lecture.speaker_notes:
-            doc.add_heading("Speaker Notes", level=1)
-            doc.add_paragraph(lecture.speaker_notes)
+                if slide.visualization:
+                    doc.add_heading("Visualisation Notes", level=2)
+                    doc.add_paragraph(slide.visualization.notes)
+                if slide.speaker_notes:
+                    doc.add_heading("Speaker Notes", level=2)
+                    doc.add_paragraph(slide.speaker_notes.notes)
         if lecture.assessment:
             doc.add_heading("Assessment", level=1)
             for item in lecture.assessment:

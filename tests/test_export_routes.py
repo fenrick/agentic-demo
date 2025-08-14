@@ -104,7 +104,6 @@ def test_download_routes_return_content(tmp_path: Path) -> None:
     lecture = {
         "title": "Demo",
         "learning_objectives": ["lo"],
-        "activities": [{"type": "Lecture", "description": "desc", "duration_min": 5}],
         "duration_min": 5,
         "references": [
             {

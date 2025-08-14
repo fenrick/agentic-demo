@@ -25,7 +25,7 @@ def test_render_pdf_requires_weasyprint(monkeypatch: pytest.MonkeyPatch) -> None
 def test_pdf_exporter_includes_markdown_content(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """export produces HTML containing slide bullets and speaker notes."""
+    """export produces HTML containing slide content and notes."""
 
     db_path = tmp_path / "lecture.db"
     conn = sqlite3.connect(db_path)
@@ -35,10 +35,15 @@ def test_pdf_exporter_includes_markdown_content(
     lecture = {
         "title": "Demo",
         "learning_objectives": ["lo"],
-        "activities": [{"type": "Lecture", "description": "desc", "duration_min": 5}],
         "duration_min": 5,
-        "slide_bullets": [{"slide_number": 1, "bullets": ["point"]}],
-        "speaker_notes": "notes",
+        "slides": [
+            {
+                "slide_number": 1,
+                "copy": {"bullet_points": ["point"]},
+                "visualization": {"notes": "visual"},
+                "speaker_notes": {"notes": "notes"},
+            }
+        ],
     }
     conn.execute(
         "INSERT INTO lectures VALUES (?,?,datetime('now'))",
@@ -60,4 +65,5 @@ def test_pdf_exporter_includes_markdown_content(
     assert pdf_bytes == b"%PDF"
     html = captured["html"]
     assert "Slide 1" in html
+    assert "Visualisation Notes" in html
     assert "Speaker Notes" in html

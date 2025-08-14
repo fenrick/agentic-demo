@@ -188,7 +188,7 @@ Each node module defines a single `async` handler function and its input/output 
 - **Function `run_content_weaver(state: State) → WeaveResult`**
   - Call LLM, apply JSON schema, stream back draft outline tokens.
 
-- **Pedagogy Critic & Fact Checker**
+- **Editor & Final Reviewer**
 
 - **File:** `critics.py`
 - **Function `run_pedagogy_critic(state: State) → CritiqueReport`**
@@ -386,17 +386,20 @@ Once `researcher_pipeline` returns `List[Citation]`, the orchestrator will:
 
 ## D. Content Synthesis
 
-1. **JSON Schema for Lecture**
-   1.1. Write `lecture_schema.json` specifying required fields:
+1. **JSON Schema for Session**
+   1.1. Write `session_schema.json` specifying required fields and optional pedagogical metadata:
 
 ```json
 {
  "type":"object",
  "properties": {
  "learning_objectives": { "type":"array", "items": { "type":"string" } },
+ "session_type": { "type":"string" },
+ "pedagogical_styles": { "type":"array", "items": { "type":"string" } },
+ "learning_methods": { "type":"array", "items": { "type":"string" } },
  …
  },
- "required": ["learning_objectives","activities","duration_min"]
+ "required": ["learning_objectives","duration_min"]
 }
 ```
 
@@ -415,7 +418,7 @@ Once `researcher_pipeline` returns `List[Citation]`, the orchestrator will:
 
 ```python
 def from_schema(weave: WeaveResult) -> str:
- # build markdown sections: ## Objectives, ### Activity
+ # build markdown sections: ## Objectives
  …
 ```
 
@@ -427,7 +430,7 @@ def from_schema(weave: WeaveResult) -> str:
 
 ---
 
-### E.1 Pedagogy Critic Agent
+### E.1 Editor Agent
 
 **File:** `src/agents/pedagogy_critic.py`
 **Purpose:** Analyse the draft outline against a pedagogical rubric (Bloom’s taxonomy, activity variety, cognitive load).
@@ -437,7 +440,7 @@ def from_schema(weave: WeaveResult) -> str:
   • Takes the current `state.outline` and returns a `CritiqueReport` summarising gaps and recommendations.
 
 - **`analyze_bloom_coverage(outline: Outline) → BloomCoverageReport`**
-  • Maps each learning objective and activity to one of Bloom’s six levels.
+  • Maps each learning objective to one of Bloom’s six levels.
   • Flags any missing levels and computes a coverage score.
 
 - **`evaluate_activity_diversity(outline: Outline) → ActivityDiversityReport`**
@@ -492,7 +495,7 @@ def from_schema(weave: WeaveResult) -> str:
   • Updates `state.retry_counts[section_id]`.
 
 - **`get_sections_to_regenerate(report) → List[SectionIdentifier]`**
-  • Extracts the IDs or indices of outline paragraphs/activities that failed checks.
+  • Extracts the IDs or indices of outline paragraphs that failed checks.
 
 - **`increment_retry_count(state: State, section_id: SectionIdentifier) → None`**
   • Increments a counter in `state.metadata` so we can enforce a max-3 retry policy.
@@ -680,7 +683,7 @@ def from_schema(weave: WeaveResult) -> str:
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `export(workspace_id: str) → str`                  | • Load latest outline, metadata, citations from SQLite. • Invoke `build_front_matter`, `render_outline`, `embed_citations`. • Return full Markdown document. |
 | `build_front_matter(metadata: dict) → str`         | • Generate YAML front-matter (topic, model, commit SHA, date).• Ensures downstream tools (Pandoc) recognise metadata.                                        |
-| `render_outline(outline: Outline) → str`           | • Walk the structured `Outline` model.• Emit headings (`##`, `###`) and bullet lists for objectives, activities, notes.                                      |
+| `render_outline(outline: Outline) → str`           | • Walk the structured `Outline` model.• Emit headings (`##`, `###`) and bullet lists for objectives and notes.                                      |
 | `embed_citations(citations: List[Citation]) → str` | • Append footnote markers in text.• Render a “## Bibliography” section with numbered entries.                                                                |
 
 **Tests:** `tests/test_markdown_exporter.py`
@@ -1331,5 +1334,30 @@ def from_schema(weave: WeaveResult) -> str:
 5. **Acceptance:**
    - Network interruption triggers the toast and automatic reconnection attempts.
    - Once reconnected, a brief “Reconnected” message appears and normal SSE events resume.
+
+---
+
+### L. Document Graph & Progressive Authoring
+
+> **Objective:** Capture research, planning, and slide content in a graph to enable incremental edits.
+
+1. **`src/core/document_graph.py`**
+   - **Function:** `build_document_graph(state: State) -> DocumentDAG`
+     _Create nodes for research results, modules, and slides (copy, visualization, speaker notes)._ 
+   - **Acceptance:** tests verify node relationships and keyword propagation.
+
+2. **`src/core/state.py`**
+   - **Field:** `document_graph: DocumentDAG | None`
+     _Persist graph snapshots during checkpointing._
+   - **Acceptance:** round-trip serialization retains the graph structure.
+
+3. **Authoring Nodes**
+   - **Planner/Learning Advisor:** attach learning outcomes and pedagogical intent.
+   - **Content Weaver:** emit slide nodes with per-slide components.
+   - **Editor/Rewriter:** update specific nodes without regenerating upstream steps.
+   - **Quality Check:** compute final consistency score and append to root node.
+
+4. **Documentation**
+   - Update README, ARCHITECTURE.md, and DESIGN.md with authoring workflow and graph details.
 
 ---

@@ -7,6 +7,7 @@ import sqlite3
 from dataclasses import dataclass
 
 from config import settings
+from core.document_graph import build_document_dag
 from core.state import ActionLog, State
 from export.docx_exporter import DocxExporter
 from export.markdown_exporter import MarkdownExporter
@@ -53,6 +54,10 @@ async def run_exporter(state: State) -> ExportStatus:
     exported: dict[str, str] = {}
 
     try:
+        # Materialise the document graph before exporting so downstream
+        # consumers can traverse per-slide content.
+        state.document_graph = build_document_dag(state.modules, state.research_results)
+
         md = MarkdownExporter(str(db_path)).export(workspace_id)
         md_path = export_dir / "lecture.md"
         md_path.write_text(md, encoding="utf-8")
