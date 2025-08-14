@@ -81,9 +81,7 @@ def save_markdown(output: Path, topic: str, payload: Dict[str, Any]) -> None:
 def main() -> None:
     """Entry point for console scripts."""
     args = parse_args()
-    from observability import init_observability, install_auto_tracing
-
-    install_auto_tracing()
+    from observability import init_observability
     init_observability()
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
