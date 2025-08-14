@@ -11,29 +11,39 @@ from cli.generate_lecture import save_markdown
 
 
 def test_generate(monkeypatch):
-    """_generate returns final graph state."""
+    """_generate returns final graph state and initializes the database."""
 
     async def fake_run(state):  # type: ignore[unused-argument]
-        state.title = "Test"
+        assert state.workspace_id == "ws"
+        state.version = 99
 
     fake_graph = types.SimpleNamespace(run=fake_run)
 
     monkeypatch.setitem(
         sys.modules,
         "core.orchestrator",
-        types.SimpleNamespace(graph=fake_graph),
+        types.SimpleNamespace(graph_orchestrator=fake_graph),
     )
 
-    from cli.generate_lecture import _generate
+    from cli import generate_lecture
 
-    result = asyncio.run(_generate("topic"))
-    assert result["title"] == "Test"
+    called = {"value": False}
+
+    async def fake_init_db() -> None:
+        called["value"] = True
+
+    monkeypatch.setattr(generate_lecture, "init_db", fake_init_db)
+
+    result = asyncio.run(generate_lecture._generate("topic", "ws"))
+    assert result["version"] == 99
+    assert called["value"] is True
 
 
 def test_generate_verbose_streams_progress(monkeypatch, caplog):
     """_generate streams progress messages when verbose."""
 
     async def fake_stream(state):  # type: ignore[unused-argument]
+        assert state.workspace_id == "ws"
         logging.getLogger("core.orchestrator").info("progress for %s", state.prompt)
         yield {"type": "action", "payload": "X"}
 
@@ -42,13 +52,18 @@ def test_generate_verbose_streams_progress(monkeypatch, caplog):
     monkeypatch.setitem(
         sys.modules,
         "core.orchestrator",
-        types.SimpleNamespace(graph=fake_graph),
+        types.SimpleNamespace(graph_orchestrator=fake_graph),
     )
 
-    from cli.generate_lecture import _generate
+    from cli import generate_lecture
+
+    async def fake_init_db() -> None:
+        return None
+
+    monkeypatch.setattr(generate_lecture, "init_db", fake_init_db)
 
     with caplog.at_level(logging.INFO):
-        asyncio.run(_generate("topic", verbose=True))
+        asyncio.run(generate_lecture._generate("topic", "ws", verbose=True))
 
     assert "progress for topic" in caplog.text
 
@@ -89,8 +104,10 @@ def test_main_writes_output(monkeypatch, tmp_path):
     fake_observability.install_auto_tracing = lambda: None
     sys.modules["observability"] = fake_observability
 
-    async def fake_generate(topic: str, verbose: bool = False) -> dict[str, str]:
-        return {"result": topic}
+    async def fake_generate(
+        topic: str, workspace_id: str, verbose: bool = False
+    ) -> dict[str, str]:
+        return {"result": topic, "workspace": workspace_id}
 
     def fake_parse_args() -> types.SimpleNamespace:
         return types.SimpleNamespace(
