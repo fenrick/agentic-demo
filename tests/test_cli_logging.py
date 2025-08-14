@@ -22,7 +22,12 @@ def test_main_logs_stream_boundaries(monkeypatch, caplog, tmp_path):
         return {"result": "ok"}
 
     def fake_parse_args():
-        return SimpleNamespace(topic="demo", verbose=True, output=tmp_path / "out.md")
+        return SimpleNamespace(
+            topic="demo",
+            verbose=True,
+            output=tmp_path / "out.md",
+            portfolios=["Education"],
+        )
 
     monkeypatch.setattr(generate_lecture, "_generate", fake_generate)
     monkeypatch.setattr(generate_lecture, "parse_args", fake_parse_args)

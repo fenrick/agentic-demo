@@ -34,11 +34,24 @@ def test_parse_args_verbose(monkeypatch):
 
     from cli.generate_lecture import parse_args
 
-    monkeypatch.setattr(sys, "argv", ["prog", "topic", "--verbose"])
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "prog",
+            "topic",
+            "--verbose",
+            "--portfolio",
+            "STEM",
+            "--portfolio",
+            "Education",
+        ],
+    )
     args = parse_args()
     assert args.verbose is True
     assert args.topic == "topic"
     assert args.output.name == "run_output.md"
+    assert args.portfolios == ["STEM", "Education"]
 
 
 def test_main_writes_output(monkeypatch, tmp_path):
@@ -57,7 +70,10 @@ def test_main_writes_output(monkeypatch, tmp_path):
 
     def fake_parse_args() -> types.SimpleNamespace:
         return types.SimpleNamespace(
-            topic="demo", verbose=False, output=tmp_path / "out.md"
+            topic="demo",
+            verbose=False,
+            output=tmp_path / "out.md",
+            portfolios=["Research & Innovation"],
         )
 
     from cli import generate_lecture
@@ -65,8 +81,11 @@ def test_main_writes_output(monkeypatch, tmp_path):
     monkeypatch.setattr(generate_lecture, "_generate", fake_generate)
     monkeypatch.setattr(generate_lecture, "parse_args", fake_parse_args)
 
+    from cli.generate_lecture import slugify
+
     generate_lecture.main()
-    content = (tmp_path / "out.md").read_text()
+    out_file = tmp_path / f"out_{slugify('Research & Innovation')}.md"
+    content = out_file.read_text()
     assert "demo" in content
 
 

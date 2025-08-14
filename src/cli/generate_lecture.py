@@ -15,6 +15,20 @@ from agents.models import Activity, Citation, WeaveResult
 from agents.streaming import stream_messages
 from export.markdown import from_weave_result
 
+PORTFOLIOS_ALL = [
+    "Research & Innovation",
+    "Education",
+    "STEM",
+    "Design & Social Context",
+    "Business & Law",
+    "Vocational Education",
+]
+
+
+def slugify(text: str) -> str:
+    """Create a filesystem-friendly slug from ``text``."""
+    return text.lower().replace("&", "and").replace("/", " ").replace(" ", "_")
+
 
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
@@ -34,7 +48,16 @@ def parse_args() -> argparse.Namespace:
         default=Path("run_output.md"),
         help="Path to the output markdown file",
     )
-    return parser.parse_args()
+    parser.add_argument(
+        "--portfolio",
+        dest="portfolios",
+        action="append",
+        help="Portfolio to target. May be used multiple times.",
+    )
+    args = parser.parse_args()
+    if not args.portfolios:
+        args.portfolios = PORTFOLIOS_ALL
+    return args
 
 
 async def _generate(topic: str) -> Dict[str, Any]:
@@ -85,15 +108,20 @@ def main() -> None:
     init_observability()
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
-        stream_messages("LLM response stream start")
-    try:
-        payload = asyncio.run(_generate(args.topic))
-    except Exception as exc:  # pragma: no cover - defensive
-        raise SystemExit(f"Error generating lecture: {exc}") from exc
-    if args.verbose:
-        stream_messages("LLM response stream complete: %s" % json.dumps(payload))
-    print(json.dumps(payload, indent=2))
-    save_markdown(args.output, args.topic, payload)
+    for portfolio in args.portfolios:
+        topic = f"{args.topic} for {portfolio}"
+        if args.verbose:
+            stream_messages("LLM response stream start")
+        try:
+            payload = asyncio.run(_generate(topic))
+        except Exception as exc:  # pragma: no cover - defensive
+            raise SystemExit(f"Error generating lecture: {exc}") from exc
+        if args.verbose:
+            stream_messages("LLM response stream complete: %s" % json.dumps(payload))
+        print(json.dumps(payload, indent=2))
+        output_name = f"{args.output.stem}_{slugify(portfolio)}{args.output.suffix}"
+        output_path = args.output.parent / output_name
+        save_markdown(output_path, topic, payload)
 
 
 if __name__ == "__main__":
