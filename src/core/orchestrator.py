@@ -139,7 +139,8 @@ class Node:
 PROGRESS_MESSAGES: Dict[str, str] = {
     "Planner": "Sketching the roadmap for {topic}",
     "Researcher-Web": "Scouting resources on {topic}",
-    "Content-Weaver": "Weaving content from different sources for {topic}",
+    "Content-Weaver-1": "Weaving content from different sources for {topic}",
+    "Content-Weaver-2": "Updating content from different sources for {topic}",
     "Pedagogy-Critic": "Assessing learning outcomes for {topic}",
     "Fact-Checker": "Verifying facts about {topic}",
     "Human-In-Loop": "Inviting human insight on {topic}",
@@ -152,46 +153,35 @@ def build_main_flow() -> List[Node]:
 
     def planner_condition(result: PlanResult, state: State) -> Optional[str]:
         decision = policy_retry_on_low_confidence(result, state)
-        return "Researcher-Web" if decision == "loop" else "Content-Weaver"
-
-    def pedagogy_condition(report: Any, state: State) -> Optional[str]:
-        return (
-            "Content-Weaver"
-            if policy_retry_on_critic_failure(report, state)
-            else "Fact-Checker"
-        )
-
-    def factcheck_condition(report: Any, state: State) -> Optional[str]:
-        return (
-            "Content-Weaver"
-            if policy_retry_on_critic_failure(report, state)
-            else "Human-In-Loop"
-        )
+        return "Researcher-Web" if decision == "loop" else "Content-Weaver-1"
 
     return [
         Node(
             "Planner",
             wrap_with_tracing(run_planner),
-            "Content-Weaver",
+            "Content-Weaver-1",
             planner_condition,
         ),
         Node("Researcher-Web", wrap_with_tracing(run_researcher_web), "Planner"),
         Node(
-            "Content-Weaver",
+            "Content-Weaver-1",
             wrap_with_tracing(run_content_weaver),
             "Pedagogy-Critic",
         ),
         Node(
             "Pedagogy-Critic",
             wrap_with_tracing(run_pedagogy_critic),
+            "Content-Weaver-2",
+        ),
+        Node(
+            "Content-Weaver-2",
+            wrap_with_tracing(run_content_weaver),
             "Fact-Checker",
-            pedagogy_condition,
         ),
         Node(
             "Fact-Checker",
             wrap_with_tracing(run_fact_checker),
-            "Human-In-Loop",
-            factcheck_condition,
+            "Exporter",
         ),
         Node("Human-In-Loop", wrap_with_tracing(run_approver), "Exporter"),
         Node("Exporter", wrap_with_tracing(run_exporter), None),

@@ -124,12 +124,17 @@ def from_weave_result(weave: WeaveResult, citations: List[Citation]) -> str:
         front_matter_lines.append(f"date: {weave.date}")
     if weave.version:
         front_matter_lines.append(f"version: {weave.version}")
+    if weave.duration_min:
+        front_matter_lines.append(f"duration_min: {weave.duration_min}")
     if weave.tags:
         tags = ", ".join(weave.tags)
         front_matter_lines.append(f"tags: [{tags}]")
     front_matter_lines.append("---\n")
 
     doc_parts: List[str] = ["\n".join(front_matter_lines)]
+
+    if weave.duration_min:
+        doc_parts.append(render_section("Duration", f"{weave.duration_min} min"))
 
     if weave.summary:
         doc_parts.append(render_section("Summary", weave.summary))

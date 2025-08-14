@@ -27,6 +27,7 @@ _meter_provider = MeterProvider(metric_readers=[_prometheus_reader])
 set_meter_provider(_meter_provider)
 meter = get_meter_provider().get_meter("lecture_builder")
 
+
 def init_observability() -> None:
     """Configure Logfire and instrument global libraries.
 
