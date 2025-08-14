@@ -11,7 +11,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict
 
-from agents.models import Activity, Citation, WeaveResult
+from agents.models import (
+    Activity,
+    AssessmentItem,
+    Citation,
+    SlideBullet,
+    WeaveResult,
+)
 from agents.streaming import stream_messages
 from export.markdown import from_weave_result
 
@@ -55,11 +61,24 @@ def save_markdown(output: Path, topic: str, payload: Dict[str, Any]) -> None:
     try:
         module = payload.get("modules", [])[-1]
         activities = [Activity(**a) for a in module.get("activities", [])]
+        slide_bullets = [SlideBullet(**s) for s in module.get("slide_bullets", [])]
+        assessment = [AssessmentItem(**a) for a in module.get("assessment", [])]
+        references = [Citation(**c) for c in module.get("references", [])]
         weave = WeaveResult(
             title=module.get("title", topic),
             learning_objectives=module.get("learning_objectives", []),
             activities=activities,
             duration_min=module.get("duration_min", 0),
+            author=module.get("author"),
+            date=module.get("date"),
+            version=module.get("version"),
+            summary=module.get("summary"),
+            tags=module.get("tags"),
+            prerequisites=module.get("prerequisites"),
+            slide_bullets=slide_bullets or None,
+            speaker_notes=module.get("speaker_notes"),
+            assessment=assessment or None,
+            references=references or None,
         )
         citations = [Citation(**c) for c in payload.get("sources", [])]
         markdown_body = from_weave_result(weave, citations)
@@ -82,6 +101,7 @@ def main() -> None:
     """Entry point for console scripts."""
     args = parse_args()
     from observability import init_observability
+
     init_observability()
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)

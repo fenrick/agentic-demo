@@ -187,12 +187,6 @@ async def run_content_weaver(state: State, section_id: int | None = None) -> Mod
     """
 
     weave = await content_weaver(state, section_id=section_id)
-    module = Module(
-        id=f"m{len(state.modules) + 1}",
-        title=weave.title,
-        duration_min=weave.duration_min,
-        learning_objectives=weave.learning_objectives,
-        activities=weave.activities,
-    )
+    module = Module(id=f"m{len(state.modules) + 1}", **weave.model_dump())
     state.modules.append(module)
     return module

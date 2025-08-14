@@ -9,7 +9,7 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel, Field, HttpUrl
 from pydantic.dataclasses import dataclass
 
-from agents.models import Activity
+from agents.models import Activity, WeaveResult
 from models import CritiqueReport, FactCheckReport
 
 
@@ -29,14 +29,10 @@ class Citation(BaseModel):
     retrieved_at: str | None = None
 
 
-class Module(BaseModel):
+class Module(WeaveResult):
     """Discrete unit within a planned lecture."""
 
     id: str
-    title: str
-    duration_min: int
-    learning_objectives: List[str] = Field(default_factory=list)
-    activities: List[Activity] = Field(default_factory=list)
 
 
 class Outline(BaseModel):
