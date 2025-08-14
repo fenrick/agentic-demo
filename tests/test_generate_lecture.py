@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import sys
 import types
 
@@ -27,6 +28,29 @@ def test_generate(monkeypatch):
 
     result = asyncio.run(_generate("topic"))
     assert result["title"] == "Test"
+
+
+def test_generate_verbose_streams_progress(monkeypatch, caplog):
+    """_generate streams progress messages when verbose."""
+
+    async def fake_stream(state):  # type: ignore[unused-argument]
+        logging.getLogger("core.orchestrator").info("progress for %s", state.prompt)
+        yield {"type": "action", "payload": "X"}
+
+    fake_graph = types.SimpleNamespace(stream=fake_stream)
+
+    monkeypatch.setitem(
+        sys.modules,
+        "core.orchestrator",
+        types.SimpleNamespace(graph=fake_graph),
+    )
+
+    from cli.generate_lecture import _generate
+
+    with caplog.at_level(logging.INFO):
+        asyncio.run(_generate("topic", verbose=True))
+
+    assert "progress for topic" in caplog.text
 
 
 def test_parse_args_verbose(monkeypatch):
@@ -65,7 +89,7 @@ def test_main_writes_output(monkeypatch, tmp_path):
     fake_observability.install_auto_tracing = lambda: None
     sys.modules["observability"] = fake_observability
 
-    async def fake_generate(topic: str) -> dict[str, str]:
+    async def fake_generate(topic: str, verbose: bool = False) -> dict[str, str]:
         return {"result": topic}
 
     def fake_parse_args() -> types.SimpleNamespace:

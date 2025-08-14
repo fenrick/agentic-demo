@@ -135,6 +135,18 @@ class Node:
     condition: Optional[Callable[[Any, State], Optional[str]]] = None
 
 
+# Human-friendly progress strings keyed by node name
+PROGRESS_MESSAGES: Dict[str, str] = {
+    "Planner": "Sketching the roadmap for {topic}",
+    "Researcher-Web": "Scouting resources on {topic}",
+    "Content-Weaver": "Weaving content from different sources for {topic}",
+    "Pedagogy-Critic": "Assessing learning outcomes for {topic}",
+    "Fact-Checker": "Verifying facts about {topic}",
+    "Human-In-Loop": "Inviting human insight on {topic}",
+    "Exporter": "Packaging the final lecture on {topic}",
+}
+
+
 def build_main_flow() -> List[Node]:
     """Return the ordered list of nodes forming the primary pipeline."""
 
@@ -224,7 +236,13 @@ class GraphOrchestrator:
 
         current = self.flow[0]
         workspace = getattr(state, "workspace_id", "default")
+        topic = getattr(state, "prompt", "")
         while current:
+            message_tpl = PROGRESS_MESSAGES.get(current.name)
+            if message_tpl:
+                text = message_tpl.format(topic=topic)
+                logger.info(text)
+                publish(f"{workspace}:messages", text)
             publish(f"{workspace}:action", current.name)
             yield {"type": "action", "payload": current.name}
             try:
