@@ -95,7 +95,8 @@ async def classify_bloom_level(text: str) -> str:
         agent = Agent(
             model=model,
             output_type=BloomResult,  # return structured BloomResult from LLM
-            instructions=instructions, retries=0
+            instructions=instructions,
+            retries=0,  # attempt the model call once to avoid retry loops
         )
         result = await agent.run(text)
         level = result.output.level.strip().lower()
