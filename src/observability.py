@@ -27,21 +27,6 @@ _meter_provider = MeterProvider(metric_readers=[_prometheus_reader])
 set_meter_provider(_meter_provider)
 meter = get_meter_provider().get_meter("lecture_builder")
 
-
-def install_auto_tracing() -> None:
-    """Install Logfire auto-tracing restricted to repository modules."""
-
-    def _in_project(module: logfire.AutoTraceModule) -> bool:
-        filename = module.filename
-        return filename is not None and Path(filename).resolve().is_relative_to(SRC_DIR)
-
-    logfire.install_auto_tracing(
-        modules=_in_project,
-        min_duration=0,
-        check_imported_modules="warn",
-    )
-
-
 def init_observability() -> None:
     """Configure Logfire and instrument global libraries.
 
@@ -55,7 +40,6 @@ def init_observability() -> None:
     token = os.getenv("LOGFIRE_API_KEY")
     project = os.getenv("LOGFIRE_PROJECT")
 
-    install_auto_tracing()
     logfire.configure(token=token, service_name=project)
 
     # Ensure loguru and the standard logging module send records to Logfire.
@@ -67,13 +51,14 @@ def init_observability() -> None:
     loguru_logger.remove()
     loguru_logger.add(**logfire.loguru_handler())
 
-    logfire.instrument_pydantic()
+    # logfire.instrument_pydantic()
     try:
         logfire.instrument_httpx()
     except RuntimeError as exc:
         logging.getLogger(__name__).warning("HTTPX instrumentation disabled: %s", exc)
     logfire.instrument_sqlalchemy()
     logfire.instrument_sqlite3()
+    logfire.instrument_openai()
     logfire.instrument_system_metrics()
 
 
