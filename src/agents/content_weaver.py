@@ -19,6 +19,49 @@ class RetryableError(RuntimeError):
     """Signal that the operation can be retried."""
 
 
+def _extract_json(raw: str) -> str:
+    """Return the first JSON object embedded in ``raw``.
+
+    LLMs occasionally wrap JSON in markdown code fences. This helper strips
+    any such fences and returns the inner JSON fragment unchanged.
+    """
+
+    if "```" not in raw:
+        return raw
+    for part in raw.split("```"):
+        part = part.strip()
+        if part.startswith("{"):
+            return part
+    return raw
+
+
+def _load_weave(raw: str) -> WeaveResult:
+    """Parse ``raw`` into :class:`WeaveResult` tolerating trailing text.
+
+    The function first attempts standard JSON validation. If that fails it
+    falls back to :func:`json.JSONDecoder.raw_decode` which parses the first
+    JSON document and ignores any remaining noise, raising
+    :class:`RetryableError` if decoding still fails.
+    """
+
+    cleaned = _extract_json(raw)
+    try:
+        return WeaveResult.model_validate_json(cleaned)
+    except ValidationError as exc:  # pragma: no cover - defensive
+        stream_debug(str(exc))
+        decoder = json.JSONDecoder()
+        try:
+            data, _ = decoder.raw_decode(cleaned)
+        except json.JSONDecodeError as exc2:  # pragma: no cover - defensive
+            stream_debug(str(exc2))
+            raise RetryableError("model returned invalid schema") from exc2
+        try:
+            return WeaveResult.model_validate(data)
+        except ValidationError as exc2:  # pragma: no cover - defensive
+            stream_debug(str(exc2))
+            raise RetryableError("model returned invalid schema") from exc2
+
+
 async def call_openai_function(
     prompt: str,
     sources: Sequence[Citation] | None = None,
@@ -117,11 +160,7 @@ async def content_weaver(state: State, section_id: int | None = None) -> WeaveRe
             tokens.append(token)
             stream_messages(token)
         raw = "".join(tokens)
-        try:
-            weave = WeaveResult.model_validate_json(raw)
-        except ValidationError as exc:  # pragma: no cover - defensive
-            stream_debug(str(exc))
-            raise RetryableError("model returned invalid schema") from exc
+        weave = _load_weave(raw)
 
         # Guardrail: ensure speaker notes provide sufficient material
         word_count = len(weave.speaker_notes.split()) if weave.speaker_notes else 0
