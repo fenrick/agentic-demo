@@ -1,16 +1,45 @@
-"""Tests for sequential document generation without graph utilities."""
+"""Tests for document graph iterating over outline sections."""
 
 from __future__ import annotations
 
 import asyncio
 import sys
 import types
+from dataclasses import dataclass, field
+from typing import List
 
-import core.document_dag as document_dag  # noqa: E402
-from core.state import Module, Outline, State
+import core.document_graph as document_graph  # noqa: E402
+
+
+@dataclass
+class Module:
+    id: str
+    title: str
+    duration_min: int
+
+
+@dataclass
+class Outline:
+    steps: List[str]
+    modules: List[Module] = field(default_factory=list)
+
+
+@dataclass
+class State:
+    prompt: str
+    outline: Outline
+    modules: List[Module] = field(default_factory=list)
+
+
+# Provide a lightweight ``core.state`` for the module under test.
+state_mod = types.ModuleType("core.state")
+state_mod.Module = Module  # type: ignore[attr-defined]
+state_mod.Outline = Outline  # type: ignore[attr-defined]
+state_mod.State = State  # type: ignore[attr-defined]
+sys.modules["core.state"] = state_mod
 
 # ---------------------------------------------------------------------------
-# Stub agent modules required by ``core.document_dag``.
+# Stub agent modules required by ``core.document_graph``.
 # ---------------------------------------------------------------------------
 
 calls: list[str] = []
@@ -56,11 +85,11 @@ policies.policy_retry_on_critic_failure = lambda *a, **k: False  # type: ignore[
 sys.modules["core.policies"] = policies
 
 
-def test_run_document_dag_processes_sections() -> None:
+def test_run_document_graph_processes_sections() -> None:
     calls.clear()
-    document_dag.policy_retry_on_critic_failure = lambda *a, **k: False
+    document_graph.policy_retry_on_critic_failure = lambda *a, **k: False
     state = State(prompt="p", outline=Outline(steps=["a", "b"]))
-    asyncio.run(document_dag.run_document_dag(state, skip_plan=True))
+    asyncio.run(document_graph.run_document_graph(state, skip_plan=True))
     assert calls == [
         "research",
         "draft",
@@ -73,7 +102,7 @@ def test_run_document_dag_processes_sections() -> None:
     assert state.outline.modules == state.modules
 
 
-def test_run_document_dag_retries_on_critic_feedback() -> None:
+def test_run_document_graph_retries_on_critic_feedback() -> None:
     calls.clear()
 
     class Report:
@@ -86,11 +115,11 @@ def test_run_document_dag_retries_on_critic_feedback() -> None:
         calls.append("critic")
         return next(reports)
 
-    document_dag.run_pedagogy_critic = _critic
-    document_dag.policy_retry_on_critic_failure = lambda report, _state: bool(
+    document_graph.run_pedagogy_critic = _critic
+    document_graph.policy_retry_on_critic_failure = lambda report, _state: bool(
         report.recommendations
     )
 
     state = State(prompt="p", outline=Outline(steps=["a"]))
-    asyncio.run(document_dag.run_document_dag(state, skip_plan=True))
+    asyncio.run(document_graph.run_document_graph(state, skip_plan=True))
     assert calls == ["research", "draft", "critic", "draft", "critic"]
