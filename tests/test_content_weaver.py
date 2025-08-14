@@ -85,6 +85,31 @@ def test_content_weaver_propagates_validation_error(monkeypatch: Any) -> None:
         asyncio.run(content_weaver.content_weaver(state))
 
 
+def test_content_weaver_handles_trailing_text(monkeypatch: Any) -> None:
+    """Extraneous text after the JSON payload is ignored."""
+
+    async def fake_call(
+        prompt: str, *_a, **_k
+    ) -> Any:  # pragma: no cover - used in test
+        async def gen() -> Any:
+            payload = {
+                "title": "T",
+                "learning_objectives": [],
+                "activities": [],
+                "duration_min": 0,
+            }
+            yield json.dumps(payload) + " trailing"
+
+        return gen()
+
+    monkeypatch.setattr(content_weaver, "call_openai_function", fake_call)
+    from core.state import State
+
+    state = State(prompt="topic")
+    weave = asyncio.run(content_weaver.content_weaver(state))
+    assert weave.title == "T"
+
+
 def test_weave_result_requires_all_fields() -> None:
     """The :class:`WeaveResult` model enforces required fields."""
 
