@@ -139,7 +139,8 @@ class Node:
 PROGRESS_MESSAGES: Dict[str, str] = {
     "Planner": "Sketching the roadmap for {topic}",
     "Researcher-Web": "Scouting resources on {topic}",
-    "Content-Weaver": "Weaving content from different sources for {topic}",
+    "Content-Weaver-1": "Weaving content from different sources for {topic}",
+    "Content-Weaver-2": "Updating content from different sources for {topic}",
     "Pedagogy-Critic": "Assessing learning outcomes for {topic}",
     "Fact-Checker": "Verifying facts about {topic}",
     "Human-In-Loop": "Inviting human insight on {topic}",
