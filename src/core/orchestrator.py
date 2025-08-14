@@ -178,7 +178,7 @@ def build_main_flow() -> List[Node]:
         Node(
             "Fact-Checker",
             wrap_with_tracing(run_fact_checker),
-            "Exporter",
+            "Human-In-Loop",
         ),
         Node("Human-In-Loop", wrap_with_tracing(run_approver), "Exporter"),
         Node("Exporter", wrap_with_tracing(run_exporter), None),
