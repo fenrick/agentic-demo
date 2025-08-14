@@ -95,7 +95,7 @@ async def classify_bloom_level(text: str) -> str:
         agent = Agent(
             model=model,
             output_type=BloomResult,  # return structured BloomResult from LLM
-            instructions=instructions,
+            instructions=instructions, retries=0
         )
         result = await agent.run(text)
         level = result.output.level.strip().lower()
@@ -120,11 +120,6 @@ async def analyze_bloom_coverage(
         level = await classify(objective)
         if level in counts:
             counts[level] += 1
-    for act in outline.activities:
-        for obj in act.learning_objectives:
-            level = await classify(obj)
-            if level in counts:
-                counts[level] += 1
     covered = {lvl for lvl, cnt in counts.items() if cnt > 0}
     missing = [lvl for lvl in BLOOM_LEVELS if lvl not in covered]
     score = len(covered) / len(BLOOM_LEVELS)
