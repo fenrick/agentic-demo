@@ -305,6 +305,19 @@ alembic revision --autogenerate -m "add new table"
 The command reads `alembic.ini` and writes migration scripts to
 `migrations/versions/`.
 
+### Command-line Lecture Generation
+
+Run the CLI to generate lecture material while persisting state to the
+workspace database. Each invocation creates a new workspace identified by a
+slug of the topic and timestamp:
+
+```bash
+poetry run python -m cli.generate_lecture "Intro to Quantum"
+```
+
+The resulting workspace data is stored in `DATA_DIR/workspace.db` and exports
+are written alongside the generated Markdown file.
+
 ---
 
 ## Configuration & Environment Variables

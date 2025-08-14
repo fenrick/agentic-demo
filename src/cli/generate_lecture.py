@@ -20,6 +20,7 @@ from agents.models import (
 )
 from agents.streaming import stream_messages
 from export.markdown import from_weave_result
+from persistence.database import init_db
 
 PORTFOLIOS_ALL = [
     "Research & Innovation",
@@ -66,18 +67,23 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
-async def _generate(topic: str, verbose: bool = False) -> Dict[str, Any]:
-    """Run the full graph for ``topic`` and return the final state.
+async def _generate(
+    topic: str, workspace_id: str, verbose: bool = False
+) -> Dict[str, Any]:
+    """Run the full graph for ``topic`` using ``workspace_id``.
 
-    When ``verbose`` is ``True`` the orchestrator is executed using the
-    streaming interface so that progress messages are emitted as nodes
-    advance. Otherwise the graph runs silently.
+    The workspace is created on the configured database if it does not
+    already exist. When ``verbose`` is ``True`` the orchestrator executes
+    using the streaming interface so that progress messages are emitted as
+    nodes advance. Otherwise the graph runs silently.
     """
 
     from core.orchestrator import graph_orchestrator
     from core.state import State
 
+    await init_db()
     state = State(prompt=topic)
+    state.workspace_id = workspace_id
     if verbose:
         async for _ in graph_orchestrator.stream(state):
             pass
@@ -139,10 +145,13 @@ def main() -> None:
         logging.basicConfig(level=logging.DEBUG)
     for portfolio in args.portfolios:
         topic = f"{args.topic} for {portfolio}"
+        workspace_id = (
+            f"{slugify(topic)}_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
+        )
         if args.verbose:
             stream_messages("LLM response stream start")
         try:
-            payload = asyncio.run(_generate(topic, verbose=args.verbose))
+            payload = asyncio.run(_generate(topic, workspace_id, verbose=args.verbose))
         except Exception as exc:  # pragma: no cover - defensive
             raise SystemExit(f"Error generating lecture: {exc}") from exc
         if args.verbose:
