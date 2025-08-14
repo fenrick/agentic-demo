@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 
-from agents.models import Activity, AssessmentItem, Citation, SlideBullet, WeaveResult
+from agents.models import AssessmentItem, Citation, Slide, WeaveResult
 
 from .markdown import from_weave_result
 
@@ -35,14 +35,12 @@ class MarkdownExporter:
         if row is None:
             raise ValueError("lecture not found")
         data = json.loads(row[0])
-        activities = [Activity(**a) for a in data.get("activities", [])]
-        slide_bullets = [SlideBullet(**s) for s in data.get("slide_bullets", [])]
+        slides = [Slide(**s) for s in data.get("slides", [])]
         assessment = [AssessmentItem(**a) for a in data.get("assessment", [])]
         references = [Citation(**c) for c in data.get("references", [])]
         return WeaveResult(
             title=data["title"],
             learning_objectives=data.get("learning_objectives", []),
-            activities=activities,
             duration_min=data.get("duration_min", 0),
             author=data.get("author"),
             date=data.get("date"),
@@ -50,8 +48,7 @@ class MarkdownExporter:
             summary=data.get("summary"),
             tags=data.get("tags"),
             prerequisites=data.get("prerequisites"),
-            slide_bullets=slide_bullets or None,
-            speaker_notes=data.get("speaker_notes"),
+            slides=slides or None,
             assessment=assessment or None,
             references=references or None,
         )

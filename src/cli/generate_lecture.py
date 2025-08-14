@@ -11,13 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict
 
-from agents.models import (
-    Activity,
-    AssessmentItem,
-    Citation,
-    SlideBullet,
-    WeaveResult,
-)
+from agents.models import AssessmentItem, Citation, Slide, WeaveResult
 from agents.streaming import stream_messages
 from export.markdown import from_weave_result
 from persistence.database import init_db
@@ -98,14 +92,12 @@ def save_markdown(output: Path, topic: str, payload: Dict[str, Any]) -> None:
     markdown_body: str
     try:
         module = payload.get("modules", [])[-1]
-        activities = [Activity(**a) for a in module.get("activities", [])]
-        slide_bullets = [SlideBullet(**s) for s in module.get("slide_bullets", [])]
+        slides = [Slide(**s) for s in module.get("slides", [])]
         assessment = [AssessmentItem(**a) for a in module.get("assessment", [])]
         references = [Citation(**c) for c in module.get("references", [])]
         weave = WeaveResult(
             title=module.get("title", topic),
             learning_objectives=module.get("learning_objectives", []),
-            activities=activities,
             duration_min=module.get("duration_min", 0),
             author=module.get("author"),
             date=module.get("date"),
@@ -113,8 +105,7 @@ def save_markdown(output: Path, topic: str, payload: Dict[str, Any]) -> None:
             summary=module.get("summary"),
             tags=module.get("tags"),
             prerequisites=module.get("prerequisites"),
-            slide_bullets=slide_bullets or None,
-            speaker_notes=module.get("speaker_notes"),
+            slides=slides or None,
             assessment=assessment or None,
             references=references or None,
         )

@@ -24,6 +24,8 @@ A local-first, multi-agent system that generates high‑quality, university‑gr
     - [Persistence \& Versioning](#persistence--versioning)
     - [Frontend UX](#frontend-ux)
     - [Exporters](#exporters)
+  - [API](#api)
+  - [Authoring Process](#authoring-process)
   - [Examples](#examples)
     - [Invoking the Orchestrator](#invoking-the-orchestrator)
     - [Working with Pydantic Models](#working-with-pydantic-models)
@@ -42,10 +44,12 @@ A local-first, multi-agent system that generates high‑quality, university‑gr
 
 ## Key Features
 
-- **Multi-Agent Workflow**: Planner, Researcher, Synthesiser, Pedagogy Critic, Fact Checker, Human-in-Loop, and Exporter nodes coordinated by a lightweight custom orchestrator.
+- **Multi-Agent Workflow**: Researcher, Planner, Learning Advisor, Content Weaver, Editor, Final Reviewer and Exporter nodes coordinated by a lightweight custom orchestrator.
 - **Streaming UI**: Token-level draft streaming with diff highlights; action/reasoning log streaming via SSE.
 - **Robust Citations**: Tavily search, citation metadata stored in SQLite, Creative Commons and university domain filtering.
 - **Local-First**: Operates offline using cached corpora and fallback to local dense retrieval.
+- **Flexible Session Model**: Lectures and workshops share a composable schema with optional pedagogical styles and learning methods.
+- **Progressive Document Graph**: Research results, modules, and slide details are captured in a DAG so individual nodes can be revised without regenerating the whole session.
 - **Flexible Exports**: Markdown (canonical), DOCX (python-docx), PDF (WeasyPrint), with cover page, TOC, and bibliography.
 - **Audit & Governance**: Immutable action logs, SHA‑256 state hashes, role‑based access, database encryption.
 
@@ -57,11 +61,12 @@ The system comprises:
 
 1. **Custom Orchestrator**: Manages typed `State` objects through nodes and edges defined with Pydantic models. Handles checkpointing in SQLite.
 2. **Agents**:
-   - **Curriculum Planner**: Defines learning objectives and module structure.
    - **Researcher-Web**: Executes parallel Tavily searches, dedupes and ranks sources.
-   - **Content Weaver**: Generates Markdown outline, speaker notes, slide bullets.
-   - **Pedagogy Critic**: Verifies Bloom taxonomy coverage, activity diversity, cognitive load.
-   - **Fact Checker**: Scans for hallucinations via Cleanlab/regex.
+   - **Curriculum Planner**: Defines learning objectives and module structure.
+   - **Learning Advisor**: Converts pedagogical intent into Bloom-aligned lesson plans.
+   - **Content Weaver**: Generates slide decks and assessments from lesson plans.
+   - **Editor**: Reviews narrative coherence and learning goals.
+   - **Final Reviewer**: Scores overall consistency and completeness.
    - **Exporter**: Renders final deliverables.
 
 3. **Web UX**: React + Primer, SSE-driven, panels for document, log, sources, and controls.
@@ -219,8 +224,8 @@ To run the services directly on your host for development:
 
 ### Quality Control
 
-- **PedagogyCritic** outputs a `CritiqueReport` object with Bloom coverage.
-- **FactChecker** flags lines using Cleanlab probabilities and regex rules.
+- **Editor** records narrative and objective feedback.
+- **FinalReviewer** outputs a `QAReport` object with an overall score.
 - Integration tests in `tests/quality/`.
 
 ### Persistence & Versioning
@@ -254,6 +259,17 @@ using `JWT_SECRET` and validated with the `HS256` algorithm by default.
 | 401  | Missing token or failed signature check    |
 | 403  | Token valid but caller lacks required role |
 
+## Authoring Process
+
+1. **Researcher** collects web snippets and extracts keywords.
+2. **Planner** turns research into learning outcomes and pedagogical intent.
+3. **Learning Advisor** expands topics into lesson plans aligned with Bloom's taxonomy.
+4. **Content Weaver** drafts slides, visualization notes, and speaker notes.
+5. **Editor** reviews the material and may trigger targeted rewrites.
+6. **Final Check** scores overall consistency and completeness.
+
+Each stage updates the `DocumentDAG` so specific nodes—such as a slide's copy or visualization notes—can be refined without regenerating the entire session.
+
 ## Examples
 
 ### Invoking the Orchestrator
@@ -270,13 +286,15 @@ await orch.run(state)
 ### Working with Pydantic Models
 
 ```python
-from agents.models import Activity, WeaveResult
+from agents.models import WeaveResult
 
 model = WeaveResult(
     title="Intro to AI",
     learning_objectives=["Define artificial intelligence"],
-    activities=[Activity(type="lecture", description="Overview", duration_min=30)],
     duration_min=60,
+    session_type="workshop",
+    pedagogical_styles=["flipped"],
+    learning_methods=["case study"],
 )
 ```
 

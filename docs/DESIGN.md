@@ -40,17 +40,29 @@ Component interactions are visualized in ARCHITECTURE.md.
 
 Each agent is defined using Pydantic‑AI models and scheduled by the orchestrator. Workflow phases:
 
-| Phase        | Agent              | Input                                    | Output                                       | Retry Logic                            |
-| ------------ | ------------------ | ---------------------------------------- | -------------------------------------------- | -------------------------------------- |
-| 1. Plan      | Curriculum Planner | `prompt`                                 | `State.learning_objectives`, `State.modules` | None                                   |
-| 2. Search    | Researcher-Web × N | `learning_objectives`                    | `State.citations[]`, `State.snippets[]`      | On network/error, retry 2×             |
-| 3. Synthesis | Content Weaver     | `State.modules`, `State.citations`       | `State.outline` (JSON schema)                | On schema-failure, regenerate up to 3× |
-| 4. Critique  | Pedagogy Critic    | `State.outline`                          | `State.critique_report`                      | None                                   |
-|              | Fact Checker       | `State.outline`                          | `State.factcheck_report`                     | Retry flagged segments 3×              |
-| 5. Approve   | Human-in-Loop      | Full `State`                             | `State.outline` (accepted edits)             | Manual                                 |
-| 6. Publish   | Exporter           | Final `State.outline`, `State.citations` | Markdown, DOCX, PDF files                    | None                                   |
+| Phase     | Agent              | Input                                        | Output                            | Retry Logic                           |
+| --------- | ------------------ | -------------------------------------------- | --------------------------------- | ------------------------------------- |
+| 1. Research | Researcher-Web × N | `prompt`                                     | `State.research_results`          | On network/error, retry 2×            |
+| 2. Plan   | Curriculum Planner | `research_results`                           | `State.learning_objectives`, `State.modules` | None                                |
+| 3. Advise | Learning Advisor   | `State.modules`                              | `State.lesson_plans`             | None                                  |
+| 4. Author | Content Weaver     | `State.lesson_plans`, `State.research_results` | `State.document_graph`           | On schema-failure, regenerate up to 3× |
+| 5. Edit   | Editor             | `State.document_graph`                       | `State.editor_feedback`          | Route to Content Rewriter on issues   |
+| 6. Review | Final Reviewer     | `State.document_graph`                       | `State.qa_report`                | None                                  |
+| 7. Publish | Exporter           | Final `State.document_graph`                 | Markdown, DOCX, PDF files        | None                                  |
 
 Agents communicate via typed state transitions and stream deltas to the frontend.
+
+### 3.1 Document Graph Authoring
+
+During execution the orchestrator materialises a `DocumentDAG` representing the evolving session:
+
+- Research nodes capture full snippets and extracted keywords.
+- Planner and learning-advisor steps attach module and lesson-plan nodes with pedagogical intent.
+- Content-weaver nodes expand each module into slide nodes containing copy, visualization notes, and speaker notes.
+- Editors or rewriters update individual slide nodes while preserving prior context.
+- A final quality pass records scores without mutating existing nodes.
+
+This graph structure enables progressive refinement of materials while maintaining provenance for each authoring phase.
 
 ---
 
@@ -98,9 +110,10 @@ Agents communicate via typed state transitions and stream deltas to the frontend
 
 ### 5.2 Entity Definitions
 
-- **Module**: `{id, title, duration_min, learning_objectives}`
+- **Module**: `{id, title, duration_min, learning_objectives, session_type, pedagogical_styles?, learning_methods?}`
 - **Citation**: `{url, title, retrieved_at (ISO8601), license, source_agent}`
-- **OutlineSchema**: JSON schema defining `modules[]` with `activities[]`, `speaker_notes`, and `slides[]`.
+- **OutlineSchema**: JSON schema defining `modules[]` with `slides[]` composed of optional `copy`, `visualization`, and `speaker_notes` components.
+- **DocumentDAG**: Rooted DAG linking research results, modules, slides, and per-slide notes for incremental editing.
 
 Further ER diagrams in ARCHITECTURE.md.
 
@@ -136,7 +149,7 @@ Further ER diagrams in ARCHITECTURE.md.
 
 ### 7.2 Schema-Driven Generation
 
-- **Outline JSON Schema** (`schemas/outline.json`): defines modules, activities, durations.
+- **Outline JSON Schema** (`schemas/outline.json`): defines modules and durations.
 - **Validation**: `jsonschema` enforces before writing to state.
 
 ### 7.3 Streaming Protocols
@@ -151,24 +164,23 @@ Further ER diagrams in ARCHITECTURE.md.
 
 ## 8. Quality Control
 
-### 8.1 Pedagogy Critic
+### 8.1 Editor
 
-- **Inputs**: `OutlineSchema`
+- **Inputs**: `DocumentDAG`
 - **Checks**:
-  - Coverage across Bloom levels (remember, apply, analyze, evaluate, create).
-  - At least one `activity` per module of type `discussion`, `exercise`, `quiz`.
-  - Total cognitive load ≤ 100 units (configurable).
+  - Narrative flow and module coherence.
+  - Alignment between learning objectives and authored material.
 
-- **Output**: `CritiqueReport` stored in table.
+- **Output**: `EditorFeedback` stored on state for potential rewrites.
 
-### 8.2 Fact Checker
+### 8.2 Final Reviewer
 
-- **Methods**:
-  - Regex patterns for unsupported claims (e.g. no source after statistic).
-  - Cleanlab classifier probability ≤ 0.05 triggers flag.
+- **Inputs**: `DocumentDAG`
+- **Checks**:
+  - Completeness of lessons and references.
+  - Consistency across slides and assessments.
 
-- **Retry policy**: regenerate flagged segments up to 3 attempts.
-- **Output**: `FactCheckReport`.
+- **Output**: `QAReport` with an overall quality score.
 
 ---
 

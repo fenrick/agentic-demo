@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/session_schema.json",
+  "title": "LearningSession",
+  "description": "A deliverable such as a lecture or workshop, with slides, assessments and citations.",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "The title of the session."
+    },
+    "author": {
+      "type": "string",
+      "description": "Name of the session author or presenter."
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the session was created or delivered (YYYY-MM-DD)."
+    },
+    "version": {
+      "type": "string",
+      "description": "Version identifier for the session (e.g., \"1.0\")."
+    },
+    "summary": {
+      "type": "string",
+      "description": "A brief summary or abstract of the session content."
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Keywords or topics associated with this session."
+    },
+    "prerequisites": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of topics or skills learners should know before this session."
+    },
+    "duration_min": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total expected duration of the session in minutes."
+    },
+    "learning_objectives": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      },
+      "description": "Clear, measurable learning objectives for the session."
+    },
+    "session_type": {
+      "type": "string",
+      "description": "Delivery style such as lecture or workshop.",
+      "default": "lecture"
+    },
+    "pedagogical_styles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Teaching approaches used."
+    },
+    "learning_methods": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Learner engagement techniques."
+    },
+    "slides": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Slide"
+      },
+      "description": "Ordered collection of slides for the session."
+    },
+    "assessment": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/AssessmentItem"
+      },
+      "description": "Assessments or quizzes to evaluate learner understanding."
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Citation"
+      },
+      "description": "List of external sources cited in the session."
+    }
+  },
+  "required": [
+    "title",
+    "learning_objectives",
+    "duration_min"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "Slide": {
+      "type": "object",
+      "properties": {
+        "slide_number": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Index of the slide."
+        },
+        "copy": {
+          "$ref": "#/$defs/SlideCopy"
+        },
+        "visualization": {
+          "$ref": "#/$defs/SlideVisualization"
+        },
+        "speaker_notes": {
+          "$ref": "#/$defs/SlideSpeakerNotes"
+        }
+      },
+      "required": [
+        "slide_number"
+      ],
+      "additionalProperties": false
+    },
+    "AssessmentItem": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "Quiz",
+            "Assignment",
+            "Project",
+            "Poll"
+          ],
+          "description": "Assessment format."
+        },
+        "description": {
+          "type": "string",
+          "description": "Details of the assessment."
+        },
+        "max_score": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum obtainable score for this item."
+        }
+      },
+      "required": [
+        "type",
+        "description"
+      ],
+      "additionalProperties": false
+    },
+    "Citation": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "The URL of the referenced source."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title or name of the source."
+        },
+        "retrieved_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 timestamp when the source was fetched."
+        },
+        "licence": {
+          "type": "string",
+          "description": "License or usage terms of the source."
+        }
+      },
+      "required": [
+        "url",
+        "title",
+        "retrieved_at"
+      ],
+      "additionalProperties": false
+    },
+    "SlideCopy": {
+      "type": "object",
+      "properties": {
+        "bullet_points": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Bullet points shown on the slide."
+        }
+      },
+      "additionalProperties": false
+    },
+    "SlideVisualization": {
+      "type": "object",
+      "properties": {
+        "notes": {
+          "type": "string",
+          "description": "Guidance on accompanying visuals."
+        }
+      },
+      "required": [
+        "notes"
+      ],
+      "additionalProperties": false
+    },
+    "SlideSpeakerNotes": {
+      "type": "object",
+      "properties": {
+        "notes": {
+          "type": "string",
+          "description": "Presenter notes for this slide."
+        }
+      },
+      "required": [
+        "notes"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

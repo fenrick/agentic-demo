@@ -13,7 +13,8 @@ from pydantic import ValidationError
 
 from agents import content_weaver
 from agents.content_weaver import RetryableError, WeaveResult
-from agents.models import AssessmentItem, SlideBullet
+from agents.models import AssessmentItem, Slide, SlideCopy, SlideSpeakerNotes
+from prompts import get_prompt
 
 
 def test_call_openai_function_supplies_schema(monkeypatch: Any) -> None:
@@ -65,6 +66,7 @@ def test_call_openai_function_supplies_schema(monkeypatch: Any) -> None:
     schema_str = json.dumps(schema_marker, indent=2)
     instructions = captured.get("instructions", [])
     assert any(schema_str in instr for instr in instructions)
+    assert get_prompt("content_weaver_duration_rule") in instructions
 
 
 def test_content_weaver_propagates_validation_error(monkeypatch: Any) -> None:
@@ -95,7 +97,6 @@ def test_content_weaver_handles_trailing_text(monkeypatch: Any) -> None:
             payload = {
                 "title": "T",
                 "learning_objectives": [],
-                "activities": [],
                 "duration_min": 0,
             }
             yield json.dumps(payload) + " trailing"
@@ -231,8 +232,8 @@ def test_call_openai_function_includes_sources(monkeypatch: Any) -> None:
     assert any("Example (https://example.com)" in instr for instr in instructions)
 
 
-def test_content_weaver_retries_on_duration_mismatch(monkeypatch: Any) -> None:
-    """Duration mismatch triggers a retry and raises when unresolved."""
+def test_content_weaver_accepts_short_speaker_notes(monkeypatch: Any) -> None:
+    """Short speaker notes are accepted without retries."""
 
     calls: list[str] = []
 
@@ -246,15 +247,14 @@ def test_content_weaver_retries_on_duration_mismatch(monkeypatch: Any) -> None:
                 {
                     "title": "T",
                     "learning_objectives": [],
-                    "activities": [
+                    "duration_min": 0,
+                    "slides": [
                         {
-                            "type": "x",
-                            "description": "",
-                            "duration_min": 1,
-                            "learning_objectives": [],
+                            "slide_number": 1,
+                            "copy": {"bullet_points": []},
+                            "speaker_notes": {"notes": "short"},
                         }
                     ],
-                    "duration_min": 2,
                 }
             )
 
@@ -264,49 +264,9 @@ def test_content_weaver_retries_on_duration_mismatch(monkeypatch: Any) -> None:
     from core.state import State
 
     state = State(prompt="topic")
-    with pytest.raises(RetryableError):
-        asyncio.run(content_weaver.content_weaver(state))
-
-    assert len(calls) == 2
-    assert "Fix timing so sum equals duration_min; keep content unchanged." in calls[1]
-
-
-def test_content_weaver_retries_on_short_speaker_notes(monkeypatch: Any) -> None:
-    """Short speaker notes trigger a retry and raise when unresolved."""
-
-    calls: list[str] = []
-
-    async def fake_call(
-        prompt: str, *_a, **_k
-    ) -> Any:  # pragma: no cover - used in test
-        calls.append(prompt)
-
-        async def gen() -> Any:
-            yield json.dumps(
-                {
-                    "title": "T",
-                    "learning_objectives": [],
-                    "activities": [],
-                    "duration_min": 0,
-                    "speaker_notes": "short notes",
-                }
-            )
-
-        return gen()
-
-    monkeypatch.setattr(content_weaver, "call_openai_function", fake_call)
-    from core.state import State
-
-    state = State(prompt="topic")
-    with pytest.raises(RetryableError):
-        asyncio.run(content_weaver.content_weaver(state))
-
-    assert len(calls) == 2
-    assert (
-        "Expand speaker_notes to 1500–2500 words with slide-scoped sections;"
-        " keep JSON identical otherwise."
-        in calls[1]
-    )
+    module = asyncio.run(content_weaver.content_weaver(state))
+    assert module.slides[0].speaker_notes.notes == "short"
+    assert len(calls) == 1
 
 
 def test_run_content_weaver_preserves_full_output(monkeypatch: Any) -> None:
@@ -316,13 +276,20 @@ def test_run_content_weaver_preserves_full_output(monkeypatch: Any) -> None:
         return WeaveResult(
             title="T",
             learning_objectives=["lo"],
-            activities=[],
             duration_min=0,
+            session_type="lecture",
+            pedagogical_styles=["direct"],
+            learning_methods=["quiz"],
             summary="sum",
             tags=["tag"],
             prerequisites=["pre"],
-            slide_bullets=[SlideBullet(slide_number=1, bullets=["b"])],
-            speaker_notes="notes",
+            slides=[
+                Slide(
+                    slide_number=1,
+                    copy=SlideCopy(bullet_points=["b"]),
+                    speaker_notes=SlideSpeakerNotes(notes="notes"),
+                )
+            ],
             assessment=[AssessmentItem(type="quiz", description="q", max_score=1.0)],
         )
 
@@ -332,5 +299,5 @@ def test_run_content_weaver_preserves_full_output(monkeypatch: Any) -> None:
     state = State(prompt="topic")
     module = asyncio.run(content_weaver.run_content_weaver(state))
     assert module.summary == "sum"
-    assert state.modules[0].speaker_notes == "notes"
-    assert state.modules[0].slide_bullets[0].bullets == ["b"]
+    assert module.session_type == "lecture"
+    assert state.modules[0].slides[0].copy.bullet_points == ["b"]

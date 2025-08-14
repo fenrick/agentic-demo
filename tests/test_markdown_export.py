@@ -9,7 +9,15 @@ from pathlib import Path
 import pytest
 
 from agents.exporter import run_exporter
-from agents.models import Activity, AssessmentItem, Citation, SlideBullet, WeaveResult
+from agents.models import (
+    AssessmentItem,
+    Citation,
+    Slide,
+    SlideCopy,
+    SlideSpeakerNotes,
+    SlideVisualization,
+    WeaveResult,
+)
 from config import settings
 from core.state import State
 from export.markdown import embed_citations, from_weave_result, render_section
@@ -49,10 +57,18 @@ def test_markdown_exporter_reads_from_database(tmp_path: Path) -> None:
     lecture = {
         "title": "Demo",
         "learning_objectives": ["lo"],
-        "activities": [{"type": "Lecture", "description": "desc", "duration_min": 5}],
         "duration_min": 5,
-        "slide_bullets": [{"slide_number": 1, "bullets": ["point"]}],
-        "speaker_notes": "notes",
+        "session_type": "lecture",
+        "pedagogical_styles": ["inquiry"],
+        "learning_methods": ["discussion"],
+        "slides": [
+            {
+                "slide_number": 1,
+                "copy": {"bullet_points": ["point"]},
+                "visualization": {"notes": "visual"},
+                "speaker_notes": {"notes": "notes"},
+            }
+        ],
         "references": [{"url": "http://x", "title": "X", "retrieved_at": "2024-01-01"}],
     }
     conn.execute(
@@ -69,6 +85,7 @@ def test_markdown_exporter_reads_from_database(tmp_path: Path) -> None:
     assert "## Duration" in md
     assert "5 min" in md
     assert "Slide 1" in md
+    assert "Visualisation Notes" in md
     assert "Speaker Notes" in md
     assert "[^1]" in md
 
@@ -79,16 +96,24 @@ def test_from_weave_result_builds_complete_document() -> None:
     weave = WeaveResult(
         title="Demo",
         learning_objectives=["understand"],
-        activities=[Activity(type="Lecture", description="desc", duration_min=10)],
         duration_min=10,
+        session_type="lecture",
+        pedagogical_styles=["direct"],
+        learning_methods=["quiz"],
         author="Author",
         date="2024-01-01",
         version="1.0",
         summary="summary",
         tags=["t1"],
         prerequisites=["p"],
-        slide_bullets=[SlideBullet(slide_number=1, bullets=["point"])],
-        speaker_notes="notes",
+        slides=[
+            Slide(
+                slide_number=1,
+                copy=SlideCopy(bullet_points=["point"]),
+                visualization=SlideVisualization(notes="visual"),
+                speaker_notes=SlideSpeakerNotes(notes="notes"),
+            )
+        ],
         assessment=[AssessmentItem(type="quiz", description="q", max_score=1.0)],
     )
     citation = Citation(url="http://x", title="X", retrieved_at="2024-01-01")
@@ -100,8 +125,9 @@ def test_from_weave_result_builds_complete_document() -> None:
     assert "tags: [t1]" in md
     assert "## Learning Objectives" in md
     assert "## Prerequisites" in md
-    assert "Speaker Notes" in md
     assert "Slide 1" in md
+    assert "Visualisation Notes" in md
+    assert "Speaker Notes" in md
     assert "Assessment" in md
     assert md.endswith("X - http://x (retrieved 2024-01-01)\n")
 

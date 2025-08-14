@@ -49,19 +49,21 @@ async def test_full_flow_execution(monkeypatch: pytest.MonkeyPatch) -> None:
 
     for func, name in [
         ("run_planner", "Planner"),
+        ("run_learning_advisor", "Learning-Advisor"),
         ("run_content_weaver", "Content-Weaver"),
-        ("run_pedagogy_critic", "Pedagogy-Critic"),
-        ("run_fact_checker", "Fact-Checker"),
-        ("run_approver", "Human-In-Loop"),
+        ("run_content_rewriter", "Content-Rewriter"),
+        ("run_final_reviewer", "Final-Reviewer"),
     ]:
         monkeypatch.setattr(f"core.orchestrator.{func}", make_stub(name))
 
-    monkeypatch.setattr(
-        "core.orchestrator.policy_retry_on_low_confidence", lambda *_a, **_k: "continue"
-    )
-    monkeypatch.setattr(
-        "core.orchestrator.policy_retry_on_critic_failure", lambda *_a, **_k: False
-    )
+    class _Feedback:
+        needs_revision = False
+
+    async def _editor_stub(state: State) -> Any:
+        order.append("Editor")
+        return _Feedback()
+
+    monkeypatch.setattr("core.orchestrator.run_editor", _editor_stub)
 
     class DummySpan:
         def __enter__(self) -> "DummySpan":  # pragma: no cover - trivial
@@ -93,11 +95,12 @@ async def test_full_flow_execution(monkeypatch: pytest.MonkeyPatch) -> None:
     await orch.run(State(prompt="topic"))
 
     assert order == [
+        "Researcher-Web",
         "Planner",
+        "Learning-Advisor",
         "Content-Weaver",
-        "Pedagogy-Critic",
-        "Fact-Checker",
-        "Human-In-Loop",
+        "Editor",
+        "Final-Reviewer",
         "Exporter",
     ]
 
@@ -131,9 +134,6 @@ async def test_validation_error_propagates(monkeypatch: pytest.MonkeyPatch) -> N
         return {"plan": True}
 
     monkeypatch.setattr("core.orchestrator.run_planner", planner)
-    monkeypatch.setattr(
-        "core.orchestrator.policy_retry_on_low_confidence", lambda *_a, **_k: "continue"
-    )
 
     async def bad_call(_prompt: str) -> Any:
         async def gen():

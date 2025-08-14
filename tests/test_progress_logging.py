@@ -12,13 +12,13 @@ async def test_stream_logs_pithy_messages(caplog):
         return None
 
     flow = [
-        Node("Content-Weaver", noop, "Pedagogy-Critic"),
-        Node("Pedagogy-Critic", noop, None),
+        Node("Learning-Advisor", noop, "Editor"),
+        Node("Editor", noop, None),
     ]
     orch = GraphOrchestrator(flow)
     state = State(prompt="Photosynthesis")
     with caplog.at_level(logging.INFO):
         async for _ in orch.stream(state):
             pass
-    assert "Weaving content from different sources for Photosynthesis" in caplog.text
-    assert "Assessing learning outcomes for Photosynthesis" in caplog.text
+    assert "Crafting lesson plans for Photosynthesis" in caplog.text
+    assert "Reviewing narrative for Photosynthesis" in caplog.text

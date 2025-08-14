@@ -79,7 +79,7 @@ async def orchestrate_regeneration(
 
     flow = build_main_flow()
     start_idx = next(
-        (i for i, node in enumerate(flow) if node.name == "Pedagogy-Critic"),
+        (i for i, node in enumerate(flow) if node.name == "Editor"),
         None,
     )
     if start_idx is not None:

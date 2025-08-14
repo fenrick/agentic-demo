@@ -35,7 +35,7 @@ This document provides a **comprehensive** and **explicit** description of the L
 
 1. **API Layer (FastAPI)**
    - **Endpoints**:
-   - `POST /workspaces/{workspace_id}/run` — start new lecture build job
+   - `POST /workspaces/{workspace_id}/run` — start new session build job
    - `POST /workspaces/{workspace_id}/retry` — retry using last inputs
    - `SSE /stream/messages` — token diff messages
    - `SSE /stream/updates` — citation and progress updates
@@ -49,7 +49,7 @@ This document provides a **comprehensive** and **explicit** description of the L
 
 2. **Graph Orchestrator**
    - **Graph Definition**: `src/core/orchestrator.py`
-   - **Nodes**: Planner, Researcher-Web, Content Weaver, Pedagogy Critic, Fact Checker, Exporter
+   - **Nodes**: Researcher-Web, Planner, Learning Advisor, Content Weaver, Editor, Final Reviewer, Exporter
    - **Checkpoint Saver**: `SqliteCheckpointSaver` or `PostgresCheckpointSaver`
    - **Edge Policies**: confidence thresholds, retry loops
 
@@ -64,9 +64,9 @@ This document provides a **comprehensive** and **explicit** description of the L
    - **Stream Manager**: channels orchestrator streams to HTTP SSE
 
 5. **Quality Control**
-   - **PedagogyCritic**: Bloom taxonomy coverage algorithm
-   - **FactChecker**: Cleanlab integration and regex rules
-   - **Report Manager**: writes to `critique_report` and `factcheck_report`
+   - **Editor**: narrative coherence and objective validation
+   - **FinalReviewer**: consistency scoring and final QA
+   - **Report Manager**: writes to `editor_feedback` and `qa_report`
 
 6. **Export Layer**
    - **MarkdownRenderer**: Jinja templates
@@ -94,6 +94,15 @@ This document provides a **comprehensive** and **explicit** description of the L
 - **SSE Client**: `web/src/services/stream.ts` subscribes and dispatches to Redux or Zustand store
 - **Download Buttons**: trigger GET requests to `/download/...`
 
+### 2.3 Document Graph
+
+- **DocumentDAG**: implemented in `src/core/document_graph.py` and persisted on `State`.
+- **Node Types**:
+  - Research results with full text and extracted keywords
+  - Module nodes with slide-deck children
+  - Slide nodes decomposed into copy, visualization notes, and speaker notes
+- Enables incremental updates and provenance tracking across authoring phases.
+
 ---
 
 ## 3. Data Flow Sequences
@@ -118,6 +127,14 @@ This document provides a **comprehensive** and **explicit** description of the L
 2. If **hit**, returns cached response, marks `retrieval_cache.hit_count++`.
 3. If **miss**, calls Tavily search, writes response to cache & timestamp.
 4. **Citation objects** created and written to `citations` table.
+
+### 3.4 Authoring Workflow
+
+1. Research results populate the graph under a `research` node.
+2. Planner and learning-advisor nodes derive learning outcomes and pedagogical intent.
+3. Content-weaver nodes attach slide content (copy, visualization notes, speaker notes).
+4. Editors or rewriters adjust specific nodes without regenerating the entire graph.
+5. A final quality pass scores consistency and completeness.
 
 ---
 
@@ -204,11 +221,12 @@ This document provides a **comprehensive** and **explicit** description of the L
 - **SSE**: Server-Sent Events, unidirectional streaming over HTTP.
 - **Orchestrator**: graph-based orchestration framework for agent workflows.
 - **State**: Typed object representing the current job snapshot.
-- **Module**: A lecture segment with duration and activities.
-- **OutlineSchema**: JSON schema dictating lecture content structure.
+- **Module**: A session segment with duration and optional slides.
+- **DocumentDAG**: Directed acyclic graph linking research results, modules, slides, and per-slide notes for incremental edits.
+- **OutlineSchema**: JSON schema dictating session content structure.
 - **Citation**: Metadata bundle for source attribution.
-- **PedagogyCritic**: Agent enforcing educational best practices.
-- **FactChecker**: Agent ensuring factual accuracy.
+- **Editor**: Agent enforcing educational best practices and narrative quality.
+- **FinalReviewer**: Agent scoring overall consistency and completeness.
 
 ---
 

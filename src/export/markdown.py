@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
-from agents.models import Activity, AssessmentItem, Citation, SlideBullet, WeaveResult
+from agents.models import AssessmentItem, Citation, Slide, WeaveResult
 
 
 def render_section(title: str, content: Union[str, Iterable[str], None]) -> str:
@@ -65,18 +65,6 @@ def embed_citations(md: str, citations: List[Citation]) -> str:
     return md + "\n" + "\n".join(footnotes) + "\n"
 
 
-def _render_activities(activities: List[Activity]) -> List[str]:
-    """Format activity entries for the Markdown exporter."""
-
-    lines: List[str] = []
-    for activity in activities:
-        desc = f"{activity.type} ({activity.duration_min} min): {activity.description}"
-        if activity.learning_objectives:
-            desc += f" — objectives: {', '.join(activity.learning_objectives)}"
-        lines.append(desc)
-    return lines
-
-
 def _render_assessment(items: List[AssessmentItem]) -> List[str]:
     """Format assessment items for Markdown output."""
 
@@ -89,12 +77,19 @@ def _render_assessment(items: List[AssessmentItem]) -> List[str]:
     return lines
 
 
-def _render_slides(slides: List[SlideBullet]) -> str:
-    """Render slide bullets as individual sections."""
+def _render_slides(slides: List[Slide]) -> str:
+    """Render slides including copy and notes."""
 
     sections: List[str] = []
     for slide in slides:
-        sections.append(render_section(f"Slide {slide.slide_number}", slide.bullets))
+        points = slide.copy.bullet_points if slide.copy else []
+        sections.append(render_section(f"Slide {slide.slide_number}", points))
+        if slide.visualization:
+            sections.append(
+                render_section("Visualisation Notes", slide.visualization.notes)
+            )
+        if slide.speaker_notes:
+            sections.append(render_section("Speaker Notes", slide.speaker_notes.notes))
     return "".join(sections)
 
 
@@ -144,16 +139,8 @@ def from_weave_result(weave: WeaveResult, citations: List[Citation]) -> str:
     if weave.prerequisites:
         doc_parts.append(render_section("Prerequisites", weave.prerequisites))
 
-    if weave.activities:
-        doc_parts.append(
-            render_section("Activities", _render_activities(weave.activities))
-        )
-
-    if weave.slide_bullets:
-        doc_parts.append(_render_slides(weave.slide_bullets))
-
-    if weave.speaker_notes:
-        doc_parts.append(render_section("Speaker Notes", weave.speaker_notes))
+    if weave.slides:
+        doc_parts.append(_render_slides(weave.slides))
 
     if weave.assessment:
         doc_parts.append(

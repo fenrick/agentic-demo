@@ -144,7 +144,7 @@ def register_routes(app: FastAPI) -> None:
     from .auth import verify_jwt
     from .health_endpoint import healthz, readyz
     from .metrics_endpoint import get_metrics
-    from .routes import citation, control, entries, export, stream
+    from .routes import citation, control, entries, export, poll, stream
 
     # SSE routes are mounted directly to avoid JWT requirements on EventSource.
     app.include_router(stream.router)
@@ -154,6 +154,7 @@ def register_routes(app: FastAPI) -> None:
     api_router.include_router(export.router)
     api_router.include_router(citation.router)
     api_router.include_router(entries.router)
+    api_router.include_router(poll.router)
     api_router.add_api_route("/alerts/{workspace_id}", post_alerts, methods=["POST"])
     app.include_router(api_router)
     app.add_api_route("/metrics", get_metrics, methods=["GET"])

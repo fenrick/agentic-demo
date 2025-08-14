@@ -139,14 +139,6 @@ def test_save_markdown_formats_lecture(tmp_path):
                 "title": "Demo",
                 "duration_min": 10,
                 "learning_objectives": ["lo1"],
-                "activities": [
-                    {
-                        "type": "Lecture",
-                        "description": "desc",
-                        "duration_min": 5,
-                        "learning_objectives": [],
-                    }
-                ],
             }
         ]
     }

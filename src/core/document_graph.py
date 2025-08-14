@@ -2,60 +2,135 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Awaitable, Callable, List
+from typing import Dict, List
 
-from agents.content_weaver import run_content_weaver
-from agents.pedagogy_critic import run_pedagogy_critic
-from agents.planner import run_planner
-from agents.researcher_web_node import run_researcher_web
-from core.policies import policy_retry_on_critic_failure
-from core.state import State
+from pydantic import BaseModel, Field
 
-NodeCallable = Callable[[State], Awaitable[object]]
+from agents.models import ResearchResult
+
+# ---------------------------------------------------------------------------
+# Legacy graph implementation retained temporarily for reference.
+# The orchestrator now drives content generation, so this class is commented
+# out and slated for removal once dependent code is migrated.
+# ---------------------------------------------------------------------------
+# from dataclasses import dataclass
+# from typing import Awaitable, Callable
+# from core.state import State
+#
+# NodeCallable = Callable[[State], Awaitable[object]]
+#
+# @dataclass
+# class DocumentGraph:
+#     """Lightweight graph executor for document generation."""
+#
+#     nodes: List[NodeCallable]
+#
+#     async def run(self, state: State) -> None:
+#         for node in self.nodes:
+#             await node(state)
 
 
-@dataclass
-class DocumentGraph:
-    """Lightweight graph executor for document generation."""
+class DocumentNode(BaseModel):
+    """Content node tracked within the :class:`DocumentDAG`."""
 
-    nodes: List[NodeCallable]
-
-    async def run(self, state: State) -> None:
-        """Execute each node in order, mutating ``state`` in-place."""
-
-        for node in self.nodes:
-            await node(state)
+    id: str
+    type: str
+    content: object | None = None
 
 
-def _build_section_graph(section_id: int) -> DocumentGraph:
-    """Return the graph to process a single outline section."""
+class DocumentDAG(BaseModel):
+    """Directed acyclic graph capturing document structure."""
 
-    async def draft_and_review(state: State) -> None:
-        while True:
-            await run_content_weaver(state, section_id=section_id)
-            report = await run_pedagogy_critic(state)
-            if not policy_retry_on_critic_failure(report, state):
-                break
-        if state.modules:
-            state.outline.steps[section_id] = (
-                state.modules[-1].title or state.outline.steps[section_id]
+    root: str = "root"
+    nodes: Dict[str, DocumentNode] = Field(default_factory=dict)
+    edges: Dict[str, List[str]] = Field(default_factory=dict)
+
+    def add_node(self, node: DocumentNode) -> None:
+        self.nodes[node.id] = node
+        self.edges.setdefault(node.id, [])
+
+    def add_edge(self, parent: str, child: str) -> None:
+        self.edges.setdefault(parent, []).append(child)
+
+    def children(self, node_id: str) -> List[DocumentNode]:
+        return [self.nodes[c] for c in self.edges.get(node_id, [])]
+
+
+def build_document_dag(
+    modules: List[object], research: List[ResearchResult] | None = None
+) -> DocumentDAG:
+    """Embed ``modules`` and research results into a document DAG.
+
+    Args:
+        modules: Session modules, each exposing ``id`` and optional ``slides``.
+        research: Optional research results with keywords.
+
+    Returns:
+        DocumentDAG: Rooted DAG with research, module, slide, and note nodes.
+    """
+
+    dag = DocumentDAG()
+    dag.add_node(DocumentNode(id=dag.root, type="document"))
+
+    if research:
+        dag.add_node(DocumentNode(id="research", type="research"))
+        dag.add_edge(dag.root, "research")
+        for idx, res in enumerate(research):
+            res_id = f"research-{idx}"
+            dag.add_node(DocumentNode(id=res_id, type="research_result", content=res))
+            dag.add_edge("research", res_id)
+            kw_id = f"{res_id}-keywords"
+            dag.add_node(
+                DocumentNode(id=kw_id, type="research_keywords", content=res.keywords)
             )
+            dag.add_edge(res_id, kw_id)
 
-    return DocumentGraph([run_researcher_web, draft_and_review])
+    for module in modules:
+        mod_id = getattr(module, "id", "")
+        mod_node = DocumentNode(id=mod_id, type="module", content=module)
+        dag.add_node(mod_node)
+        dag.add_edge(dag.root, mod_id)
+
+        slides_container = f"{mod_id}-slides"
+        dag.add_node(DocumentNode(id=slides_container, type="slides"))
+        dag.add_edge(mod_id, slides_container)
+
+        for slide in getattr(module, "slides", []) or []:
+            slide_num = getattr(
+                slide, "slide_number", len(dag.edges[slides_container]) + 1
+            )
+            slide_id = f"{mod_id}-slide-{slide_num}"
+            slide_node = DocumentNode(id=slide_id, type="slide", content=slide)
+            dag.add_node(slide_node)
+            dag.add_edge(slides_container, slide_id)
+
+            if getattr(slide, "copy", None) is not None:
+                copy_id = f"{slide_id}-copy"
+                dag.add_node(
+                    DocumentNode(id=copy_id, type="slide_copy", content=slide.copy)
+                )
+                dag.add_edge(slide_id, copy_id)
+            if getattr(slide, "visualization", None) is not None:
+                vis_id = f"{slide_id}-visualization"
+                dag.add_node(
+                    DocumentNode(
+                        id=vis_id,
+                        type="slide_visualization",
+                        content=slide.visualization,
+                    )
+                )
+                dag.add_edge(slide_id, vis_id)
+            if getattr(slide, "speaker_notes", None) is not None:
+                notes_id = f"{slide_id}-speaker-notes"
+                dag.add_node(
+                    DocumentNode(
+                        id=notes_id,
+                        type="slide_speaker_notes",
+                        content=slide.speaker_notes,
+                    )
+                )
+                dag.add_edge(slide_id, notes_id)
+    return dag
 
 
-async def run_document_graph(state: State, skip_plan: bool = False) -> State:
-    """Generate content for each outline section and merge into ``state``."""
-
-    if not skip_plan:
-        await run_planner(state)
-
-    for idx, _ in enumerate(state.outline.steps):
-        section_graph = _build_section_graph(idx)
-        await section_graph.run(state)
-    state.outline.modules = list(state.modules)
-    return state
-
-
-__all__ = ["DocumentGraph", "run_document_graph"]
+__all__ = ["DocumentNode", "DocumentDAG", "build_document_dag"]

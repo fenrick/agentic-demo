@@ -16,17 +16,17 @@ import logfire
 import tiktoken
 
 import config
-from agents.approver import run_approver
+from agents.content_rewriter import run_content_rewriter
 from agents.content_weaver import run_content_weaver
+from agents.editor import run_editor
 from agents.exporter import run_exporter
-from agents.fact_checker import run_fact_checker
-from agents.pedagogy_critic import run_pedagogy_critic
-from agents.planner import PlanResult  # noqa: F401
+from agents.final_reviewer import run_final_reviewer
+from agents.learning_advisor import run_learning_advisor
+from agents.models import EditorFeedback
 from agents.planner import run_planner
 from agents.researcher_web_node import run_researcher_web
 from agents.streaming import stream as publish
 from core.logging import get_logger
-from core.policies import policy_retry_on_low_confidence
 from core.state import State
 from metrics.collector import MetricsCollector
 from metrics.repository import MetricsRepository
@@ -134,13 +134,13 @@ class Node:
 
 # Human-friendly progress strings keyed by node name
 PROGRESS_MESSAGES: Dict[str, str] = {
-    "Planner": "Sketching the roadmap for {topic}",
     "Researcher-Web": "Scouting resources on {topic}",
-    "Content-Weaver-1": "Weaving content from different sources for {topic}",
-    "Content-Weaver-2": "Updating content from different sources for {topic}",
-    "Pedagogy-Critic": "Assessing learning outcomes for {topic}",
-    "Fact-Checker": "Verifying facts about {topic}",
-    "Human-In-Loop": "Inviting human insight on {topic}",
+    "Planner": "Sketching the roadmap for {topic}",
+    "Learning-Advisor": "Crafting lesson plans for {topic}",
+    "Content-Weaver": "Weaving content from different sources for {topic}",
+    "Editor": "Reviewing narrative for {topic}",
+    "Content-Rewriter": "Revising content based on feedback for {topic}",
+    "Final-Reviewer": "Assessing completeness for {topic}",
     "Exporter": "Packaging the final lecture on {topic}",
 }
 
@@ -148,39 +148,34 @@ PROGRESS_MESSAGES: Dict[str, str] = {
 def build_main_flow() -> List[Node]:
     """Return the ordered list of nodes forming the primary pipeline."""
 
-    def planner_condition(result: PlanResult, state: State) -> Optional[str]:
-        decision = policy_retry_on_low_confidence(result, state)
-        return "Researcher-Web" if decision == "loop" else "Content-Weaver-1"
+    def editor_condition(result: EditorFeedback, _state: State) -> Optional[str]:
+        return "Content-Rewriter" if result.needs_revision else "Final-Reviewer"
 
     return [
-        Node(
-            "Planner",
-            wrap_with_tracing(run_planner),
-            "Content-Weaver-1",
-            planner_condition,
-        ),
         Node("Researcher-Web", wrap_with_tracing(run_researcher_web), "Planner"),
+        Node("Planner", wrap_with_tracing(run_planner), "Learning-Advisor"),
         Node(
-            "Content-Weaver-1",
-            wrap_with_tracing(run_content_weaver),
-            "Pedagogy-Critic",
+            "Learning-Advisor",
+            wrap_with_tracing(run_learning_advisor),
+            "Content-Weaver",
+        ),
+        Node("Content-Weaver", wrap_with_tracing(run_content_weaver), "Editor"),
+        Node(
+            "Editor",
+            wrap_with_tracing(run_editor),
+            "Final-Reviewer",
+            editor_condition,
         ),
         Node(
-            "Pedagogy-Critic",
-            wrap_with_tracing(run_pedagogy_critic),
-            "Content-Weaver-2",
+            "Content-Rewriter",
+            wrap_with_tracing(run_content_rewriter),
+            "Editor",
         ),
         Node(
-            "Content-Weaver-2",
-            wrap_with_tracing(run_content_weaver),
-            "Fact-Checker",
+            "Final-Reviewer",
+            wrap_with_tracing(run_final_reviewer),
+            "Exporter",
         ),
-        Node(
-            "Fact-Checker",
-            wrap_with_tracing(run_fact_checker),
-            "Human-In-Loop",
-        ),
-        Node("Human-In-Loop", wrap_with_tracing(run_approver), "Exporter"),
         Node("Exporter", wrap_with_tracing(run_exporter), None),
     ]
 
@@ -259,7 +254,6 @@ graph = graph_orchestrator
 __all__ = [
     "Node",
     "GraphOrchestrator",
-    "PlanResult",
     "build_main_flow",
     "graph_orchestrator",
     "graph",
