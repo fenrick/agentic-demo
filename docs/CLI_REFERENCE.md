@@ -17,12 +17,12 @@ Command-line shortcuts for running the application, executing tests, and handlin
 - **Generate lecture material**
 
   ```bash
-  ./scripts/cli.sh [--verbose] "<topic>"
+  ./scripts/cli.sh [--verbose] "<topic>" [--portfolio <portfolio> ...]
   ```
 
-  Produces a structured lecture in Markdown for the topic and saves it to `run_output.md`.
-  `--verbose` shows progress logs. Use `--output` to specify a different
-  Markdown file.
+  Produces a structured lecture for the topic across one or more portfolios and
+  saves each to `run_output_<portfolio>.md`. `--verbose` shows progress logs.
+  Use `--output` to specify a different base Markdown file.
 
 ## Testing
 

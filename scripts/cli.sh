@@ -2,12 +2,12 @@
 # Starts the CLI application locally without Docker.
 #
 # Usage:
-#   ./scripts/cli.sh [--verbose] <topic>
+#   ./scripts/cli.sh [--verbose] <topic> [--portfolio <portfolio> ...]
 #
 # The script will:
 #   1. Source environment variables from .env
 #   2. Apply database migrations via Alembic
-#   3. Launch the CLI instance (forwarding any flags like --verbose)
+#   3. Launch the CLI instance (forwarding any flags like --verbose and --portfolio)
 
 set -euo pipefail
 
