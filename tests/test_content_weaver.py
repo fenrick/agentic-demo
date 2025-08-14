@@ -13,6 +13,7 @@ from pydantic import ValidationError
 
 from agents import content_weaver
 from agents.content_weaver import RetryableError, WeaveResult
+from agents.models import AssessmentItem, SlideBullet
 
 
 def test_call_openai_function_supplies_schema(monkeypatch: Any) -> None:
@@ -281,3 +282,30 @@ def test_content_weaver_retries_on_short_speaker_notes(monkeypatch: Any) -> None
         " keep JSON identical otherwise."
         in calls[1]
     )
+
+
+def test_run_content_weaver_preserves_full_output(monkeypatch: Any) -> None:
+    """run_content_weaver stores all weave fields in the module state."""
+
+    async def fake_weaver(_state: Any, section_id: int | None = None) -> WeaveResult:
+        return WeaveResult(
+            title="T",
+            learning_objectives=["lo"],
+            activities=[],
+            duration_min=0,
+            summary="sum",
+            tags=["tag"],
+            prerequisites=["pre"],
+            slide_bullets=[SlideBullet(slide_number=1, bullets=["b"])],
+            speaker_notes="notes",
+            assessment=[AssessmentItem(type="quiz", description="q", max_score=1.0)],
+        )
+
+    monkeypatch.setattr(content_weaver, "content_weaver", fake_weaver)
+    from core.state import State
+
+    state = State(prompt="topic")
+    module = asyncio.run(content_weaver.run_content_weaver(state))
+    assert module.summary == "sum"
+    assert state.modules[0].speaker_notes == "notes"
+    assert state.modules[0].slide_bullets[0].bullets == ["b"]
