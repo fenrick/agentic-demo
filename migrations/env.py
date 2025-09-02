@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
+import os
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
-
-from config import Settings
+from sqlalchemy import create_engine, pool
 
 # Alembic Config object, provides access to .ini values.
 config = context.config
@@ -20,13 +19,9 @@ target_metadata = None
 
 
 def get_url() -> str:
-    """Return the database URL from environment settings."""
+    """Return the database URL from configuration."""
 
-    settings = Settings()
-    if settings.database_url:
-        return settings.database_url
-    db_path = settings.data_dir / "workspace.db"
-    return f"sqlite:///{db_path}"
+    return os.path.expandvars(config.get_main_option("sqlalchemy.url"))
 
 
 def run_migrations_offline() -> None:
@@ -45,9 +40,8 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
-    connectable = engine_from_config(
-        {"url": get_url()}, prefix="", poolclass=pool.NullPool
-    )
+    url = get_url()
+    connectable = create_engine(url, poolclass=pool.NullPool)
 
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)
