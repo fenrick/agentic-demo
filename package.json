@@ -36,7 +36,7 @@
     "stylelint-config-standard": "^39.0.0",
     "typescript": "^5.9.2",
     "vite": "^7.1.1",
-    "vitest": "^3.2.4",
+    "vitest": "^4.0.0",
     "zustand": "^5.0.7"
   },
   "dependencies": {
